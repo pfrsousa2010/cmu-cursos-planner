@@ -14,16 +14,274 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      curso_insumos: {
+        Row: {
+          curso_id: string
+          id: string
+          insumo_id: string
+          quantidade: number
+        }
+        Insert: {
+          curso_id: string
+          id?: string
+          insumo_id: string
+          quantidade?: number
+        }
+        Update: {
+          curso_id?: string
+          id?: string
+          insumo_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curso_insumos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curso_insumos_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curso_materias: {
+        Row: {
+          curso_id: string
+          id: string
+          materia_id: string
+        }
+        Insert: {
+          curso_id: string
+          id?: string
+          materia_id: string
+        }
+        Update: {
+          curso_id?: string
+          id?: string
+          materia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curso_materias_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curso_materias_materia_id_fkey"
+            columns: ["materia_id"]
+            isOneToOne: false
+            referencedRelation: "materias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cursos: {
+        Row: {
+          created_at: string | null
+          fim: string
+          id: string
+          inicio: string
+          periodo: Database["public"]["Enums"]["periodo_enum"]
+          professor: string
+          sala_id: string | null
+          status: Database["public"]["Enums"]["status_curso"] | null
+          titulo: string
+          unidade_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fim: string
+          id?: string
+          inicio: string
+          periodo: Database["public"]["Enums"]["periodo_enum"]
+          professor: string
+          sala_id?: string | null
+          status?: Database["public"]["Enums"]["status_curso"] | null
+          titulo: string
+          unidade_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fim?: string
+          id?: string
+          inicio?: string
+          periodo?: Database["public"]["Enums"]["periodo_enum"]
+          professor?: string
+          sala_id?: string | null
+          status?: Database["public"]["Enums"]["status_curso"] | null
+          titulo?: string
+          unidade_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cursos_sala_id_fkey"
+            columns: ["sala_id"]
+            isOneToOne: false
+            referencedRelation: "salas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cursos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insumos: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      materias: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          nome: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          nome: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      salas: {
+        Row: {
+          capacidade: number
+          created_at: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          unidade_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacidade?: number
+          created_at?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          unidade_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacidade?: number
+          created_at?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          unidade_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidades: {
+        Row: {
+          created_at: string | null
+          endereco: string
+          id: string
+          nome: string
+          telefone: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          endereco: string
+          id?: string
+          nome: string
+          telefone: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          endereco?: string
+          id?: string
+          nome?: string
+          telefone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      periodo_enum: "manha" | "tarde" | "noite"
+      status_curso: "ativo" | "finalizado"
+      user_role: "admin" | "editor" | "visualizador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +408,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      periodo_enum: ["manha", "tarde", "noite"],
+      status_curso: ["ativo", "finalizado"],
+      user_role: ["admin", "editor", "visualizador"],
+    },
   },
 } as const
