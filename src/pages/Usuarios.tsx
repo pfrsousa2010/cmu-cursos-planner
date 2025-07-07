@@ -11,12 +11,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
+import type { Database } from "@/integrations/supabase/types";
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface Profile {
   id: string;
   nome: string;
   email: string;
-  role: string;
+  role: UserRole;
   created_at: string;
 }
 
@@ -31,7 +34,7 @@ const Usuarios = () => {
     nome: "",
     email: "",
     password: "",
-    role: "visualizador"
+    role: "visualizador" as UserRole
   });
 
   useEffect(() => {
@@ -118,7 +121,7 @@ const Usuarios = () => {
       nome: "",
       email: "",
       password: "",
-      role: "visualizador"
+      role: "visualizador" as UserRole
     });
     setEditingUser(null);
     setDialogOpen(false);
@@ -135,7 +138,7 @@ const Usuarios = () => {
     setDialogOpen(true);
   };
 
-  const getRoleLabel = (role: string) => {
+  const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'Administrador';
       case 'editor': return 'Editor';
@@ -144,7 +147,7 @@ const Usuarios = () => {
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'text-red-600 bg-red-50';
       case 'editor': return 'text-blue-600 bg-blue-50';
@@ -244,7 +247,7 @@ const Usuarios = () => {
                   <Label htmlFor="role">Função</Label>
                   <Select
                     value={formData.role}
-                    onValueChange={(value) => setFormData({ ...formData, role: value })}
+                    onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
                     required
                   >
                     <SelectTrigger>
