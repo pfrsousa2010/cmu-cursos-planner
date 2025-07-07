@@ -5,22 +5,54 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, Edit, FileText } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+interface Curso {
+  id: string;
+  titulo: string;
+  professor: string;
+  periodo: 'manha' | 'tarde' | 'noite';
+  inicio: string;
+  fim: string;
+  sala_id: string;
+  unidades: { nome: string } | null;
+  salas: { nome: string } | null;
+}
 
 const Calendario = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedUnidade, setSelectedUnidade] = useState<string>("all");
   const [selectedProfessor, setSelectedProfessor] = useState<string>("all");
+  const [selectedSala, setSelectedSala] = useState<string>("all");
+  const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Buscar unidades para filtro
   const { data: unidades } = useQuery({
     queryKey: ['unidades'],
     queryFn: async () => {
       const { data } = await supabase.from('unidades').select('*').order('nome');
+      return data || [];
+    }
+  });
+
+  // Buscar salas para filtro
+  const { data: salas } = useQuery({
+    queryKey: ['salas', selectedUnidade],
+    queryFn: async () => {
+      let query = supabase.from('salas').select('*, unidades(nome)').order('nome');
+      
+      if (selectedUnidade !== "all") {
+        query = query.eq('unidade_id', selectedUnidade);
+      }
+      
+      const { data } = await query;
       return data || [];
     }
   });
@@ -41,7 +73,7 @@ const Calendario = () => {
 
   // Buscar cursos da semana
   const { data: cursos } = useQuery({
-    queryKey: ['cursos-semana', currentWeek, selectedUnidade, selectedProfessor],
+    queryKey: ['cursos-semana', currentWeek, selectedUnidade, selectedProfessor, selectedSala],
     queryFn: async () => {
       const startDate = startOfWeek(currentWeek, { weekStartsOn: 0 });
       const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
@@ -65,6 +97,10 @@ const Calendario = () => {
         query = query.eq('professor', selectedProfessor);
       }
 
+      if (selectedSala !== "all") {
+        query = query.eq('sala_id', selectedSala);
+      }
+
       const { data } = await query.order('inicio');
       return data || [];
     }
@@ -75,8 +111,13 @@ const Calendario = () => {
     end: endOfWeek(currentWeek, { weekStartsOn: 0 })
   });
 
-  const getCursosForDay = (day: Date) => {
+  // Filtrar apenas os dias úteis (segunda a sábado)
+  const workDays = weekDays.slice(1, 7); // Remove domingo
+
+  const getCursosForSalaAndDay = (salaId: string, day: Date) => {
     return cursos?.filter(curso => {
+      if (curso.sala_id !== salaId) return false;
+      
       const cursoStart = parseISO(curso.inicio);
       const cursoEnd = parseISO(curso.fim);
       return isWithinInterval(day, { start: cursoStart, end: cursoEnd });
@@ -101,6 +142,18 @@ const Calendario = () => {
     return colors[periodo as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const handleCursoClick = (curso: Curso) => {
+    setSelectedCurso(curso);
+    setDialogOpen(true);
+  };
+
+  const salasToShow = salas?.filter(sala => {
+    if (selectedSala !== "all") {
+      return sala.id === selectedSala;
+    }
+    return true;
+  }) || [];
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -108,7 +161,7 @@ const Calendario = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>
             <p className="text-muted-foreground">
-              Visualização semanal dos cursos agendados
+              Visualização semanal dos cursos por sala
             </p>
           </div>
         </div>
@@ -153,6 +206,22 @@ const Calendario = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <Select value={selectedSala} onValueChange={setSelectedSala}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma sala" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as salas</SelectItem>
+                  {salas?.map(sala => (
+                    <SelectItem key={sala.id} value={sala.id}>
+                      {sala.nome} - {sala.unidades?.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
@@ -171,7 +240,7 @@ const Calendario = () => {
               
               <div className="text-center">
                 <h2 className="text-lg font-semibold">
-                  {format(weekDays[0], 'dd', { locale: ptBR })} - {format(weekDays[6], 'dd MMM yyyy', { locale: ptBR })}
+                  {format(workDays[0], 'dd', { locale: ptBR })} - {format(workDays[5], 'dd MMM yyyy', { locale: ptBR })}
                 </h2>
               </div>
 
@@ -187,57 +256,142 @@ const Calendario = () => {
           </CardHeader>
         </Card>
 
-        {/* Grid do calendário */}
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-          {weekDays.map((day, index) => {
-            const cursosDay = getCursosForDay(day);
-            const dayName = format(day, 'EEEE', { locale: ptBR });
-            const dayNumber = format(day, 'd');
-
-            return (
-              <Card key={day.toISOString()} className="min-h-[300px]">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-center">
-                    <div className="text-sm font-medium capitalize">{dayName}</div>
-                    <div className="text-2xl font-bold">{dayNumber}</div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {cursosDay.map((curso) => (
-                    <div
-                      key={curso.id}
-                      className="p-2 rounded-lg border bg-white hover:shadow-md transition-shadow"
-                    >
-                      <div className="space-y-1">
-                        <h4 className="font-medium text-sm leading-tight">{curso.titulo}</h4>
-                        <p className="text-xs text-muted-foreground">{curso.professor}</p>
-                        <div className="flex items-center gap-1">
-                          <Badge 
-                            variant="secondary" 
-                            className={getPeriodoColor(curso.periodo) + " text-xs"}
-                          >
-                            {formatPeriodo(curso.periodo)}
-                          </Badge>
+        {/* Tabela de cursos por sala */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32 font-semibold">SALAS</TableHead>
+                    {workDays.map((day) => (
+                      <TableHead key={day.toISOString()} className="text-center min-w-[200px] font-semibold">
+                        <div className="flex flex-col">
+                          <span className="capitalize text-sm">
+                            {format(day, 'EEEE', { locale: ptBR })}
+                          </span>
+                          <span className="text-lg font-bold">
+                            {format(day, 'dd/MM')}
+                          </span>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {curso.unidades?.nome}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {curso.salas?.nome}
-                        </p>
-                      </div>
-                    </div>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salasToShow.map((sala) => (
+                    <TableRow key={sala.id}>
+                      <TableCell className="font-medium bg-gray-50 align-top">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm">{sala.nome}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {sala.unidades?.nome}
+                          </div>
+                        </div>
+                      </TableCell>
+                      {workDays.map((day) => {
+                        const cursosDay = getCursosForSalaAndDay(sala.id, day);
+                        
+                        return (
+                          <TableCell key={day.toISOString()} className="align-top p-2">
+                            <div className="space-y-2">
+                              {cursosDay.map((curso) => (
+                                <div
+                                  key={curso.id}
+                                  className="p-2 rounded border bg-white hover:shadow-md transition-shadow cursor-pointer text-xs"
+                                  onClick={() => handleCursoClick(curso)}
+                                >
+                                  <div className="space-y-1">
+                                    <div className="font-medium leading-tight">{curso.titulo}</div>
+                                    <div className="text-muted-foreground">{curso.professor}</div>
+                                    <Badge 
+                                      variant="secondary" 
+                                      className={getPeriodoColor(curso.periodo) + " text-xs px-1 py-0"}
+                                    >
+                                      {formatPeriodo(curso.periodo)}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                              {cursosDay.length === 0 && (
+                                <div className="text-center text-muted-foreground text-xs py-2">
+                                  -
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
                   ))}
-                  {cursosDay.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center pt-4">
-                      Nenhum curso
-                    </p>
+                  {salasToShow.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                        Nenhuma sala encontrada
+                      </TableCell>
+                    </TableRow>
                   )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dialog de detalhes do curso */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detalhes do Curso</DialogTitle>
+            </DialogHeader>
+            {selectedCurso && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedCurso.titulo}</h3>
+                  <p className="text-muted-foreground">Professor: {selectedCurso.professor}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Período:</span>
+                    <Badge className={getPeriodoColor(selectedCurso.periodo) + " ml-2"}>
+                      {formatPeriodo(selectedCurso.periodo)}
+                    </Badge>
+                  </div>
+                  
+                  <div>
+                    <span className="font-medium">Sala:</span>
+                    <p>{selectedCurso.salas?.nome}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-medium">Unidade:</span>
+                    <p>{selectedCurso.unidades?.nome}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-medium">Duração:</span>
+                    <p>{format(parseISO(selectedCurso.inicio), 'dd/MM')} - {format(parseISO(selectedCurso.fim), 'dd/MM')}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Eye className="h-4 w-4 mr-2" />
+                    Visualizar
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Insumos
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
