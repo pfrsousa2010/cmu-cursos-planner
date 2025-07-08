@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Plus, Edit, Trash2, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 const Cursos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCurso, setEditingCurso] = useState<any>(null);
+  const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
+  const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<any>(null);
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
 
@@ -65,6 +66,16 @@ const Cursos = () => {
   const handleDialogClose = () => {
     setIsDialogOpen(false);
     setEditingCurso(null);
+  };
+
+  const handleViewInsumos = (curso: any) => {
+    setSelectedCursoInsumos(curso);
+    setInsumosDialogOpen(true);
+  };
+
+  const handleDownloadPDF = () => {
+    // TODO: Implementar download do PDF
+    toast.success("Função de download será implementada em breve");
   };
 
   const formatPeriodo = (periodo: string) => {
@@ -192,9 +203,13 @@ const Cursos = () => {
                         <span className="font-medium">Fim:</span> {format(new Date(curso.fim), 'dd/MM/yyyy', { locale: ptBR })}
                       </div>
                       <div>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewInsumos(curso)}
+                        >
                           <FileText className="mr-2 h-4 w-4" />
-                          Imprimir Lista de Insumos
+                          Ver Insumos
                         </Button>
                       </div>
                     </div>
@@ -218,6 +233,40 @@ const Cursos = () => {
             </Card>
           )}
         </div>
+
+        {/* Dialog de Insumos */}
+        <Dialog open={insumosDialogOpen} onOpenChange={setInsumosDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Professor: {selectedCursoInsumos?.professor}
+              </div>
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-2">Insumos Necessários:</h4>
+                <div className="text-sm text-muted-foreground">
+                  Lista de insumos será implementada em breve...
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Lista
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={handleDownloadPDF}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar PDF
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

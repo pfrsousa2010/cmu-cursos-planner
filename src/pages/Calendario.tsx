@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Edit, Download, FileText } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CursoDetails from "@/components/CursoDetails";
+import { toast } from "sonner";
 
 interface Curso {
   id: string;
@@ -33,6 +33,8 @@ const Calendario = () => {
   const [selectedSala, setSelectedSala] = useState<string>("all");
   const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
+  const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
 
   // Buscar unidades para filtro
   const { data: unidades } = useQuery({
@@ -149,6 +151,16 @@ const Calendario = () => {
   const handleCursoClick = (curso: Curso) => {
     setSelectedCurso(curso);
     setDialogOpen(true);
+  };
+
+  const handleViewInsumos = (curso: Curso) => {
+    setSelectedCursoInsumos(curso);
+    setInsumosDialogOpen(true);
+    setDialogOpen(false);
+  };
+
+  const handleDownloadPDF = () => {
+    toast.success("Função de download será implementada em breve");
   };
 
   // Resetar filtros dependentes quando unidade muda
@@ -358,8 +370,45 @@ const Calendario = () => {
               <DialogTitle>Detalhes do Curso</DialogTitle>
             </DialogHeader>
             {selectedCurso && (
-              <CursoDetails curso={selectedCurso} />
+              <CursoDetails 
+                curso={selectedCurso} 
+                onViewInsumos={handleViewInsumos}
+              />
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Insumos */}
+        <Dialog open={insumosDialogOpen} onOpenChange={setInsumosDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Professor: {selectedCursoInsumos?.professor}
+              </div>
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-2">Insumos Necessários:</h4>
+                <div className="text-sm text-muted-foreground">
+                  Lista de insumos será implementada em breve...
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Lista
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={handleDownloadPDF}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar PDF
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
