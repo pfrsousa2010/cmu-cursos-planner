@@ -9,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, Edit, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import CursoDetails from "@/components/CursoDetails";
 
 interface Curso {
   id: string;
@@ -42,7 +43,7 @@ const Calendario = () => {
     }
   });
 
-  // Buscar salas para filtro
+  // Buscar salas para filtro (filtradas por unidade)
   const { data: salas } = useQuery({
     queryKey: ['salas', selectedUnidade],
     queryFn: async () => {
@@ -57,21 +58,23 @@ const Calendario = () => {
     }
   });
 
-  // Buscar professores únicos para filtro
+  // Buscar professores únicos (filtrados por unidade)
   const { data: professores } = useQuery({
-    queryKey: ['professores'],
+    queryKey: ['professores', selectedUnidade],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('cursos')
-        .select('professor')
-        .order('professor');
+      let query = supabase.from('cursos').select('professor');
       
+      if (selectedUnidade !== "all") {
+        query = query.eq('unidade_id', selectedUnidade);
+      }
+      
+      const { data } = await query.order('professor');
       const uniqueProfessores = [...new Set(data?.map(item => item.professor) || [])];
       return uniqueProfessores;
     }
   });
 
-  // Buscar cursos da semana
+  // Buscar cursos da semana (sempre filtrados por unidade)
   const { data: cursos } = useQuery({
     queryKey: ['cursos-semana', currentWeek, selectedUnidade, selectedProfessor, selectedSala],
     queryFn: async () => {
@@ -89,6 +92,7 @@ const Calendario = () => {
         .gte('fim', format(startDate, 'yyyy-MM-dd'))
         .eq('status', 'ativo');
 
+      // Sempre filtrar por unidade selecionada (obrigatório)
       if (selectedUnidade !== "all") {
         query = query.eq('unidade_id', selectedUnidade);
       }
@@ -147,6 +151,13 @@ const Calendario = () => {
     setDialogOpen(true);
   };
 
+  // Resetar filtros dependentes quando unidade muda
+  const handleUnidadeChange = (value: string) => {
+    setSelectedUnidade(value);
+    setSelectedProfessor("all");
+    setSelectedSala("all");
+  };
+
   const salasToShow = salas?.filter(sala => {
     if (selectedSala !== "all") {
       return sala.id === selectedSala;
@@ -176,7 +187,8 @@ const Calendario = () => {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
-              <Select value={selectedUnidade} onValueChange={setSelectedUnidade}>
+              <label className="text-sm font-medium mb-2 block">Unidade *</label>
+              <Select value={selectedUnidade} onValueChange={handleUnidadeChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma unidade" />
                 </SelectTrigger>
@@ -192,6 +204,7 @@ const Calendario = () => {
             </div>
 
             <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Professor</label>
               <Select value={selectedProfessor} onValueChange={setSelectedProfessor}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um professor" />
@@ -208,6 +221,7 @@ const Calendario = () => {
             </div>
 
             <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Sala</label>
               <Select value={selectedSala} onValueChange={setSelectedSala}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma sala" />
@@ -327,7 +341,7 @@ const Calendario = () => {
                   {salasToShow.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
-                        Nenhuma sala encontrada
+                        {selectedUnidade === "all" ? "Selecione uma unidade para visualizar as salas" : "Nenhuma sala encontrada"}
                       </TableCell>
                     </TableRow>
                   )}
@@ -344,51 +358,7 @@ const Calendario = () => {
               <DialogTitle>Detalhes do Curso</DialogTitle>
             </DialogHeader>
             {selectedCurso && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedCurso.titulo}</h3>
-                  <p className="text-muted-foreground">Professor: {selectedCurso.professor}</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Período:</span>
-                    <Badge className={getPeriodoColor(selectedCurso.periodo) + " ml-2"}>
-                      {formatPeriodo(selectedCurso.periodo)}
-                    </Badge>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium">Sala:</span>
-                    <p>{selectedCurso.salas?.nome}</p>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium">Unidade:</span>
-                    <p>{selectedCurso.unidades?.nome}</p>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium">Duração:</span>
-                    <p>{format(parseISO(selectedCurso.inicio), 'dd/MM')} - {format(parseISO(selectedCurso.fim), 'dd/MM')}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Visualizar
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Insumos
-                  </Button>
-                </div>
-              </div>
+              <CursoDetails curso={selectedCurso} />
             )}
           </DialogContent>
         </Dialog>
