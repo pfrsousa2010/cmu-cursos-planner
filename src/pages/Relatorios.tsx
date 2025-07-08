@@ -30,30 +30,42 @@ interface ChartData {
 const Relatorios = () => {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedUnidade, setSelectedUnidade] = useState("");
 
   useEffect(() => {
+    console.log("Relatorios: Iniciando carregamento...");
     fetchCursos();
   }, []);
 
   const fetchCursos = async () => {
-    const { data, error } = await supabase
-      .from('cursos')
-      .select(`
-        *,
-        unidades (nome)
-      `)
-      .order('inicio');
+    try {
+      console.log("Relatorios: Buscando cursos...");
+      const { data, error } = await supabase
+        .from('cursos')
+        .select(`
+          *,
+          unidades (nome)
+        `)
+        .order('inicio');
 
-    if (error) {
-      toast.error("Erro ao carregar dados dos cursos");
-      console.error(error);
-    } else {
-      setCursos(data || []);
+      if (error) {
+        console.error("Relatorios: Erro ao buscar cursos:", error);
+        setError("Erro ao carregar dados dos cursos");
+        toast.error("Erro ao carregar dados dos cursos");
+      } else {
+        console.log("Relatorios: Cursos carregados:", data?.length || 0);
+        setCursos(data || []);
+      }
+    } catch (err) {
+      console.error("Relatorios: Erro inesperado:", err);
+      setError("Erro inesperado ao carregar dados");
+      toast.error("Erro inesperado ao carregar dados");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const getAvailableYears = () => {
@@ -109,7 +121,7 @@ const Relatorios = () => {
     return Object.entries(cursosPorProfessor)
       .map(([professor, count]) => ({ name: professor, value: count }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 10); // Top 10 professores
+      .slice(0, 10);
   };
 
   const getCursosPorPeriodo = (): ChartData[] => {
@@ -129,7 +141,6 @@ const Relatorios = () => {
     const filteredCursos = getFilteredCursos();
     const currentDate = new Date().toLocaleString('pt-BR');
     
-    // Criar conteúdo HTML para o PDF
     const htmlContent = `
       <html>
         <head>
@@ -182,7 +193,6 @@ const Relatorios = () => {
       </html>
     `;
 
-    // Abrir nova janela para impressão
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(htmlContent);
@@ -207,6 +217,7 @@ const Relatorios = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
   if (loading) {
+    console.log("Relatorios: Mostrando loading...");
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -216,6 +227,24 @@ const Relatorios = () => {
     );
   }
 
+  if (error) {
+    console.log("Relatorios: Mostrando erro:", error);
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Erro ao carregar relatórios</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  console.log("Relatorios: Renderizando página completa com", cursos.length, "cursos");
   const filteredCursos = getFilteredCursos();
 
   return (
