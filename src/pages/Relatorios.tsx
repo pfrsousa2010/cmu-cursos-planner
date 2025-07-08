@@ -31,9 +31,9 @@ const Relatorios = () => {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedUnidade, setSelectedUnidade] = useState("");
+  const [selectedYear, setSelectedYear] = useState("todos");
+  const [selectedMonth, setSelectedMonth] = useState("todos");
+  const [selectedUnidade, setSelectedUnidade] = useState("todas");
 
   useEffect(() => {
     console.log("Relatorios: Iniciando carregamento...");
@@ -78,9 +78,9 @@ const Relatorios = () => {
       const cursoYear = new Date(curso.inicio).getFullYear().toString();
       const cursoMonth = (new Date(curso.inicio).getMonth() + 1).toString();
       
-      if (selectedYear && cursoYear !== selectedYear) return false;
-      if (selectedMonth && cursoMonth !== selectedMonth) return false;
-      if (selectedUnidade && curso.unidades.nome !== selectedUnidade) return false;
+      if (selectedYear !== "todos" && cursoYear !== selectedYear) return false;
+      if (selectedMonth !== "todos" && cursoMonth !== selectedMonth) return false;
+      if (selectedUnidade !== "todas" && curso.unidades.nome !== selectedUnidade) return false;
       
       return true;
     });
@@ -162,9 +162,9 @@ const Relatorios = () => {
           
           <div class="filters">
             <h3>Filtros Aplicados:</h3>
-            <p>Ano: ${selectedYear || 'Todos'}</p>
-            <p>Mês: ${selectedMonth ? getMonthName(parseInt(selectedMonth)) : 'Todos'}</p>
-            <p>Unidade: ${selectedUnidade || 'Todas'}</p>
+            <p>Ano: ${selectedYear === 'todos' ? 'Todos' : selectedYear}</p>
+            <p>Mês: ${selectedMonth === 'todos' ? 'Todos' : getMonthName(parseInt(selectedMonth))}</p>
+            <p>Unidade: ${selectedUnidade === 'todas' ? 'Todas' : selectedUnidade}</p>
           </div>
           
           <div class="stats">
@@ -277,7 +277,7 @@ const Relatorios = () => {
                     <SelectValue placeholder="Selecionar ano" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os anos</SelectItem>
+                    <SelectItem value="todos">Todos os anos</SelectItem>
                     {getAvailableYears().map(year => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
@@ -294,7 +294,7 @@ const Relatorios = () => {
                     <SelectValue placeholder="Selecionar mês" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os meses</SelectItem>
+                    <SelectItem value="todos">Todos os meses</SelectItem>
                     {Array.from({ length: 12 }, (_, i) => (
                       <SelectItem key={i + 1} value={(i + 1).toString()}>
                         {getMonthName(i + 1)}
@@ -311,7 +311,7 @@ const Relatorios = () => {
                     <SelectValue placeholder="Selecionar unidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as unidades</SelectItem>
+                    <SelectItem value="todas">Todas as unidades</SelectItem>
                     {getUnidades().map(unidade => (
                       <SelectItem key={unidade} value={unidade}>
                         {unidade}
