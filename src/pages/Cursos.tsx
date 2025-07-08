@@ -1,12 +1,15 @@
-import { useState } from "react";
+
+import { useState, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Plus, Edit, Trash2, FileText, Download } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Download, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,6 +21,14 @@ const Cursos = () => {
   const [editingCurso, setEditingCurso] = useState<any>(null);
   const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
   const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<any>(null);
+  
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("todos");
+  const [selectedPeriodo, setSelectedPeriodo] = useState("todos");
+  const [selectedUnidade, setSelectedUnidade] = useState("todas");
+  const [selectedYear, setSelectedYear] = useState("todos");
+  
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
 
@@ -36,6 +47,52 @@ const Cursos = () => {
       return data || [];
     }
   });
+
+  // Filtrar cursos
+  const filteredCursos = useMemo(() => {
+    if (!cursos) return [];
+    
+    return cursos.filter(curso => {
+      // Filtro de busca por texto
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matches = 
+          curso.titulo.toLowerCase().includes(searchLower) ||
+          curso.professor.toLowerCase().includes(searchLower) ||
+          curso.unidades?.nome.toLowerCase().includes(searchLower);
+        if (!matches) return false;
+      }
+      
+      // Filtro por status
+      if (selectedStatus !== "todos" && curso.status !== selectedStatus) return false;
+      
+      // Filtro por período
+      if (selectedPeriodo !== "todos" && curso.periodo !== selectedPeriodo) return false;
+      
+      // Filtro por unidade
+      if (selectedUnidade !== "todas" && curso.unidades?.nome !== selectedUnidade) return false;
+      
+      // Filtro por ano
+      if (selectedYear !== "todos") {
+        const cursoYear = new Date(curso.inicio).getFullYear().toString();
+        if (cursoYear !== selectedYear) return false;
+      }
+      
+      return true;
+    });
+  }, [cursos, searchTerm, selectedStatus, selectedPeriodo, selectedUnidade, selectedYear]);
+
+  // Obter dados únicos para filtros
+  const getUnidades = () => {
+    if (!cursos) return [];
+    return [...new Set(cursos.map(curso => curso.unidades?.nome).filter(Boolean))];
+  };
+
+  const getAvailableYears = () => {
+    if (!cursos) return [];
+    const years = cursos.map(curso => new Date(curso.inicio).getFullYear());
+    return [...new Set(years)].sort((a, b) => b - a);
+  };
 
   // Deletar curso
   const deleteMutation = useMutation({
@@ -100,6 +157,14 @@ const Cursos = () => {
     return colors[periodo as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedStatus("todos");
+    setSelectedPeriodo("todos");
+    setSelectedUnidade("todas");
+    setSelectedYear("todos");
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -144,9 +209,120 @@ const Cursos = () => {
           )}
         </div>
 
+        {/* Seção de Filtros */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {/* Busca por texto */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Título, professor, unidade..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+
+              {/* Filtro por Status */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os status</SelectItem>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Período */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Período</label>
+                <Select value={selectedPeriodo} onValueChange={setSelectedPeriodo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os períodos</SelectItem>
+                    <SelectItem value="manha">Manhã</SelectItem>
+                    <SelectItem value="tarde">Tarde</SelectItem>
+                    <SelectItem value="noite">Noite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Unidade */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Unidade</label>
+                <Select value={selectedUnidade} onValueChange={setSelectedUnidade}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as unidades</SelectItem>
+                    {getUnidades().map(unidade => (
+                      <SelectItem key={unidade} value={unidade}>
+                        {unidade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Ano */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Ano</label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os anos</SelectItem>
+                    {getAvailableYears().map(year => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Botão Limpar Filtros */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium opacity-0">Ações</label>
+                <Button 
+                  variant="outline" 
+                  onClick={clearFilters}
+                  className="w-full"
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </div>
+
+            {/* Contador de resultados */}
+            <div className="mt-4 text-sm text-muted-foreground">
+              Mostrando {filteredCursos.length} de {cursos?.length || 0} cursos
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-6">
-          {cursos && cursos.length > 0 ? (
-            cursos.map((curso) => (
+          {filteredCursos && filteredCursos.length > 0 ? (
+            filteredCursos.map((curso) => (
               <Card key={curso.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -221,13 +397,22 @@ const Cursos = () => {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <div className="text-center space-y-2">
-                  <h3 className="text-lg font-medium">Nenhum curso encontrado</h3>
+                  <h3 className="text-lg font-medium">
+                    {cursos && cursos.length > 0 ? "Nenhum curso encontrado com os filtros aplicados" : "Nenhum curso encontrado"}
+                  </h3>
                   <p className="text-muted-foreground">
-                    {canManageCursos 
-                      ? "Comece criando seu primeiro curso." 
-                      : "Não há cursos cadastrados no momento."
+                    {cursos && cursos.length > 0 
+                      ? "Tente ajustar os filtros ou limpar todos os filtros para ver mais resultados."
+                      : canManageCursos 
+                        ? "Comece criando seu primeiro curso." 
+                        : "Não há cursos cadastrados no momento."
                     }
                   </p>
+                  {cursos && cursos.length > 0 && (
+                    <Button variant="outline" onClick={clearFilters} className="mt-2">
+                      Limpar Filtros
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
