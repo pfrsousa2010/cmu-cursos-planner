@@ -13,8 +13,10 @@ interface Curso {
   inicio: string;
   fim: string;
   sala_id: string;
+  unidade_id: string;
+  status: 'ativo' | 'finalizado';
   unidades: { nome: string } | null;
-  salas: { nome: string } | null;
+  salas: { nome: string; id: string } | null;
 }
 
 interface CursoDetailsProps {
@@ -24,6 +26,9 @@ interface CursoDetailsProps {
 }
 
 const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
+  console.log('CursoDetails - Curso recebido:', curso);
+  console.log('CursoDetails - Sala info:', curso.salas);
+
   const formatPeriodo = (periodo: string) => {
     const periodos = {
       'manha': 'Manhã',
@@ -63,12 +68,12 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
         
         <div>
           <span className="font-medium">Sala:</span>
-          <p>{curso.salas?.nome}</p>
+          <p>{curso.salas?.nome || 'Não definida'}</p>
         </div>
         
         <div>
           <span className="font-medium">Unidade:</span>
-          <p>{curso.unidades?.nome}</p>
+          <p>{curso.unidades?.nome || 'Não definida'}</p>
         </div>
         
         <div>
