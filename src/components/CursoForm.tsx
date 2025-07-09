@@ -77,11 +77,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       setFim(curso.fim || "");
       setPeriodo(curso.periodo || "");
       setUnidadeId(curso.unidade_id || "");
-      // Aguardar um pouco para garantir que a unidade seja definida antes da sala
-      setTimeout(() => {
-        setSalaId(curso.sala_id || "");
-        console.log('Sala ID definido:', curso.sala_id);
-      }, 100);
       setStatus(curso.status || "ativo");
 
       // Carregar matérias e insumos do curso
@@ -122,6 +117,18 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       setSelectedInsumos([]);
     }
   }, [curso]);
+
+  // Definir sala quando as salas são carregadas e existe um curso sendo editado
+  useEffect(() => {
+    if (curso && curso.sala_id && salas && salas.length > 0) {
+      // Verificar se a sala do curso está na lista de salas carregadas
+      const salaExists = salas.find(sala => sala.id === curso.sala_id);
+      if (salaExists) {
+        console.log('Definindo sala ID:', curso.sala_id);
+        setSalaId(curso.sala_id);
+      }
+    }
+  }, [salas, curso]);
 
   // Quando a unidade mudar, limpar a sala se não for da mesma unidade
   useEffect(() => {
