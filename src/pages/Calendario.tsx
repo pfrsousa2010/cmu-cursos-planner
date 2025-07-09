@@ -23,8 +23,10 @@ interface Curso {
   inicio: string;
   fim: string;
   sala_id: string;
+  unidade_id: string;
+  status: 'ativo' | 'finalizado';
   unidades: { nome: string } | null;
-  salas: { nome: string } | null;
+  salas: { nome: string; id: string } | null;
 }
 
 const Calendario = () => {
@@ -93,7 +95,7 @@ const Calendario = () => {
         .select(`
           *,
           unidades (nome),
-          salas (nome)
+          salas (nome, id)
         `)
         .lte('inicio', format(endDate, 'yyyy-MM-dd'))
         .gte('fim', format(startDate, 'yyyy-MM-dd'))
@@ -159,6 +161,7 @@ const Calendario = () => {
   };
 
   const handleEditCurso = (curso: Curso) => {
+    console.log('Curso selecionado para edição:', curso);
     setCursoToEdit(curso);
     setEditDialogOpen(true);
     setDialogOpen(false);

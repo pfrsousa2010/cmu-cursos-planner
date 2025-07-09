@@ -37,20 +37,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     }
   });
 
-  const { data: salas } = useQuery({
-    queryKey: ['salas', unidadeId],
-    queryFn: async () => {
-      if (!unidadeId) return [];
-      const { data } = await supabase
-        .from('salas')
-        .select('*')
-        .eq('unidade_id', unidadeId)
-        .order('nome');
-      return data || [];
-    },
-    enabled: !!unidadeId
-  });
-
   const { data: materias } = useQuery({
     queryKey: ['materias'],
     queryFn: async () => {
@@ -67,17 +53,35 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     }
   });
 
+  const { data: salas } = useQuery({
+    queryKey: ['salas', unidadeId],
+    queryFn: async () => {
+      if (!unidadeId) return [];
+      const { data } = await supabase
+        .from('salas')
+        .select('*')
+        .eq('unidade_id', unidadeId)
+        .order('nome');
+      return data || [];
+    },
+    enabled: !!unidadeId
+  });
+
   // Carregar dados do curso para edição
   useEffect(() => {
     if (curso) {
-      console.log('Carregando dados do curso:', curso);
+      console.log('Carregando dados do curso para edição:', curso);
       setTitulo(curso.titulo || "");
       setProfessor(curso.professor || "");
       setInicio(curso.inicio || "");
       setFim(curso.fim || "");
       setPeriodo(curso.periodo || "");
       setUnidadeId(curso.unidade_id || "");
-      setSalaId(curso.sala_id || "");
+      // Aguardar um pouco para garantir que a unidade seja definida antes da sala
+      setTimeout(() => {
+        setSalaId(curso.sala_id || "");
+        console.log('Sala ID definido:', curso.sala_id);
+      }, 100);
       setStatus(curso.status || "ativo");
 
       // Carregar matérias e insumos do curso
@@ -118,6 +122,13 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       setSelectedInsumos([]);
     }
   }, [curso]);
+
+  // Quando a unidade mudar, limpar a sala se não for da mesma unidade
+  useEffect(() => {
+    if (curso && curso.unidade_id && unidadeId !== curso.unidade_id) {
+      setSalaId("");
+    }
+  }, [unidadeId, curso]);
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
