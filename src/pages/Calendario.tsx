@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Edit, Download, FileText } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CursoDetails from "@/components/CursoDetails";
+import CursoForm from "@/components/CursoForm";
 import { toast } from "sonner";
 
 interface Curso {
@@ -34,7 +35,11 @@ const Calendario = () => {
   const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
+  const [cursoToEdit, setCursoToEdit] = useState<Curso | null>(null);
+
+  const queryClient = useQueryClient();
 
   // Buscar unidades para filtro
   const { data: unidades } = useQuery({
@@ -153,6 +158,12 @@ const Calendario = () => {
     setDialogOpen(true);
   };
 
+  const handleEditCurso = (curso: Curso) => {
+    setCursoToEdit(curso);
+    setEditDialogOpen(true);
+    setDialogOpen(false);
+  };
+
   const handleViewInsumos = (curso: Curso) => {
     setSelectedCursoInsumos(curso);
     setInsumosDialogOpen(true);
@@ -161,6 +172,13 @@ const Calendario = () => {
 
   const handleDownloadPDF = () => {
     toast.success("Função de download será implementada em breve");
+  };
+
+  const handleEditSuccess = () => {
+    setEditDialogOpen(false);
+    setCursoToEdit(null);
+    queryClient.invalidateQueries({ queryKey: ['cursos-semana'] });
+    toast.success("Curso atualizado com sucesso!");
   };
 
   // Resetar filtros dependentes quando unidade muda
@@ -372,7 +390,23 @@ const Calendario = () => {
             {selectedCurso && (
               <CursoDetails 
                 curso={selectedCurso} 
+                onEdit={handleEditCurso}
                 onViewInsumos={handleViewInsumos}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de edição do curso */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Curso</DialogTitle>
+            </DialogHeader>
+            {cursoToEdit && (
+              <CursoForm 
+                curso={cursoToEdit} 
+                onSuccess={handleEditSuccess}
               />
             )}
           </DialogContent>
