@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,35 +70,52 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   // Carregar dados do curso para edição
   useEffect(() => {
     if (curso) {
-      setTitulo(curso.titulo);
-      setProfessor(curso.professor);
-      setInicio(curso.inicio);
-      setFim(curso.fim);
-      setPeriodo(curso.periodo);
-      setUnidadeId(curso.unidade_id);
+      console.log('Carregando dados do curso:', curso);
+      setTitulo(curso.titulo || "");
+      setProfessor(curso.professor || "");
+      setInicio(curso.inicio || "");
+      setFim(curso.fim || "");
+      setPeriodo(curso.periodo || "");
+      setUnidadeId(curso.unidade_id || "");
       setSalaId(curso.sala_id || "");
-      setStatus(curso.status);
+      setStatus(curso.status || "ativo");
 
       // Carregar matérias e insumos do curso
       const loadCursoData = async () => {
-        const [materiasRes, insumosRes] = await Promise.all([
-          supabase.from('curso_materias').select('materia_id').eq('curso_id', curso.id),
-          supabase.from('curso_insumos').select('insumo_id, quantidade').eq('curso_id', curso.id)
-        ]);
+        try {
+          const [materiasRes, insumosRes] = await Promise.all([
+            supabase.from('curso_materias').select('materia_id').eq('curso_id', curso.id),
+            supabase.from('curso_insumos').select('insumo_id, quantidade').eq('curso_id', curso.id)
+          ]);
 
-        if (materiasRes.data) {
-          setSelectedMaterias(materiasRes.data.map(m => m.materia_id));
-        }
+          if (materiasRes.data) {
+            setSelectedMaterias(materiasRes.data.map(m => m.materia_id));
+          }
 
-        if (insumosRes.data) {
-          setSelectedInsumos(insumosRes.data.map(i => ({
-            id: i.insumo_id,
-            quantidade: i.quantidade
-          })));
+          if (insumosRes.data) {
+            setSelectedInsumos(insumosRes.data.map(i => ({
+              id: i.insumo_id,
+              quantidade: i.quantidade
+            })));
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados do curso:', error);
         }
       };
 
       loadCursoData();
+    } else {
+      // Limpar formulário para novo curso
+      setTitulo("");
+      setProfessor("");
+      setInicio("");
+      setFim("");
+      setPeriodo("");
+      setUnidadeId("");
+      setSalaId("");
+      setStatus("ativo");
+      setSelectedMaterias([]);
+      setSelectedInsumos([]);
     }
   }, [curso]);
 
@@ -153,10 +169,12 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       }
 
       queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['cursos-semana'] });
       toast.success(curso ? "Curso atualizado com sucesso!" : "Curso criado com sucesso!");
       onSuccess();
     },
     onError: (error) => {
+      console.error('Erro ao salvar curso:', error);
       toast.error("Erro ao salvar curso: " + error.message);
     }
   });
@@ -175,6 +193,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       status
     };
 
+    console.log('Enviando dados do curso:', data);
     mutation.mutate(data);
   };
 
