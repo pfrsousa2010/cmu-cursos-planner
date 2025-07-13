@@ -165,7 +165,7 @@ const Dashboard = () => {
                         </p>
                       </div>
                       <Badge variant="secondary">
-                        {format(new Date(curso.inicio), 'dd/MM', { locale: ptBR })}
+                        {format(new Date(curso.inicio  + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                       </Badge>
                     </div>
                   ))}
@@ -202,7 +202,7 @@ const Dashboard = () => {
                         </p>
                       </div>
                       <Badge variant="destructive">
-                        {format(new Date(curso.fim), 'dd/MM', { locale: ptBR })}
+                        {format(new Date(curso.fim  + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                       </Badge>
                     </div>
                   ))}

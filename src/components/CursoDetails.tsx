@@ -83,10 +83,6 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
       </div>
 
       <div className="flex gap-2 pt-4">
-        <Button variant="outline" size="sm" className="flex-1">
-          <Eye className="h-4 w-4 mr-2" />
-          Visualizar
-        </Button>
         <Button 
           variant="outline" 
           size="sm" 

@@ -373,10 +373,10 @@ const Cursos = () => {
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <span className="font-medium">Início:</span> {format(new Date(curso.inicio), 'dd/MM/yyyy', { locale: ptBR })}
+                        <span className="font-medium">Início:</span> {format(new Date(curso.inicio  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                       </div>
                       <div>
-                        <span className="font-medium">Fim:</span> {format(new Date(curso.fim), 'dd/MM/yyyy', { locale: ptBR })}
+                        <span className="font-medium">Fim:</span> {format(new Date(curso.fim  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                       </div>
                       <div>
                         <Button 
