@@ -82,7 +82,7 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
       
       if (deleteError) throw deleteError;
 
-      // Depois, inserir os novos insumos
+      // Depois, inserir os novos insumos (sem duplicatas)
       if (insumos.length > 0) {
         const insumosToInsert = insumos.map(insumo => ({
           curso_id: cursoId,
@@ -103,6 +103,7 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
       onSave();
     },
     onError: (error) => {
+      console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar lista de insumos: " + error.message);
     }
   });
@@ -143,18 +144,51 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
     setEditedInsumos(updated);
   };
 
+  const validateInsumos = (insumos: InsumoItem[]) => {
+    // Verificar se todos têm insumo_id e quantidade válidos
+    const invalidInsumos = insumos.filter(insumo => 
+      !insumo.insumo_id || insumo.quantidade <= 0
+    );
+    
+    if (invalidInsumos.length > 0) {
+      toast.error("Por favor, preencha todos os campos corretamente");
+      return false;
+    }
+
+    // Verificar duplicatas
+    const insumoIds = insumos.map(insumo => insumo.insumo_id);
+    const uniqueIds = new Set(insumoIds);
+    
+    if (insumoIds.length !== uniqueIds.size) {
+      toast.error("Não é possível adicionar o mesmo insumo mais de uma vez");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = () => {
-    // Validar se todos os insumos têm valores válidos
+    // Filtrar insumos válidos (com insumo_id preenchido)
     const validInsumos = editedInsumos.filter(insumo => 
       insumo.insumo_id && insumo.quantidade > 0
     );
     
-    if (validInsumos.length !== editedInsumos.length) {
-      toast.error("Por favor, preencha todos os campos corretamente");
+    if (!validateInsumos(validInsumos)) {
       return;
     }
 
+    console.log("Salvando insumos:", validInsumos);
     saveMutation.mutate(validInsumos);
+  };
+
+  const getAvailableInsumos = (currentIndex: number) => {
+    if (!allInsumos) return [];
+    
+    const selectedIds = editedInsumos
+      .map((insumo, index) => index !== currentIndex ? insumo.insumo_id : null)
+      .filter(Boolean);
+    
+    return allInsumos.filter(insumo => !selectedIds.includes(insumo.id));
   };
 
   if (isLoadingCursoInsumos || isLoadingInsumos) {
@@ -186,45 +220,53 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {editedInsumos.map((insumo, index) => (
-              <TableRow key={insumo.id}>
-                <TableCell className="font-medium">{index + 1}</TableCell>
-                <TableCell>
-                  <Select
-                    value={insumo.insumo_id}
-                    onValueChange={(value) => handleInsumoChange(index, 'insumo_id', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar insumo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allInsumos?.map((ins) => (
-                        <SelectItem key={ins.id} value={ins.id}>
-                          {ins.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={insumo.quantidade}
-                    onChange={(e) => handleInsumoChange(index, 'quantidade', parseInt(e.target.value) || 1)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRemoveInsumo(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {editedInsumos.map((insumo, index) => {
+              const availableInsumos = getAvailableInsumos(index);
+              return (
+                <TableRow key={insumo.id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={insumo.insumo_id}
+                      onValueChange={(value) => handleInsumoChange(index, 'insumo_id', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar insumo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {insumo.insumo_id && (
+                          <SelectItem key={insumo.insumo_id} value={insumo.insumo_id}>
+                            {insumo.insumos?.nome || 'Insumo selecionado'}
+                          </SelectItem>
+                        )}
+                        {availableInsumos.map((ins) => (
+                          <SelectItem key={ins.id} value={ins.id}>
+                            {ins.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={insumo.quantidade}
+                      onChange={(e) => handleInsumoChange(index, 'quantidade', parseInt(e.target.value) || 1)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveInsumo(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       ) : (
