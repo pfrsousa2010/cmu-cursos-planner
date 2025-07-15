@@ -1,6 +1,7 @@
 
 import { useCursoInsumos } from "@/hooks/useCursoInsumos";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface CursoInsumosListProps {
   cursoId: string;
@@ -53,16 +54,24 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
       <div className="border rounded-lg p-4">
         <h4 className="font-medium mb-2">Insumos Necessários:</h4>
         {insumos && insumos.length > 0 ? (
-          <div className="space-y-2">
-            {insumos.map((cursoInsumo) => (
-              <div key={cursoInsumo.id} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                <span className="font-medium">{cursoInsumo.insumos?.nome}</span>
-                <span className="text-muted-foreground">
-                  Qtd: {cursoInsumo.quantidade}
-                </span>
-              </div>
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16">Item</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead className="text-right w-24">Quantidade</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {insumos.map((cursoInsumo, index) => (
+                <TableRow key={cursoInsumo.id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell>{cursoInsumo.insumos?.nome}</TableCell>
+                  <TableCell className="text-right">{cursoInsumo.quantidade}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <div className="text-sm text-muted-foreground">
             Nenhum insumo cadastrado para este curso.
