@@ -18,10 +18,6 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
   const [isEditing, setIsEditing] = useState(false);
   const { data: insumos, isLoading, error } = useCursoInsumos(cursoId);
 
-  const handleDownloadPDF = () => {
-    toast.success("Função de download será implementada em breve");
-  };
-
   const handleSaveEdit = () => {
     setIsEditing(false);
   };
@@ -126,7 +122,7 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
         <Button 
           variant="outline" 
           className="flex-1"
-          onClick={handleDownloadPDF}
+          onClick={() => toast.success("Função de download será implementada em breve")}
         >
           <Download className="h-4 w-4 mr-2" />
           Baixar PDF
