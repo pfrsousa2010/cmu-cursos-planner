@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CursoForm from "@/components/CursoForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CursoInsumosList from "@/components/CursoInsumosList";
 
 const Cursos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -425,30 +425,26 @@ const Cursos = () => {
             <DialogHeader>
               <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Professor: {selectedCursoInsumos?.professor}
-              </div>
-              <div className="border rounded-lg p-4">
-                <h4 className="font-medium mb-2">Insumos Necessários:</h4>
-                <div className="text-sm text-muted-foreground">
-                  Lista de insumos será implementada em breve...
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Lista
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={handleDownloadPDF}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar PDF
-                </Button>
-              </div>
+            {selectedCursoInsumos && (
+              <CursoInsumosList 
+                cursoId={selectedCursoInsumos.id}
+                cursoTitulo={selectedCursoInsumos.titulo}
+                professor={selectedCursoInsumos.professor}
+              />
+            )}
+            <div className="flex gap-2 pt-4">
+              <Button variant="outline" className="flex-1">
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Lista
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={handleDownloadPDF}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Baixar PDF
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

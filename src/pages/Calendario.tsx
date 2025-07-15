@@ -14,6 +14,7 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, 
 import { ptBR } from "date-fns/locale";
 import CursoDetails from "@/components/CursoDetails";
 import CursoForm from "@/components/CursoForm";
+import CursoInsumosList from "@/components/CursoInsumosList";
 import { toast } from "sonner";
 
 interface Curso {
@@ -696,71 +697,66 @@ const Calendario = () => {
         </Card>
       )}
 
-        {/* Dialog de detalhes do curso */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Detalhes do Curso</DialogTitle>
-            </DialogHeader>
-            {selectedCurso && (
-              <CursoDetails 
-                curso={selectedCurso} 
-                onEdit={handleEditCurso}
-                onViewInsumos={handleViewInsumos}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+      {/* Dialog de detalhes do curso */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Curso</DialogTitle>
+          </DialogHeader>
+          {selectedCurso && (
+            <CursoDetails 
+              curso={selectedCurso} 
+              onEdit={handleEditCurso}
+              onViewInsumos={handleViewInsumos}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-        {/* Dialog de edição do curso */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Editar Curso</DialogTitle>
-            </DialogHeader>
-            {cursoToEdit && (
-              <CursoForm 
-                curso={cursoToEdit} 
-                onSuccess={handleEditSuccess}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+      {/* Dialog de edição do curso */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Curso</DialogTitle>
+          </DialogHeader>
+          {cursoToEdit && (
+            <CursoForm 
+              curso={cursoToEdit} 
+              onSuccess={handleEditSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-        {/* Dialog de Insumos */}
-        <Dialog open={insumosDialogOpen} onOpenChange={setInsumosDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Professor: {selectedCursoInsumos?.professor}
-              </div>
-              <div className="border rounded-lg p-4">
-                <h4 className="font-medium mb-2">Insumos Necessários:</h4>
-                <div className="text-sm text-muted-foreground">
-                  Lista de insumos será implementada em breve...
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Lista
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={handleDownloadPDF}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar PDF
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+      {/* Dialog de Insumos */}
+      <Dialog open={insumosDialogOpen} onOpenChange={setInsumosDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
+          </DialogHeader>
+          {selectedCursoInsumos && (
+            <CursoInsumosList 
+              cursoId={selectedCursoInsumos.id}
+              cursoTitulo={selectedCursoInsumos.titulo}
+              professor={selectedCursoInsumos.professor}
+            />
+          )}
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" className="flex-1">
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Lista
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Baixar PDF
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
