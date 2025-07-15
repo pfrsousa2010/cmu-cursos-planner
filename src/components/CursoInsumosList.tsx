@@ -1,7 +1,12 @@
 
+import { useState } from "react";
 import { useCursoInsumos } from "@/hooks/useCursoInsumos";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Edit, Download } from "lucide-react";
+import { toast } from "sonner";
+import CursoInsumosEdit from "./CursoInsumosEdit";
 
 interface CursoInsumosListProps {
   cursoId: string;
@@ -10,7 +15,20 @@ interface CursoInsumosListProps {
 }
 
 const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListProps) => {
+  const [isEditing, setIsEditing] = useState(false);
   const { data: insumos, isLoading, error } = useCursoInsumos(cursoId);
+
+  const handleDownloadPDF = () => {
+    toast.success("Função de download será implementada em breve");
+  };
+
+  const handleSaveEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
 
   if (isLoading) {
     return (
@@ -41,6 +59,23 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
           <div className="text-sm text-destructive">
             Erro ao carregar insumos. Tente novamente.
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <div className="space-y-4">
+        <div className="text-sm text-muted-foreground">
+          Professor: {professor}
+        </div>
+        <div className="border rounded-lg p-4">
+          <CursoInsumosEdit 
+            cursoId={cursoId}
+            onSave={handleSaveEdit}
+            onCancel={handleCancelEdit}
+          />
         </div>
       </div>
     );
@@ -77,6 +112,25 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
             Nenhum insumo cadastrado para este curso.
           </div>
         )}
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => setIsEditing(true)}
+        >
+          <Edit className="h-4 w-4 mr-2" />
+          Editar Lista
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={handleDownloadPDF}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Baixar PDF
+        </Button>
       </div>
     </div>
   );
