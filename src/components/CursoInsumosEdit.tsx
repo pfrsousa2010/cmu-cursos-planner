@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ interface InsumoItem {
 const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) => {
   const [editedInsumos, setEditedInsumos] = useState<InsumoItem[]>([]);
   const queryClient = useQueryClient();
+  const selectRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // Buscar insumos do curso
   const { data: cursoInsumos, isLoading: isLoadingCursoInsumos } = useQuery({
@@ -114,7 +115,11 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
       insumo_id: '',
       quantidade: 1
     };
-    setEditedInsumos([...editedInsumos, newInsumo]);
+    setEditedInsumos(prev => [...prev, newInsumo]);
+    setTimeout(() => {
+      const idx = editedInsumos.length;
+      selectRefs.current[idx]?.focus();
+    }, 0);
   };
 
   const handleRemoveInsumo = (index: number) => {
@@ -210,6 +215,7 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
       </div>
 
       {editedInsumos.length > 0 ? (
+        <div className="max-h-[400px] overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -230,15 +236,12 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
                       value={insumo.insumo_id}
                       onValueChange={(value) => handleInsumoChange(index, 'insumo_id', value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        ref={el => selectRefs.current[index] = el}
+                      >
                         <SelectValue placeholder="Selecionar insumo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {insumo.insumo_id && (
-                          <SelectItem key={insumo.insumo_id} value={insumo.insumo_id}>
-                            {insumo.insumos?.nome || 'Insumo selecionado'}
-                          </SelectItem>
-                        )}
                         {availableInsumos.map((ins) => (
                           <SelectItem key={ins.id} value={ins.id}>
                             {ins.nome}
@@ -269,6 +272,7 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
             })}
           </TableBody>
         </Table>
+        </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
           <p>Nenhum insumo adicionado.</p>

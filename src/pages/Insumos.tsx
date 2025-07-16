@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Insumo {
   id: string;
@@ -27,6 +28,8 @@ const Insumos = () => {
   const [formData, setFormData] = useState({
     nome: ""
   });
+  const [multiInsumos, setMultiInsumos] = useState([""]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchInsumos();
@@ -65,15 +68,21 @@ const Insumos = () => {
         resetForm();
       }
     } else {
+      // Multi-inserção
+      const nomes = multiInsumos.map(n => n.trim()).filter(Boolean);
+      if (nomes.length === 0) {
+        toast.error("Preencha pelo menos um nome de insumo");
+        return;
+      }
       const { error } = await supabase
         .from('insumos')
-        .insert([formData]);
+        .insert(nomes.map(nome => ({ nome })));
 
       if (error) {
-        toast.error("Erro ao criar insumo");
+        toast.error("Erro ao criar insumos");
         console.error(error);
       } else {
-        toast.success("Insumo criado com sucesso!");
+        toast.success(nomes.length > 1 ? "Insumos criados com sucesso!" : "Insumo criado com sucesso!");
         fetchInsumos();
         resetForm();
       }
@@ -101,6 +110,7 @@ const Insumos = () => {
     setFormData({ nome: "" });
     setEditingInsumo(null);
     setDialogOpen(false);
+    setMultiInsumos([""]);
   };
 
   const startEdit = (insumo: Insumo) => {
@@ -108,6 +118,11 @@ const Insumos = () => {
     setEditingInsumo(insumo);
     setDialogOpen(true);
   };
+
+  // Filtro de busca
+  const filteredInsumos = insumos.filter(insumo =>
+    insumo.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -126,6 +141,13 @@ const Insumos = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Insumos</h1>
             <p className="text-gray-600">Gerencie os insumos dos cursos</p>
+            <div className="max-w-xs mt-2">
+              <Input
+                placeholder="Buscar insumo pelo nome..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
           
           {!canViewOnly && (
@@ -147,16 +169,44 @@ const Insumos = () => {
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="nome">Nome do Insumo</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      required
-                      placeholder="Ex: Papel A4, Canetas, Tesouras..."
-                    />
-                  </div>
+                  {editingInsumo ? (
+                    <div>
+                      <Label htmlFor="nome">Nome do Insumo</Label>
+                      <Input
+                        id="nome"
+                        value={formData.nome}
+                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        required
+                        placeholder="Ex: Papel A4, Canetas, Tesouras..."
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[400px] overflow-auto p-2">
+                      <Label>Nome dos Insumos</Label>
+                      {multiInsumos.map((nome, idx) => (
+                        <div key={idx} className="flex gap-2 mb-1">
+                          <Input
+                            value={nome}
+                            onChange={e => {
+                              const arr = [...multiInsumos];
+                              arr[idx] = e.target.value;
+                              setMultiInsumos(arr);
+                            }}
+                            placeholder="Ex: Papel A4, Canetas, Tesouras..."
+                            required={idx === 0}
+                          />
+                          {multiInsumos.length > 1 && (
+                            <Button type="button" variant="outline" onClick={() => setMultiInsumos(multiInsumos.filter((_, i) => i !== idx))}>
+                              Remover
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      <Button type="button" variant="secondary" onClick={() => setMultiInsumos([...multiInsumos, ""])}>
+                        Adicionar outro
+                      </Button>
+                    </div>
+                  )}
                   
                   <div className="flex justify-end space-x-2">
                     <Button type="button" variant="outline" onClick={resetForm}>
@@ -173,47 +223,51 @@ const Insumos = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {insumos.length === 0 ? (
-            <Card className="md:col-span-2 lg:col-span-3">
-              <CardContent className="p-6 text-center">
-                <p className="text-gray-500">Nenhum insumo encontrado</p>
-              </CardContent>
-            </Card>
-          ) : (
-            insumos.map((insumo) => (
-              <Card key={insumo.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{insumo.nome}</CardTitle>
-                      <CardDescription>
-                        Criado em {new Date(insumo.created_at).toLocaleDateString('pt-BR')}
-                      </CardDescription>
-                    </div>
-                    
-                    {!canViewOnly && (
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEdit(insumo)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(insumo.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-              </Card>
-            ))
-          )}
+          <div className="md:col-span-2 lg:col-span-3">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  {!canViewOnly && <TableHead>Ações</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInsumos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={canViewOnly ? 2 : 3} className="text-center text-muted-foreground">Nenhum insumo encontrado</TableCell>
+                  </TableRow>
+                ) : (
+                  filteredInsumos.map((insumo, idx) => (
+                    <TableRow key={insumo.id} className={idx % 2 === 1 ? 'bg-gray-50' : ''}>
+                      <TableCell>{insumo.nome}</TableCell>
+                      <TableCell>{new Date(insumo.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                      {!canViewOnly && (
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => startEdit(insumo)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(insumo.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </Layout>

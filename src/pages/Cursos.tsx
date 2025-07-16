@@ -24,9 +24,9 @@ const Cursos = () => {
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("todos");
   const [selectedPeriodo, setSelectedPeriodo] = useState("todos");
   const [selectedUnidade, setSelectedUnidade] = useState("todas");
+  const [selectedSala, setSelectedSala] = useState("todas");
   const [selectedYear, setSelectedYear] = useState("todos");
   
   const { canManageCursos } = useUserRole();
@@ -63,14 +63,14 @@ const Cursos = () => {
         if (!matches) return false;
       }
       
-      // Filtro por status
-      if (selectedStatus !== "todos" && curso.status !== selectedStatus) return false;
-      
       // Filtro por período
       if (selectedPeriodo !== "todos" && curso.periodo !== selectedPeriodo) return false;
       
       // Filtro por unidade
       if (selectedUnidade !== "todas" && curso.unidades?.nome !== selectedUnidade) return false;
+      
+      // Filtro por sala
+      if (selectedSala !== "todas" && curso.salas?.nome !== selectedSala) return false;
       
       // Filtro por ano
       if (selectedYear !== "todos") {
@@ -80,7 +80,7 @@ const Cursos = () => {
       
       return true;
     });
-  }, [cursos, searchTerm, selectedStatus, selectedPeriodo, selectedUnidade, selectedYear]);
+  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear]);
 
   // Obter dados únicos para filtros
   const getUnidades = () => {
@@ -92,6 +92,12 @@ const Cursos = () => {
     if (!cursos) return [];
     const years = cursos.map(curso => new Date(curso.inicio).getFullYear());
     return [...new Set(years)].sort((a, b) => b - a);
+  };
+
+  // Obter salas únicas para filtro
+  const getSalas = () => {
+    if (!cursos) return [];
+    return [...new Set(cursos.map(curso => curso.salas?.nome).filter(Boolean))];
   };
 
   // Deletar curso
@@ -159,9 +165,9 @@ const Cursos = () => {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedStatus("todos");
     setSelectedPeriodo("todos");
     setSelectedUnidade("todas");
+    setSelectedSala("todas");
     setSelectedYear("todos");
   };
 
@@ -233,21 +239,6 @@ const Cursos = () => {
                 </div>
               </div>
 
-              {/* Filtro por Status */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os status</SelectItem>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="finalizado">Finalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Filtro por Período */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Período</label>
@@ -276,6 +267,24 @@ const Cursos = () => {
                     {getUnidades().map(unidade => (
                       <SelectItem key={unidade} value={unidade}>
                         {unidade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Sala */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Sala</label>
+                <Select value={selectedSala} onValueChange={setSelectedSala}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar sala" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as salas</SelectItem>
+                    {getSalas().map(sala => (
+                      <SelectItem key={sala} value={sala}>
+                        {sala}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -320,7 +329,8 @@ const Cursos = () => {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6">
+        {/* Grid de Cursos */}
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCursos && filteredCursos.length > 0 ? (
             filteredCursos.map((curso) => (
               <Card key={curso.id}>
@@ -432,20 +442,6 @@ const Cursos = () => {
                 professor={selectedCursoInsumos.professor}
               />
             )}
-            <div className="flex gap-2 pt-4">
-              <Button variant="outline" className="flex-1">
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Lista
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={handleDownloadPDF}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Baixar PDF
-              </Button>
-            </div>
           </DialogContent>
         </Dialog>
       </div>

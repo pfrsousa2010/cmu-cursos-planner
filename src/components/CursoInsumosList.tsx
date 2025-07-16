@@ -7,6 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Edit, Download } from "lucide-react";
 import { toast } from "sonner";
 import CursoInsumosEdit from "./CursoInsumosEdit";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface CursoInsumosListProps {
   cursoId: string;
@@ -18,12 +22,96 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
   const [isEditing, setIsEditing] = useState(false);
   const { data: insumos, isLoading, error } = useCursoInsumos(cursoId);
 
+  // Buscar dados do curso para sala e unidade
+  const [cursoInfo, setCursoInfo] = useState<{ sala?: string; unidade?: string }>({});
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('cursos')
+        .select('salas (nome), unidades (nome)')
+        .eq('id', cursoId)
+        .single();
+      setCursoInfo({
+        sala: data?.salas?.nome || '',
+        unidade: data?.unidades?.nome || ''
+      });
+    })();
+  }, [cursoId]);
+
   const handleSaveEdit = () => {
     setIsEditing(false);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+  };
+
+  const handleDownloadPDF = () => {
+    if (!insumos || insumos.length === 0) {
+      toast.error("Nenhum insumo para exportar");
+      return;
+    }
+    const doc = new jsPDF();
+    const dataAtual = new Date().toLocaleDateString();
+    doc.setFontSize(14);
+    doc.text(`Lista de Insumos`, 10, 15);
+    // Informações do curso em duas linhas, 2 itens por linha
+    doc.setFontSize(11);
+    let infoY = 25;
+    doc.text(`Curso: ${cursoTitulo}`, 10, infoY);
+    doc.text(`Professor: ${professor}`, 110, infoY);
+    infoY += 7;
+    doc.text(`Unidade: ${cursoInfo.unidade || '-'}`, 10, infoY);
+    doc.text(`Sala: ${cursoInfo.sala || '-'}`, 110, infoY);
+    infoY += 7;
+    doc.text(`Data de emissão: ${dataAtual}`, 10, infoY);
+    // Total de itens no canto direito, acima da coluna Quantidade
+    doc.setFontSize(9);
+    doc.text(`Total de itens: ${insumos.length}`, 200 - 10, infoY, { align: 'right' });
+    doc.setFontSize(11);
+
+    // Montar dados da tabela
+    const tableData = insumos.map((insumo, idx) => [
+      String(idx + 1),
+      insumo.insumos?.nome || '-',
+      String(insumo.quantidade)
+    ]);
+
+    // Definir largura das colunas: Item, Descrição, Quantidade
+    const columnStyles = {
+      0: { cellWidth: 15, halign: 'center' as const }, // Item
+      1: { cellWidth: 136 }, // Descrição
+      2: { cellWidth: 25, halign: 'center' as const }, // Quantidade (mais estreita e centralizada)
+    };
+
+    autoTable(doc, {
+      head: [["Item", "Descrição", "Quantidade"]],
+      body: tableData,
+      startY: infoY + 10,
+      theme: 'grid',
+      headStyles: { fillColor: [230, 230, 230], textColor: 0, halign: 'center' },
+      bodyStyles: { textColor: 0 },
+      styles: { fontSize: 11, cellPadding: 2 },
+      columnStyles,
+      didDrawPage: function (data) {
+        // Rodapé
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text('Sistema de Cursos - CMU', 10, pageHeight - 10);
+        const pageCount = doc.getNumberOfPages();
+        doc.text(`Página ${data.pageNumber} de ${pageCount}`, 200 - 10, pageHeight - 10, { align: 'right' });
+      }
+    });
+
+    const sanitize = (str: string) => (str || '').normalize('NFD').replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+    const nomeCurso = sanitize(cursoTitulo);
+    const sala = sanitize(cursoInfo.sala || '');
+    const unidade = sanitize(cursoInfo.unidade || '');
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dataStr = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+    doc.save(`insumos_${nomeCurso}_${sala}_${unidade}_${dataStr}.pdf`);
   };
 
   if (isLoading) {
@@ -63,9 +151,14 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
   if (isEditing) {
     return (
       <div className="space-y-4">
-        <div className="text-sm text-muted-foreground">
-          Professor: {professor}
-        </div>
+      <div className="text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 items-center">
+        {cursoInfo.unidade && <span>Unidade: {cursoInfo.unidade}</span>}
+        {cursoInfo.sala && <span>Sala: {cursoInfo.sala}</span>}
+        <span>Professor: {professor}</span>
+      </div>
+      {insumos && insumos.length > 0 && (
+        <div className="text-sm text-muted-foreground mb-2">Total de itens: {insumos.length}</div>
+      )}
         <div className="border rounded-lg p-4">
           <CursoInsumosEdit 
             cursoId={cursoId}
@@ -79,18 +172,24 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        Professor: {professor}
+      <div className="text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 items-center">
+        {cursoInfo.unidade && <span>Unidade: {cursoInfo.unidade}</span>}
+        {cursoInfo.sala && <span>Sala: {cursoInfo.sala}</span>}
+        <span>Professor: {professor}</span>
       </div>
+      {insumos && insumos.length > 0 && (
+        <div className="text-sm text-muted-foreground mb-2">Total de itens: {insumos.length}</div>
+      )}
+      <h4 className="font-medium mb-2">Insumos Necessários:</h4>
       <div className="border rounded-lg p-4">
-        <h4 className="font-medium mb-2">Insumos Necessários:</h4>
+        <div className="max-h-[400px] overflow-auto bg-white">
         {insumos && insumos.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">Item</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="text-right w-24">Quantidade</TableHead>
+                <TableHead className="w-16 sticky top-0 z-10 bg-white shadow border-b">Item</TableHead>
+                <TableHead className="sticky top-0 z-10 bg-white shadow border-b">Descrição</TableHead>
+                <TableHead className="text-right w-24 sticky top-0 z-10 bg-white shadow border-b">Quantidade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -108,6 +207,7 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
             Nenhum insumo cadastrado para este curso.
           </div>
         )}
+        </div>
       </div>
 
       <div className="flex gap-2 pt-4">
@@ -122,7 +222,7 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
         <Button 
           variant="outline" 
           className="flex-1"
-          onClick={() => toast.success("Função de download será implementada em breve")}
+          onClick={handleDownloadPDF}
         >
           <Download className="h-4 w-4 mr-2" />
           Baixar PDF
