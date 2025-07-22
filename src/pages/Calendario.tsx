@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,16 @@ const Calendario = () => {
   const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
   const [cursoToEdit, setCursoToEdit] = useState<Curso | null>(null);
   const [viewMode, setViewMode] = useState<'semana' | 'mes'>('semana');
+
+  // --- Drag to scroll states and logic ---
+  const scrollRefSemana = useRef<HTMLDivElement>(null);
+  const scrollRefMes = useRef<HTMLDivElement>(null);
+  const [isDraggingSemana, setIsDraggingSemana] = useState(false);
+  const [isDraggingMes, setIsDraggingMes] = useState(false);
+  const [startXSemana, setStartXSemana] = useState(0);
+  const [scrollLeftSemana, setScrollLeftSemana] = useState(0);
+  const [startXMes, setStartXMes] = useState(0);
+  const [scrollLeftMes, setScrollLeftMes] = useState(0);
 
   const queryClient = useQueryClient();
 
@@ -310,6 +320,62 @@ const Calendario = () => {
     return cursoColors[Math.abs(hash) % cursoColors.length];
   }
 
+  // Handlers for semana
+  const handleMouseDownSemana = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!scrollRefSemana.current) return;
+    setIsDraggingSemana(true);
+    setStartXSemana(e.pageX - scrollRefSemana.current.offsetLeft);
+    setScrollLeftSemana(scrollRefSemana.current.scrollLeft);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDraggingSemana) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!scrollRefSemana.current) return;
+      const x = e.pageX - scrollRefSemana.current.offsetLeft;
+      const walk = x - startXSemana;
+      scrollRefSemana.current.scrollLeft = scrollLeftSemana - walk;
+    };
+    const handleMouseUp = () => {
+      setIsDraggingSemana(false);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingSemana, startXSemana, scrollLeftSemana]);
+
+  // Handlers for mes
+  const handleMouseDownMes = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!scrollRefMes.current) return;
+    setIsDraggingMes(true);
+    setStartXMes(e.pageX - scrollRefMes.current.offsetLeft);
+    setScrollLeftMes(scrollRefMes.current.scrollLeft);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDraggingMes) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!scrollRefMes.current) return;
+      const x = e.pageX - scrollRefMes.current.offsetLeft;
+      const walk = x - startXMes;
+      scrollRefMes.current.scrollLeft = scrollLeftMes - walk;
+    };
+    const handleMouseUp = () => {
+      setIsDraggingMes(false);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingMes, startXMes, scrollLeftMes]);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -467,7 +533,12 @@ const Calendario = () => {
               <CardTitle className="text-lg">Calendário Semanal</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div
+                className="overflow-x-auto"
+                ref={scrollRefSemana}
+                style={{ cursor: isDraggingSemana ? 'grabbing' : 'grab' }}
+                onMouseDown={handleMouseDownSemana}
+              >
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -578,16 +649,13 @@ const Calendario = () => {
               <CardTitle className="text-lg">Calendário Mensal</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div
-                className="overflow-x-auto"
-                tabIndex={0}
-              >
-                <Table style={{ minWidth: diasDoMes.length * 60 + 120 }}>
+              <div>
+                <Table className="table-fixed" style={{ minWidth: '100%' }}>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-32 font-semibold">Sala / Turno</TableHead>
                       {diasDoMes.map((dia, i) => (
-                        <TableHead key={i} className="text-center min-w-[40px] font-semibold">
+                        <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
                           {String(i + 1).padStart(2, '0')}
                         </TableHead>
                       ))}
@@ -634,6 +702,7 @@ const Calendario = () => {
                                 <TableCell className="font-medium align-top">
                                   <div className="space-y-1">
                                     <div className="font-semibold text-sm">{sala.nome}</div>
+                                    <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
                                     <div className="text-xs text-muted-foreground font-medium">{turno.charAt(0).toUpperCase() + turno.slice(1)}</div>
                                   </div>
                                 </TableCell>
@@ -660,6 +729,7 @@ const Calendario = () => {
                                 <TableCell className="font-medium align-top">
                                   <div className="space-y-1">
                                     <div className="font-semibold text-sm">{sala.nome}</div>
+                                    <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
                                     <div className="text-xs text-muted-foreground font-medium">{turno.charAt(0).toUpperCase() + turno.slice(1)}</div>
                                   </div>
                                 </TableCell>
@@ -671,11 +741,11 @@ const Calendario = () => {
                                 <TableCell
                                   colSpan={duration}
                                   className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getCursoColor(curso.id)} border cursor-pointer`}
-                                  style={{ minWidth: duration * 40 }}
+                                  style={{ minWidth: duration * 20 }}
                                   onClick={() => handleCursoClick(curso)}
                                 >
-                                  <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 32 }}>
-                                    <span className="block w-full truncate">
+                                  <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 24 }}>
+                                    <span className="block w-full truncate" style={{ fontSize: '0.8rem' }}>
                                       {curso.titulo} - {curso.professor}
                                     </span>
                                   </div>
@@ -741,20 +811,6 @@ const Calendario = () => {
                 professor={selectedCursoInsumos.professor}
               />
             )}
-            <div className="flex gap-2 pt-4">
-              <Button variant="outline" className="flex-1">
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Lista
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={handleDownloadPDF}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Baixar PDF
-              </Button>
-            </div>
           </DialogContent>
         </Dialog>
       </div>
