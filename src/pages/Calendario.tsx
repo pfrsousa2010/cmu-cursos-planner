@@ -45,16 +45,6 @@ const Calendario = () => {
   const [cursoToEdit, setCursoToEdit] = useState<Curso | null>(null);
   const [viewMode, setViewMode] = useState<'semana' | 'mes'>('semana');
 
-  // --- Drag to scroll states and logic ---
-  const scrollRefSemana = useRef<HTMLDivElement>(null);
-  const scrollRefMes = useRef<HTMLDivElement>(null);
-  const [isDraggingSemana, setIsDraggingSemana] = useState(false);
-  const [isDraggingMes, setIsDraggingMes] = useState(false);
-  const [startXSemana, setStartXSemana] = useState(0);
-  const [scrollLeftSemana, setScrollLeftSemana] = useState(0);
-  const [startXMes, setStartXMes] = useState(0);
-  const [scrollLeftMes, setScrollLeftMes] = useState(0);
-
   const queryClient = useQueryClient();
 
   // Buscar unidades para filtro
@@ -138,8 +128,8 @@ const Calendario = () => {
     end: endOfWeek(currentWeek, { weekStartsOn: 0 })
   });
 
-  // Filtrar apenas os dias úteis (segunda a sábado)
-  const workDays = weekDays.slice(1, 7); // Remove domingo
+  // Mostrar todos os dias da semana (domingo a sábado)
+  const weekDaysFull = weekDays; // [domingo, ..., sábado]
 
   // Cálculo para visão mensal
   const ano = currentWeek.getFullYear();
@@ -258,8 +248,8 @@ const Calendario = () => {
   // Resetar filtros dependentes quando unidade muda
   const handleUnidadeChange = (value: string) => {
     setSelectedUnidade(value);
-    setSelectedProfessor("all");
     setSelectedSala("all");
+    setSelectedProfessor("all");
   };
 
   // Handlers com loading visual
@@ -285,12 +275,31 @@ const Calendario = () => {
     setTimeout(() => setIsChangingWeek(false), 300);
   };
 
-  const salasToShow = salas?.filter(sala => {
-    if (selectedSala !== "all") {
-      return sala.id === selectedSala;
+  // Mostrar apenas salas com cursos na semana/mês
+  let salasToShow: typeof salas = [];
+  if (salas) {
+    if (viewMode === 'semana') {
+      salasToShow = salas.filter(sala => {
+        return weekDaysFull.some(day => {
+          return (cursos || []).some(curso => curso.sala_id === sala.id && isWithinInterval(day, { start: parseISO(curso.inicio), end: parseISO(curso.fim) }));
+        });
+      });
+    } else {
+      // Mensal: pelo menos um curso no mês
+      salasToShow = salas.filter(sala => {
+        return (cursos || []).some(curso => {
+          if (curso.sala_id !== sala.id) return false;
+          const inicio = parseISO(curso.inicio);
+          const fim = parseISO(curso.fim);
+          return fim >= startMonth && inicio <= endMonth;
+        });
+      });
     }
-    return true;
-  }) || [];
+    // Filtro por sala específico
+    if (selectedSala !== "all") {
+      salasToShow = salasToShow.filter(sala => sala.id === selectedSala);
+    }
+  }
 
   // Estado de loading geral
   const isLoading = loadingUnidades || loadingSalas || loadingProfessores || loadingCursos || isChangingWeek;
@@ -319,62 +328,6 @@ const Calendario = () => {
     }
     return cursoColors[Math.abs(hash) % cursoColors.length];
   }
-
-  // Handlers for semana
-  const handleMouseDownSemana = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollRefSemana.current) return;
-    setIsDraggingSemana(true);
-    setStartXSemana(e.pageX - scrollRefSemana.current.offsetLeft);
-    setScrollLeftSemana(scrollRefSemana.current.scrollLeft);
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    if (!isDraggingSemana) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!scrollRefSemana.current) return;
-      const x = e.pageX - scrollRefSemana.current.offsetLeft;
-      const walk = x - startXSemana;
-      scrollRefSemana.current.scrollLeft = scrollLeftSemana - walk;
-    };
-    const handleMouseUp = () => {
-      setIsDraggingSemana(false);
-    };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDraggingSemana, startXSemana, scrollLeftSemana]);
-
-  // Handlers for mes
-  const handleMouseDownMes = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollRefMes.current) return;
-    setIsDraggingMes(true);
-    setStartXMes(e.pageX - scrollRefMes.current.offsetLeft);
-    setScrollLeftMes(scrollRefMes.current.scrollLeft);
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    if (!isDraggingMes) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!scrollRefMes.current) return;
-      const x = e.pageX - scrollRefMes.current.offsetLeft;
-      const walk = x - startXMes;
-      scrollRefMes.current.scrollLeft = scrollLeftMes - walk;
-    };
-    const handleMouseUp = () => {
-      setIsDraggingMes(false);
-    };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDraggingMes, startXMes, scrollLeftMes]);
 
   return (
     <Layout>
@@ -437,27 +390,6 @@ const Calendario = () => {
             </div>
 
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">Professor</label>
-              {loadingProfessores ? (
-                <Skeleton className="h-10 w-full" />
-              ) : (
-                <Select value={selectedProfessor} onValueChange={handleProfessorChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um professor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os professores</SelectItem>
-                    {professores?.map(professor => (
-                      <SelectItem key={professor} value={professor}>
-                        {professor}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div className="flex-1 min-w-[200px]">
               <label className="text-sm font-medium mb-2 block">Sala</label>
               {loadingSalas ? (
                 <Skeleton className="h-10 w-full" />
@@ -477,6 +409,27 @@ const Calendario = () => {
                 </Select>
               )}
             </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Professor</label>
+              {loadingProfessores ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Select value={selectedProfessor} onValueChange={handleProfessorChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um professor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os professores</SelectItem>
+                    {professores?.map(professor => (
+                      <SelectItem key={professor} value={professor}>
+                        {professor}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>            
           </CardContent>
         </Card>
 
@@ -501,7 +454,7 @@ const Calendario = () => {
                   </div>
                 ) : viewMode === 'semana' ? (
                   <h2 className="text-lg font-semibold">
-                    {format(workDays[0], 'dd', { locale: ptBR })} - {format(workDays[5], 'dd MMM yyyy', { locale: ptBR })}
+                    {format(weekDaysFull[0], 'dd', { locale: ptBR })} - {format(weekDaysFull[6], 'dd MMM yyyy', { locale: ptBR })}
                   </h2>
                 ) : (
                   <h2 className="text-lg font-semibold">
@@ -529,17 +482,12 @@ const Calendario = () => {
               <CardTitle className="text-lg">Calendário Semanal</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div
-                className="overflow-x-auto"
-                ref={scrollRefSemana}
-                style={{ cursor: isDraggingSemana ? 'grabbing' : 'grab' }}
-                onMouseDown={handleMouseDownSemana}
-              >
-                <Table>
+              <div className="overflow-x-auto">
+                <Table className="table-fixed" style={{ minWidth: '100%' }}>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-32 font-semibold">SALAS</TableHead>
-                      {workDays.map((day) => (
+                      {weekDaysFull.map((day) => (
                         <TableHead key={day.toISOString()} className="text-center min-w-[200px] font-semibold">
                           <div className="flex flex-col">
                             <span className="capitalize text-sm">
@@ -564,7 +512,7 @@ const Calendario = () => {
                               <Skeleton className="h-3 w-16" />
                             </div>
                           </TableCell>
-                          {workDays.map((day) => (
+                          {weekDaysFull.map((day) => (
                             <TableCell key={day.toISOString()} className="align-top p-2">
                               <div className="space-y-2">
                                 <Skeleton className="h-16 w-full" />
@@ -576,22 +524,22 @@ const Calendario = () => {
                       ))
                     ) : salasToShow.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
-                          {selectedUnidade === "all" ? "Selecione uma unidade para visualizar as salas" : "Nenhuma sala encontrada"}
+                        <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                          {selectedUnidade === "all" ? "Selecione uma unidade para visualizar as salas" : "Nenhuma sala com cursos encontrada"}
                         </TableCell>
                       </TableRow>
                     ) : (
                       salasToShow.map((sala) => (
                         <TableRow key={sala.id} className={getUnidadeColor(sala.unidades?.nome || '')}>
-                          <TableCell className="font-medium align-top">
-                            <div className="space-y-1">
+                          <TableCell className="font-medium align-middle">
+                            <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
                               <div className="font-semibold text-sm">{sala.nome}</div>
                               <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>
                                 {sala.unidades?.nome}
                               </div>
                             </div>
                           </TableCell>
-                          {workDays.map((day) => {
+                          {weekDaysFull.map((day) => {
                             const periodoOrder = ['manha', 'tarde', 'noite'];
                             const cursosDay = [...getCursosForSalaAndDay(sala.id, day)].sort((a, b) => periodoOrder.indexOf(a.periodo) - periodoOrder.indexOf(b.periodo));
                             return (
