@@ -19,6 +19,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LayoutProps {
   children: ReactNode;
@@ -167,12 +168,19 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 flex items-center gap-2">
-                Usuário: <span className="font-medium">{userName}</span>
-                <Badge className={UserRoleColor[userRole ?? ''] || 'text-gray-600 bg-gray-50'}>
-                  {UserRoleLabel[userRole ?? ''] || userRole}
-                </Badge>
-              </span>
+              {!userName || !userRole ? (
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-32 rounded" />
+                  <Skeleton className="h-5 w-20 rounded" />
+                </div>
+              ) : (
+                <span className="text-sm text-gray-600 flex items-center gap-2">
+                  Usuário: <span className="font-medium">{userName}</span>
+                  <Badge className={UserRoleColor[userRole ?? ''] || 'text-gray-600 bg-gray-50'}>
+                    {UserRoleLabel[userRole ?? ''] || userRole}
+                  </Badge>
+                </span>
+              )}
               <Button
                 variant="outline"
                 size="sm"
