@@ -390,6 +390,7 @@ const Calendario = () => {
             <Button
               variant={viewMode === 'semana' ? 'default' : 'outline'}
               size="sm"
+              disabled={isLoading}
               onClick={() => setViewMode('semana')}
             >
               Visão Semanal
@@ -397,16 +398,11 @@ const Calendario = () => {
             <Button
               variant={viewMode === 'mes' ? 'default' : 'outline'}
               size="sm"
+              disabled={isLoading}
               onClick={() => setViewMode('mes')}
             >
               Visão Mensal
             </Button>
-            {isLoading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                Carregando...
-              </div>
-            )}
           </div>
         </div>
 
