@@ -160,7 +160,7 @@ const Usuarios = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+          <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
         </div>
       </Layout>
     );
@@ -274,7 +274,7 @@ const Usuarios = () => {
           </Dialog>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {users.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">

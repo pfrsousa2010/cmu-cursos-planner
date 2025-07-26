@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
+import { Badge } from "@/components/ui/badge";
 
 interface Sala {
   id: string;
@@ -28,6 +29,24 @@ interface Unidade {
   id: string;
   nome: string;
 }
+
+// Função para cor da unidade
+const unidadeColors = [
+  "bg-blue-100 text-blue-800",
+  "bg-purple-100 text-purple-800",
+  "bg-pink-100 text-pink-800",
+  "bg-yellow-100 text-yellow-800",
+  "bg-green-100 text-green-800",
+  "bg-orange-100 text-orange-800",
+  "bg-red-100 text-red-800",
+  "bg-cyan-100 text-cyan-800",
+  "bg-teal-100 text-teal-800",
+];
+const getUnidadeColor = (nome: string) => {
+  let hash = 0;
+  for (let i = 0; i < nome.length; i++) hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+  return unidadeColors[Math.abs(hash) % unidadeColors.length];
+};
 
 const Salas = () => {
   const [salas, setSalas] = useState<Sala[]>([]);
@@ -82,7 +101,7 @@ const Salas = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingSala) {
       const { error } = await supabase
         .from('salas')
@@ -156,7 +175,7 @@ const Salas = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+          <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
         </div>
       </Layout>
     );
@@ -170,7 +189,7 @@ const Salas = () => {
             <h1 className="text-3xl font-bold text-gray-900">Salas</h1>
             <p className="text-gray-600">Gerencie as salas das unidades</p>
           </div>
-          
+
           {!canViewOnly && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -188,7 +207,7 @@ const Salas = () => {
                     {editingSala ? "Edite os dados da sala" : "Adicione uma nova sala"}
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="nome">Nome</Label>
@@ -199,7 +218,7 @@ const Salas = () => {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="unidade">Unidade</Label>
                     <Select
@@ -219,7 +238,7 @@ const Salas = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="capacidade">Capacidade</Label>
                     <Input
@@ -230,7 +249,7 @@ const Salas = () => {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="observacoes">Observações</Label>
                     <Textarea
@@ -239,7 +258,7 @@ const Salas = () => {
                       onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                     />
                   </div>
-                  
+
                   <div className="flex justify-end space-x-2">
                     <Button type="button" variant="outline" onClick={resetForm}>
                       Cancelar
@@ -254,7 +273,7 @@ const Salas = () => {
           )}
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {salas.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
@@ -266,13 +285,19 @@ const Salas = () => {
               <Card key={sala.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex flex-col gap-2">
                       <CardTitle>{sala.nome}</CardTitle>
-                      <CardDescription>
-                        {sala.unidades.nome} • Capacidade: {sala.capacidade} pessoas
-                      </CardDescription>
+                      <div className="flex flex-col gap-1">
+                        <Badge className={getUnidadeColor(sala.unidades.nome)}>
+                          {sala.unidades.nome}
+                        </Badge>
+                        <div className="flex items-center gap-2 mb-1">
+                          <CardDescription>
+                            <span>Capacidade: {sala.capacidade} pessoas</span>
+                          </CardDescription>
+                        </div>
+                      </div>
                     </div>
-                    
                     {!canViewOnly && (
                       <div className="flex space-x-2">
                         <Button
