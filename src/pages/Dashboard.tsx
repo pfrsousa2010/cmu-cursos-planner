@@ -9,6 +9,8 @@ import { CalendarDays, BookOpen, Building2, Users, AlertCircle } from "lucide-re
 import { format, isAfter, isBefore, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
+import * as RechartsPrimitive from "recharts";
 
 const Dashboard = () => {
   // Buscar estatísticas gerais
@@ -134,6 +136,60 @@ const Dashboard = () => {
       return data || [];
     }
   });
+
+  // Buscar cursos do ano corrente para o gráfico
+  const anoAtual = new Date().getFullYear();
+  const { data: cursosAno, isLoading: loadingCursosAno } = useQuery({
+    queryKey: ["cursos-ano", anoAtual],
+    queryFn: async () => {
+      const inicioAno = `${anoAtual}-01-01`;
+      const fimAno = `${anoAtual}-12-31`;
+      const { data } = await supabase
+        .from("cursos")
+        .select(`*, unidades (nome)`)
+        .or(`and(inicio.lte.${fimAno},fim.gte.${inicioAno})`);
+      return data || [];
+    },
+  });
+
+  // Processar dados para o gráfico
+  const meses = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  const unidades = Array.from(new Set((cursosAno || []).map(c => c.unidades?.nome).filter(Boolean)));
+  // Paleta de cores daltônico-friendly
+  const unidadeColors = [
+    "#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#666666", "#8dd3c7", "#fb8072", "#80b1d3", "#fdb462"
+  ];
+  // Montar dados: [{ mes: 'Janeiro', Unidade1: 2, Unidade2: 1, ... }, ...]
+  const chartData = meses.map((mes, idx) => {
+    const mesNum = idx + 1;
+    const dataMes: any = { mes };
+    unidades.forEach((unidade) => {
+      dataMes[unidade] = (cursosAno || []).filter(curso => {
+        if (!curso.unidades?.nome) return false;
+        if (curso.unidades.nome !== unidade) return false;
+        // Parse datas no fuso local, ignorando horas
+        const inicio = new Date(curso.inicio + 'T00:00:00-03:00');
+        const fim = new Date(curso.fim + 'T23:59:59-03:00');
+        // O mês/ano de referência
+        const ref = new Date(Date.UTC(anoAtual, idx, 1));
+        // Início do mês local
+        const inicioMes = new Date(anoAtual, idx, 1, 0, 0, 0, 0);
+        // Fim do mês local
+        const fimMes = new Date(anoAtual, idx + 1, 0, 23, 59, 59, 999);
+        // O curso é considerado ativo se houver interseção entre [inicio, fim] e [inicioMes, fimMes]
+        return fim >= inicioMes && inicio <= fimMes;
+      }).length;
+    });
+    return dataMes;
+  });
+  // Config do gráfico
+  const chartConfig = unidades.reduce((acc, unidade, idx) => {
+    acc[unidade] = { label: unidade, color: unidadeColors[idx % unidadeColors.length] };
+    return acc;
+  }, {} as any);
 
   const formatPeriodo = (periodo: string) => {
     const periodos = {
@@ -428,6 +484,72 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <p className="text-muted-foreground">Nenhum curso em andamento neste mês</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Nova seção: Gráfico de cursos por unidade ao longo do ano */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">Cursos por Unidade ao Longo do Ano ({anoAtual})</CardTitle>
+              <CardDescription>
+                Distribuição mensal de cursos ativos por unidade
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingCursosAno ? (
+                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+              ) : (
+                <ChartContainer config={chartConfig} className="w-full h-[350px]">
+                  <RechartsPrimitive.BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                    <RechartsPrimitive.XAxis dataKey="mes" />
+                    <RechartsPrimitive.YAxis allowDecimals={false} label={{ value: 'Quantidade de Cursos', angle: -90, position: 'insideLeft' }} />
+                    <RechartsPrimitive.Tooltip
+                      cursor={{ fill: '#f3f4f6' }}
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        // Mostra apenas barras com valor > 0 ou todas se todas forem zero
+                        const bars = payload.filter(p => Number(p.value) > 0)
+                          .length > 0 ? payload.filter(p => Number(p.value) > 0) : payload;
+                        return (
+                          <div className="rounded border bg-white p-2 shadow text-xs min-w-[180px]">
+                            <div className="font-semibold mb-1">Mês: {label}</div>
+                            {bars.map((item, idx) => (
+                              <div key={item.dataKey} className="mb-1 flex items-center gap-2">
+                                <span style={{ color: item.color, fontWeight: 500 }}>{item.dataKey}:</span>
+                                <span>
+                                  {item.value} Curso{Number(item.value) === 1 ? '' : 's'} Ativo{Number(item.value) === 1 ? '' : 's'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }}
+                    />
+                    <RechartsPrimitive.Legend
+                      verticalAlign="top"
+                      align="center"
+                      iconType="rect"
+                      wrapperStyle={{ paddingBottom: 16 }}
+                      formatter={(value, entry, idx) => (
+                        <span style={{ color: unidadeColors[idx % unidadeColors.length], fontWeight: 500 }}>{value}</span>
+                      )}
+                    />
+                    {unidades.map((unidade, idx) => (
+                      <RechartsPrimitive.Bar
+                        key={unidade}
+                        dataKey={unidade}
+                        fill={unidadeColors[idx % unidadeColors.length]}
+                        name={unidade}
+                        isAnimationActive={false}
+                        barSize={24}
+                      />
+                    ))}
+                  </RechartsPrimitive.BarChart>
+                </ChartContainer>
               )}
             </CardContent>
           </Card>
