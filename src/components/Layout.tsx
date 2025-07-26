@@ -26,6 +26,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,6 +34,7 @@ const Layout = ({ children }: LayoutProps) => {
     const getUserProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUserName(user.user_metadata?.nome || user.email || null);
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -146,7 +148,7 @@ const Layout = ({ children }: LayoutProps) => {
             
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Função: <span className="font-medium">{userRole}</span>
+                Usuário: <span className="font-medium">{userName}</span> | Função: <span className="font-medium">{userRole}</span>
               </span>
               <Button
                 variant="outline"
