@@ -18,10 +18,30 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface LayoutProps {
   children: ReactNode;
 }
+
+// Enum para papéis de usuário
+const UserRoleEnum = {
+  ADMIN: 'admin',
+  EDITOR: 'editor',
+  VISUALIZADOR: 'visualizador',
+} as const;
+
+const UserRoleLabel: Record<string, string> = {
+  [UserRoleEnum.ADMIN]: 'Administrador',
+  [UserRoleEnum.EDITOR]: 'Editor',
+  [UserRoleEnum.VISUALIZADOR]: 'Visualizador',
+};
+
+const UserRoleColor: Record<string, string> = {
+  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50',
+  [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50',
+  [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50',
+};
 
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -147,8 +167,11 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Usuário: <span className="font-medium">{userName}</span> | Função: <span className="font-medium">{userRole}</span>
+              <span className="text-sm text-gray-600 flex items-center gap-2">
+                Usuário: <span className="font-medium">{userName}</span>
+                <Badge className={UserRoleColor[userRole ?? ''] || 'text-gray-600 bg-gray-50'}>
+                  {UserRoleLabel[userRole ?? ''] || userRole}
+                </Badge>
               </span>
               <Button
                 variant="outline"

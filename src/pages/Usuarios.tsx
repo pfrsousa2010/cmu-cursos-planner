@@ -23,6 +23,25 @@ interface Profile {
   created_at: string;
 }
 
+// Enum para papéis de usuário
+const UserRoleEnum = {
+  ADMIN: 'admin',
+  EDITOR: 'editor',
+  VISUALIZADOR: 'visualizador',
+} as const;
+
+const UserRoleLabel: Record<string, string> = {
+  [UserRoleEnum.ADMIN]: 'Administrador',
+  [UserRoleEnum.EDITOR]: 'Editor',
+  [UserRoleEnum.VISUALIZADOR]: 'Visualizador',
+};
+
+const UserRoleColor: Record<string, string> = {
+  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50',
+  [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50',
+  [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50',
+};
+
 const Usuarios = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,23 +157,8 @@ const Usuarios = () => {
     setDialogOpen(true);
   };
 
-  const getRoleLabel = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return 'Administrador';
-      case 'editor': return 'Editor';
-      case 'visualizador': return 'Visualizador';
-      default: return role;
-    }
-  };
-
-  const getRoleColor = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return 'text-red-600 bg-red-50';
-      case 'editor': return 'text-blue-600 bg-blue-50';
-      case 'visualizador': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
+  const getRoleLabel = (role: UserRole) => UserRoleLabel[role] || role;
+  const getRoleColor = (role: UserRole) => UserRoleColor[role] || 'text-gray-600 bg-gray-50';
 
   if (loading) {
     return (
