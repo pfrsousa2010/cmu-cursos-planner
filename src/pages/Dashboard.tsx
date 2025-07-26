@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, BookOpen, Building2, Users, AlertCircle } from "lucide-react";
 import { format, isAfter, isBefore, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   // Buscar estatísticas gerais
@@ -161,7 +162,11 @@ const Dashboard = () => {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.cursos || 0}</div>
+              {stats ? (
+                <div className="text-2xl font-bold">{stats.cursos}</div>
+              ) : (
+                <Skeleton className="h-8 w-16 rounded" />
+              )}
             </CardContent>
           </Card>
 
@@ -171,7 +176,11 @@ const Dashboard = () => {
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.unidades || 0}</div>
+              {stats ? (
+                <div className="text-2xl font-bold">{stats.unidades}</div>
+              ) : (
+                <Skeleton className="h-8 w-16 rounded" />
+              )}
             </CardContent>
           </Card>
 
@@ -181,7 +190,11 @@ const Dashboard = () => {
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.salas || 0}</div>
+              {stats ? (
+                <div className="text-2xl font-bold">{stats.salas}</div>
+              ) : (
+                <Skeleton className="h-8 w-16 rounded" />
+              )}
             </CardContent>
           </Card>
         </div>
@@ -199,7 +212,20 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {cursosProximos && cursosProximos.length > 0 ? (
+              {!cursosProximos ? (
+                <div className="space-y-3">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-2">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-6 w-12 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : cursosProximos.length > 0 ? (
                 <div className="space-y-3">
                   {cursosProximos.map((curso) => (
                     <div key={curso.id} className="flex items-center justify-between border-b pb-2">
@@ -236,7 +262,20 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {cursosTerminando && cursosTerminando.length > 0 ? (
+              {!cursosTerminando ? (
+                <div className="space-y-3">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-2">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-6 w-12 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : cursosTerminando.length > 0 ? (
                 <div className="space-y-3">
                   {cursosTerminando.map((curso) => (
                     <div key={curso.id} className="flex items-center justify-between border-b pb-2">
@@ -273,7 +312,20 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {cursosSemana && cursosSemana.length > 0 ? (
+              {!cursosSemana ? (
+                <div className="space-y-3">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-2">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-6 w-20 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : cursosSemana.length > 0 ? (
                 <div className="space-y-3">
                   {cursosSemana
                     .slice()
@@ -326,7 +378,20 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {cursosMes && cursosMes.length > 0 ? (
+              {!cursosMes ? (
+                <div className="space-y-3">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-2">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-6 w-20 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : cursosMes.length > 0 ? (
                 <div className="space-y-3">
                   {cursosMes
                     .slice()
