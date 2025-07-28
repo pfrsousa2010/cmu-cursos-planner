@@ -87,13 +87,17 @@ const Calendario = () => {
     }
   });
 
-  // Buscar cursos da semana (sempre filtrados por unidade)
+  // Buscar cursos da semana ou mês (filtrados por unidade, sala, professor)
   const { data: cursos, isLoading: loadingCursos } = useQuery({
-    queryKey: ['cursos-semana', currentWeek, selectedUnidade, selectedProfessor, selectedSala],
+    queryKey: [
+      viewMode === 'semana' ? 'cursos-semana' : 'cursos-mes',
+      currentWeek,
+      selectedUnidade,
+      selectedProfessor,
+      selectedSala,
+      viewMode
+    ],
     queryFn: async () => {
-      const startDate = startOfWeek(currentWeek, { weekStartsOn: 0 });
-      const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
-
       let query = supabase
         .from('cursos')
         .select(`
@@ -101,19 +105,29 @@ const Calendario = () => {
           unidades (nome),
           salas (nome, id)
         `)
-        .lte('inicio', format(endDate, 'yyyy-MM-dd'))
-        .gte('fim', format(startDate, 'yyyy-MM-dd'))
         .eq('status', 'ativo');
 
-      // Sempre filtrar por unidade selecionada (obrigatório)
+      if (viewMode === 'semana') {
+        const startDate = startOfWeek(currentWeek, { weekStartsOn: 0 });
+        const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
+        query = query
+          .lte('inicio', format(endDate, 'yyyy-MM-dd'))
+          .gte('fim', format(startDate, 'yyyy-MM-dd'));
+      } else {
+        // visão mensal
+        const startMonth = startOfMonth(currentWeek);
+        const endMonth = endOfMonth(currentWeek);
+        query = query
+          .lte('inicio', format(endMonth, 'yyyy-MM-dd'))
+          .gte('fim', format(startMonth, 'yyyy-MM-dd'));
+      }
+
       if (selectedUnidade !== "all") {
         query = query.eq('unidade_id', selectedUnidade);
       }
-
       if (selectedProfessor !== "all") {
         query = query.eq('professor', selectedProfessor);
       }
-
       if (selectedSala !== "all") {
         query = query.eq('sala_id', selectedSala);
       }
