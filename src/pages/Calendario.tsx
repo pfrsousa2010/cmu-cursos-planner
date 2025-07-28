@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Edit, Download, FileText } from "lucide-react";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, getDate, getMonth, getYear, isSameMonth } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, getDate, getMonth, getYear, isSameMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CursoDetails from "@/components/CursoDetails";
 import CursoForm from "@/components/CursoForm";
@@ -275,6 +275,32 @@ const Calendario = () => {
     setTimeout(() => setIsChangingWeek(false), 300);
   };
 
+  // Data de hoje para referência do mês atual
+  const [today] = useState(new Date());
+
+  const handlePreviousMonth = () => {
+    setIsChangingWeek(true);
+    setCurrentWeek(subMonths(currentWeek, 1));
+    setTimeout(() => setIsChangingWeek(false), 300);
+  };
+
+  const handleNextMonth = () => {
+    setIsChangingWeek(true);
+    setCurrentWeek(addMonths(currentWeek, 1));
+    setTimeout(() => setIsChangingWeek(false), 300);
+  };
+
+  const handleCurrentMonth = () => {
+    setCurrentWeek(today);
+  };
+
+  // Handler para limpar filtros
+  const handleLimparFiltros = () => {
+    setSelectedUnidade('all');
+    setSelectedSala('all');
+    setSelectedProfessor('all');
+  };
+
   // Mostrar apenas salas com cursos na semana/mês
   let salasToShow: typeof salas = [];
   if (salas) {
@@ -329,6 +355,83 @@ const Calendario = () => {
     return cursoColors[Math.abs(hash) % cursoColors.length];
   }
 
+  // Função para pegar cor baseada no turno (para barras do mensal)
+  const getTurnoBarColor = (periodo: string) => {
+    switch (periodo) {
+      case 'manha':
+        return 'bg-yellow-200 border-yellow-400';
+      case 'tarde':
+        return 'bg-green-200 border-green-400';
+      case 'noite':
+        return 'bg-blue-200 border-blue-400';
+      default:
+        return 'bg-gray-200 border-gray-400';
+    }
+  };
+
+  // Geração das linhas da tabela mensal (corrige erro de sintaxe)
+  const linhasMensais = (salasToShow || []).flatMap((sala) => {
+    const turnos = ['manha', 'tarde', 'noite'];
+    return turnos.map((turno, turnoIdx) => {
+      const cursosTurno = (cursos || []).filter(curso =>
+        curso.sala_id === sala.id &&
+        curso.periodo === turno &&
+        parseISO(curso.inicio) <= endMonth &&
+        parseISO(curso.fim) >= startMonth
+      ).sort((a, b) => parseISO(a.inicio).getTime() - parseISO(b.inicio).getTime());
+      if (cursosTurno.length === 0) return null;
+      const cells = [];
+      let currentDay = 0;
+      for (const curso of cursosTurno) {
+        const inicio = parseISO(curso.inicio);
+        const fim = parseISO(curso.fim);
+        const startIdx = Math.max(0, inicio.getMonth() === mes ? inicio.getDate() - 1 : 0);
+        const endIdx = Math.min(totalDiasNoMes - 1, fim.getMonth() === mes ? fim.getDate() - 1 : totalDiasNoMes - 1);
+        if (startIdx > currentDay) {
+          for (let i = currentDay; i < startIdx; i++) {
+            cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
+          }
+        }
+        cells.push(
+          <TableCell
+            key={`curso-${curso.id}`}
+            colSpan={endIdx - startIdx + 1}
+            className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getTurnoBarColor(curso.periodo)} border cursor-pointer`}
+            style={{ minWidth: (endIdx - startIdx + 1) * 20 }}
+            onClick={() => handleCursoClick(curso)}
+          >
+            <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 24 }}>
+              <span className="block w-full truncate" style={{ fontSize: '0.8rem' }}>
+                {curso.titulo} - {curso.professor} <br />
+                <span className="text-xs">{format(parseISO(curso.inicio), 'dd/MM')} - {format(parseISO(curso.fim), 'dd/MM')}</span>
+              </span>
+            </div>
+          </TableCell>
+        );
+        currentDay = endIdx + 1;
+      }
+      if (currentDay < totalDiasNoMes) {
+        for (let i = currentDay; i < totalDiasNoMes; i++) {
+          cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
+        }
+      }
+      return (
+        <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '') + ' h-[56px]'}>
+          {turnoIdx === 0 ? (
+            <TableCell rowSpan={turnos.filter(t => (cursos || []).some(curso => curso.sala_id === sala.id && curso.periodo === t && parseISO(curso.inicio) <= endMonth && parseISO(curso.fim) >= startMonth)).length} className="font-medium align-middle h-full" style={{ height: '100%' }}>
+              <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
+                <div className="font-semibold text-sm">{sala.nome}</div>
+                <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
+              </div>
+            </TableCell>
+          ) : null}
+          <TableCell className="font-medium align-middle w-16 text-right pr-2 h-[56px]">{formatPeriodo(turno)}</TableCell>
+          {cells}
+        </TableRow>
+      );
+    });
+  }).filter(Boolean);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -367,9 +470,9 @@ const Calendario = () => {
               Filtros
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-4">
+          <CardContent className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">Unidade *</label>
+              <label className="text-sm font-medium mb-2 block">Unidade</label>
               {loadingUnidades ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
@@ -430,6 +533,14 @@ const Calendario = () => {
                 </Select>
               )}
             </div>            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLimparFiltros}
+              className="self-end"
+            >
+              Limpar Filtros
+            </Button>
           </CardContent>
         </Card>
 
@@ -440,7 +551,7 @@ const Calendario = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={viewMode === 'semana' ? handlePreviousWeek : () => setCurrentWeek(subWeeks(startOfMonth(currentWeek), 4))}
+                onClick={viewMode === 'semana' ? handlePreviousWeek : () => handlePreviousMonth()}
                 disabled={isChangingWeek}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -465,7 +576,7 @@ const Calendario = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={viewMode === 'semana' ? handleNextWeek : () => setCurrentWeek(addWeeks(startOfMonth(currentWeek), 4))}
+                onClick={viewMode === 'semana' ? handleNextWeek : () => handleNextMonth()}
                 disabled={isChangingWeek}
               >
                 {viewMode === 'semana' ? 'Próxima Semana' : 'Próximo Mês'}
@@ -525,7 +636,7 @@ const Calendario = () => {
                     ) : salasToShow.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
-                          {selectedUnidade === "all" ? "Selecione uma unidade para visualizar as salas" : "Nenhuma sala com cursos encontrada"}
+                          {"Nenhuma sala com cursos encontrada"}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -597,7 +708,8 @@ const Calendario = () => {
                 <Table className="table-fixed" style={{ minWidth: '100%' }}>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-32 font-semibold">Sala / Turno</TableHead>
+                      <TableHead className="w-32 font-semibold">Sala/Unidade</TableHead>
+                      <TableHead className="w-16 font-semibold">Turno</TableHead>
                       {diasDoMes.map((dia, i) => (
                         <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
                           {String(i + 1).padStart(2, '0')}
@@ -608,151 +720,62 @@ const Calendario = () => {
                   <TableBody>
                     {loadingSalas ? (
                       Array.from({ length: 3 }).map((_, index) => (
-                        ['manha', 'tarde', 'noite'].map(turno => (
-                          <TableRow key={index + turno}>
-                            <TableCell className="font-medium bg-gray-50 align-top">
-                              <Skeleton className="h-4 w-20" />
+                        <TableRow key={index}>
+                          <TableCell className="font-medium bg-gray-50 align-top">
+                            <Skeleton className="h-4 w-20" />
+                          </TableCell>
+                          {diasDoMes.map((_, i) => (
+                            <TableCell key={i} className="align-top p-2">
+                              <Skeleton className="h-8 w-full" />
                             </TableCell>
-                            {diasDoMes.map((_, i) => (
-                              <TableCell key={i} className="align-top p-2">
-                                <Skeleton className="h-8 w-full" />
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))
+                          ))}
+                        </TableRow>
                       ))
                     ) : salasToShow.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={totalDiasNoMes + 1} className="text-center py-4 text-muted-foreground">
-                          {selectedUnidade === "all" ? "Selecione uma unidade para visualizar as salas" : "Nenhuma sala encontrada"}
+                        <TableCell colSpan={totalDiasNoMes + 2} className="text-center py-4 text-muted-foreground">
+                          {"Nenhuma sala com cursos encontrada"}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      salasToShow.map((sala) => (
-                        ['manha', 'tarde', 'noite'].map(turno => {
-                          // Filtrar cursos deste turno/sala
-                          const cursosTurno = (cursos || []).filter(curso =>
-                            curso.sala_id === sala.id &&
-                            curso.periodo === turno &&
-                            (
-                              // O curso precisa ter pelo menos um dia dentro do mês
-                              (parseISO(curso.inicio) <= endMonth && parseISO(curso.fim) >= startMonth)
-                            )
-                          );
-                          // Se não houver cursos, renderiza uma linha vazia
-                          if (cursosTurno.length === 0) {
-                            return (
-                              <TableRow key={sala.id + turno} className={getUnidadeColor(sala.unidades?.nome || '')}>
-                                <TableCell className="font-medium align-top">
-                                  <div className="space-y-1">
-                                    <div className="font-semibold text-sm">{sala.nome}</div>
-                                    <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
-                                    <div className="text-xs text-muted-foreground font-medium">{turno.charAt(0).toUpperCase() + turno.slice(1)}</div>
-                                  </div>
-                                </TableCell>
-                                {diasDoMes.map((_, i) => (
-                                  <TableCell key={i} className="align-top p-1">
-                                    <span className="text-muted-foreground">-</span>
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            );
-                          }
-                          // Para sobreposição, cada curso vira uma linha
-                          return cursosTurno.map((curso, idx) => {
-                            // Índices do início e fim do curso no mês
-                            const inicio = parseISO(curso.inicio);
-                            const fim = parseISO(curso.fim);
-                            const startIdx = Math.max(0, inicio.getMonth() === mes ? inicio.getDate() - 1 : 0);
-                            const endIdx = Math.min(totalDiasNoMes - 1, fim.getMonth() === mes ? fim.getDate() - 1 : totalDiasNoMes - 1);
-                            const before = startIdx;
-                            const duration = endIdx - startIdx + 1;
-                            const after = totalDiasNoMes - endIdx - 1;
-                            return (
-                              <TableRow key={sala.id + turno + curso.id} className={getUnidadeColor(sala.unidades?.nome || '')}>
-                                <TableCell className="font-medium align-top">
-                                  <div className="space-y-1">
-                                    <div className="font-semibold text-sm">{sala.nome}</div>
-                                    <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
-                                    <div className="text-xs text-muted-foreground font-medium">{turno.charAt(0).toUpperCase() + turno.slice(1)}</div>
-                                  </div>
-                                </TableCell>
-                                {/* Células antes da barra */}
-                                {before > 0 && Array.from({ length: before }).map((_, i) => (
-                                  <TableCell key={"before" + i} className="align-top p-1"></TableCell>
-                                ))}
-                                {/* Barra do curso */}
-                                <TableCell
-                                  colSpan={duration}
-                                  className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getCursoColor(curso.id)} border cursor-pointer`}
-                                  style={{ minWidth: duration * 20 }}
-                                  onClick={() => handleCursoClick(curso)}
-                                >
-                                  <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 24 }}>
-                                    <span className="block w-full truncate" style={{ fontSize: '0.8rem' }}>
-                                      {curso.titulo} - {curso.professor}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                {/* Células depois da barra */}
-                                {after > 0 && Array.from({ length: after }).map((_, i) => (
-                                  <TableCell key={"after" + i} className="align-top p-1"></TableCell>
-                                ))}
-                              </TableRow>
-                            );
-                          });
-                        })
-                      ))
+                      linhasMensais
                     )}
                   </TableBody>
                 </Table>
               </div>
             </CardContent>
           </Card>
-        )}
+          )}
 
-        {/* Dialog de detalhes do curso */}
+        {/* Detalhes do Curso (se selecionado) */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Detalhes do Curso</DialogTitle>
-            </DialogHeader>
+          <DialogContent>
             {selectedCurso && (
-              <CursoDetails 
-                curso={selectedCurso} 
-                onEdit={handleEditCurso}
-                onViewInsumos={handleViewInsumos}
-              />
+              <CursoDetails curso={selectedCurso} onEdit={handleEditCurso} onViewInsumos={handleViewInsumos} />
             )}
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de edição do curso */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Editar Curso</DialogTitle>
-            </DialogHeader>
-            {cursoToEdit && (
-              <CursoForm 
-                curso={cursoToEdit} 
-                onSuccess={handleEditSuccess}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Insumos */}
+        {/* Insumos do Curso (se selecionado) */}
         <Dialog open={insumosDialogOpen} onOpenChange={setInsumosDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
-            </DialogHeader>
+          <DialogContent>
             {selectedCursoInsumos && (
               <CursoInsumosList 
                 cursoId={selectedCursoInsumos.id}
                 cursoTitulo={selectedCursoInsumos.titulo}
                 professor={selectedCursoInsumos.professor}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Formulário de Edição de Curso (se selecionado) */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            {cursoToEdit && (
+              <CursoForm 
+                curso={cursoToEdit}
+                onSuccess={handleEditSuccess}
               />
             )}
           </DialogContent>
