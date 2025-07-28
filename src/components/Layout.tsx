@@ -13,7 +13,8 @@ import {
   LogOut,
   Package,
   Lightbulb,
-  DoorOpen
+  DoorOpen,
+  User // Adicionado ícone de usuário
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +92,7 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Package, label: "Insumos", path: "/insumos", editorAccess: true },
     { icon: Users, label: "Usuários", path: "/usuarios", adminOnly: true },
     { icon: Lightbulb, label: "Relatórios", path: "/relatorios" },
+    { icon: User, label: "Meu Perfil", path: "/meu-perfil" }, // Adicionado menu Meu Perfil
   ];
 
   const filteredMenuItems = menuItems.filter(item => {
