@@ -56,15 +56,18 @@ const Layout = ({ children }: LayoutProps) => {
     const getUserProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUserName(user.user_metadata?.nome || user.email || null);
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, nome')
           .eq('id', user.id)
           .single();
         
         if (profile) {
           setUserRole(profile.role);
+          setUserName(profile.nome || user.email || null);
+        } else {
+          // Fallback caso não encontre o profile
+          setUserName(user.email || null);
         }
       }
     };
