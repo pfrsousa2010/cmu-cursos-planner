@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, UserCheck, UserX, Trash2 } from "lucide-react";
+import { Plus, Edit, UserCheck, UserX, Trash2, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
@@ -48,6 +48,8 @@ const Usuarios = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { userRole, canManageUnidades } = useUserRole();
 
   const [formData, setFormData] = useState({
@@ -91,57 +93,60 @@ const Usuarios = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    if (editingUser) {
-      // Atualizar apenas o perfil (não pode atualizar auth.users diretamente)
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          nome: formData.nome,
-          role: formData.role
-        })
-        .eq('id', editingUser.id);
+    try {
+      if (editingUser) {
+        // Atualizar apenas o perfil (não pode atualizar auth.users diretamente)
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            nome: formData.nome,
+            role: formData.role
+          })
+          .eq('id', editingUser.id);
 
-      if (error) {
-        toast.error("Erro ao atualizar usuário");
-        console.error(error);
-      } else {
-        toast.success("Usuário atualizado com sucesso!");
-        fetchUsers();
-        resetForm();
-      }
-    } else {
-      // Criar novo usuário
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            nome: formData.nome
-          }
+        if (error) {
+          toast.error("Erro ao atualizar usuário");
+        } else {
+          toast.success("Usuário atualizado com sucesso!");
+          fetchUsers();
+          resetForm();
         }
-      });
-
-      if (authError) {
-        toast.error("Erro ao criar usuário: " + authError.message);
-        console.error(authError);
       } else {
-        // Atualizar o role no perfil
-        if (authData.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ role: formData.role })
-            .eq('id', authData.user.id);
-
-          if (profileError) {
-            console.error("Erro ao atualizar role:", profileError);
+        // Criar novo usuário
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              nome: formData.nome
+            }
           }
+        });
+
+        if (authError) {
+          toast.error("Erro ao criar usuário: " + authError.message);
+        } else {
+          // Atualizar o role no perfil
+          if (authData.user) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update({ role: formData.role })
+              .eq('id', authData.user.id);
+
+            if (profileError) {
+              toast.error("Erro ao definir função do usuário");
+            }
+          }
+          
+          toast.success("Usuário criado com sucesso!");
+          fetchUsers();
+          resetForm();
         }
-        
-        toast.success("Usuário criado com sucesso!");
-        fetchUsers();
-        resetForm();
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -153,6 +158,7 @@ const Usuarios = () => {
       role: "visualizador" as UserRole
     });
     setEditingUser(null);
+    setShowPassword(false);
     setDialogOpen(false);
   };
 
@@ -286,14 +292,28 @@ const Usuarios = () => {
                 {!editingUser && (
                   <div>
                     <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required
-                      minLength={6}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required
+                        minLength={6}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )}
                 
@@ -316,11 +336,26 @@ const Usuarios = () => {
                 </div>
                 
                 <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={resetForm}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={resetForm}
+                    disabled={isSubmitting}
+                  >
                     Cancelar
                   </Button>
-                  <Button type="submit">
-                    {editingUser ? "Atualizar" : "Criar"}
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {editingUser ? "Atualizando..." : "Criando..."}
+                      </>
+                    ) : (
+                      editingUser ? "Atualizar" : "Criar"
+                    )}
                   </Button>
                 </div>
               </form>
