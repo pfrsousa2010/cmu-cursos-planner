@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, UserCheck, UserX } from "lucide-react";
+import { Plus, Edit, UserCheck, UserX, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
@@ -173,6 +173,40 @@ const Usuarios = () => {
     setDialogOpen(true);
   };
 
+  const handleDeleteUser = async (user: Profile) => {
+    if (user.id === currentUserId) {
+      toast.error("Você não pode deletar seu próprio usuário.");
+      return;
+    }
+
+    if (window.confirm(`Tem certeza que deseja deletar o usuário "${user.nome}"? Esta ação não pode ser desfeita.`)) {
+      try {        
+        // Deletar o perfil
+        const { data, error } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', user.id)
+          .select();
+
+        if (error) {
+          // Verificar se é erro de permissão RLS
+          if (error.code === '42501' || error.message.includes('policy')) {
+            toast.error("Você não tem permissão para deletar usuários. Apenas administradores podem realizar esta ação.");
+          } else {
+            toast.error("Erro ao deletar usuário: " + error.message);
+          }
+        } else if (data && data.length > 0) {
+          toast.success("Usuário deletado com sucesso!");
+          fetchUsers(); // Recarregar a lista
+        } else {
+          toast.error("Usuário não foi encontrado ou você não tem permissão para deletá-lo. Verifique se você é um administrador.");
+        }
+      } catch (error) {
+        toast.error("Erro inesperado ao deletar usuário");
+      }
+    }
+  };
+
   const getRoleLabel = (role: UserRole) => UserRoleLabel[role] || role;
   const getRoleColor = (role: UserRole) => UserRoleColor[role] || 'text-gray-600 bg-gray-50';
 
@@ -333,13 +367,23 @@ const Usuarios = () => {
                     </div>
                     
                     {user.id !== currentUserId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startEdit(user)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(user)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardHeader>
