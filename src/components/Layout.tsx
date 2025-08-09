@@ -180,7 +180,7 @@ const Layout = ({ children }: LayoutProps) => {
                 </div>
               ) : (
                 <span className="text-sm text-gray-600 flex items-center gap-2">
-                  Usuário: <span className="font-medium">{userName}</span>
+                  <span className="font-medium">{userName}</span>
                   <Badge className={UserRoleColor[userRole ?? ''] || 'text-gray-600 bg-gray-50'}>
                     {UserRoleLabel[userRole ?? ''] || userRole}
                   </Badge>
