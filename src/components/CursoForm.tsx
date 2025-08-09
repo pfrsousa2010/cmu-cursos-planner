@@ -389,18 +389,23 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       <Collapsible open={insumosExpanded} onOpenChange={setInsumosExpanded} className="space-y-4">
         <CollapsibleTrigger asChild>
           <Button
-            variant="ghost"
-            className="flex items-center justify-between w-full p-0 h-auto font-medium text-left"
+            variant="secondary"
+            className="flex items-center justify-between w-full p-3 h-auto font-medium text-left"
             type="button"
           >
             <Label className="cursor-pointer">
               Insumos do Curso {selectedInsumos.length > 0 && `(${selectedInsumos.length})`}
             </Label>
-            {insumosExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-normal">
+                {insumosExpanded ? "Clique para fechar" : "Clique para ver"}
+              </span>
+              {insumosExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </div>
           </Button>
         </CollapsibleTrigger>
         
