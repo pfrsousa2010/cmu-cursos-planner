@@ -255,7 +255,9 @@ const Calendario = () => {
   const handleEditSuccess = () => {
     setEditDialogOpen(false);
     setCursoToEdit(null);
-    queryClient.invalidateQueries({ queryKey: ['cursos-semana'] });
+    // Invalidar a query correta baseada no modo de visualização atual
+    const queryKey = viewMode === 'semana' ? 'cursos-semana' : 'cursos-mes';
+    queryClient.invalidateQueries({ queryKey: [queryKey] });
     toast.success("Curso atualizado com sucesso!");
   };
 
