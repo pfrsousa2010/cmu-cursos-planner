@@ -225,7 +225,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
 
   const handleInsumoAdd = (insumoId: string) => {
     if (!selectedInsumos.find(i => i.id === insumoId)) {
-      setSelectedInsumos(prev => [...prev, { id: insumoId, quantidade: 1 }]);
+      setSelectedInsumos(prev => [{ id: insumoId, quantidade: 1 }, ...prev]);
     }
   };
 
@@ -390,12 +390,23 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
             <SelectValue placeholder="Adicionar insumo" />
           </SelectTrigger>
           <SelectContent>
-            {insumos?.filter(insumo => !selectedInsumos.find(i => i.id === insumo.id))
-              .map(insumo => (
+            {(() => {
+              const insumosDisponiveis = insumos?.filter(insumo => !selectedInsumos.find(i => i.id === insumo.id)) || [];
+              
+              if (insumosDisponiveis.length === 0) {
+                return (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Todos os insumos foram adicionados
+                  </div>
+                );
+              }
+              
+              return insumosDisponiveis.map(insumo => (
                 <SelectItem key={insumo.id} value={insumo.id}>
                   {insumo.nome}
                 </SelectItem>
-              ))}
+              ));
+            })()}
           </SelectContent>
         </Select>
 
