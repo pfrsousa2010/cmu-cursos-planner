@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, ChevronDown, ChevronRight } from "lucide-react";
 
 interface CursoFormProps {
   curso?: any;
@@ -25,6 +26,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   const [status, setStatus] = useState("ativo");
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [selectedInsumos, setSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
+  const [insumosExpanded, setInsumosExpanded] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -226,6 +228,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   const handleInsumoAdd = (insumoId: string) => {
     if (!selectedInsumos.find(i => i.id === insumoId)) {
       setSelectedInsumos(prev => [{ id: insumoId, quantidade: 1 }, ...prev]);
+      setInsumosExpanded(true); // Expandir automaticamente quando adicionar um insumo
     }
   };
 
@@ -383,61 +386,79 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       </div>
 
       {/* Insumos */}
-      <div className="space-y-4">
-        <Label>Insumos do Curso</Label>
-        <Select onValueChange={handleInsumoAdd}>
-          <SelectTrigger>
-            <SelectValue placeholder="Adicionar insumo" />
-          </SelectTrigger>
-          <SelectContent>
-            {(() => {
-              const insumosDisponiveis = insumos?.filter(insumo => !selectedInsumos.find(i => i.id === insumo.id)) || [];
-              
-              if (insumosDisponiveis.length === 0) {
+      <Collapsible open={insumosExpanded} onOpenChange={setInsumosExpanded} className="space-y-4">
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="ghost"
+            className="flex items-center justify-between w-full p-0 h-auto font-medium text-left"
+            type="button"
+          >
+            <Label className="cursor-pointer">
+              Insumos do Curso {selectedInsumos.length > 0 && `(${selectedInsumos.length})`}
+            </Label>
+            {insumosExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent className="space-y-4">
+          <Select onValueChange={handleInsumoAdd}>
+            <SelectTrigger>
+              <SelectValue placeholder="Adicionar insumo" />
+            </SelectTrigger>
+            <SelectContent>
+              {(() => {
+                const insumosDisponiveis = insumos?.filter(insumo => !selectedInsumos.find(i => i.id === insumo.id)) || [];
+                
+                if (insumosDisponiveis.length === 0) {
+                  return (
+                    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                      Todos os insumos foram adicionados
+                    </div>
+                  );
+                }
+                
+                return insumosDisponiveis.map(insumo => (
+                  <SelectItem key={insumo.id} value={insumo.id}>
+                    {insumo.nome}
+                  </SelectItem>
+                ));
+              })()}
+            </SelectContent>
+          </Select>
+
+          {selectedInsumos.length > 0 && (
+            <div className="space-y-2">
+              {selectedInsumos.map(item => {
+                const insumo = insumos?.find(i => i.id === item.id);
                 return (
-                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                    Todos os insumos foram adicionados
+                  <div key={item.id} className="flex items-center gap-2 p-2 border rounded">
+                    <span className="flex-1">{insumo?.nome}</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantidade}
+                      onChange={(e) => handleQuantidadeChange(item.id, parseInt(e.target.value) || 1)}
+                      className="w-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleInsumoRemove(item.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 );
-              }
-              
-              return insumosDisponiveis.map(insumo => (
-                <SelectItem key={insumo.id} value={insumo.id}>
-                  {insumo.nome}
-                </SelectItem>
-              ));
-            })()}
-          </SelectContent>
-        </Select>
-
-        {selectedInsumos.length > 0 && (
-          <div className="space-y-2">
-            {selectedInsumos.map(item => {
-              const insumo = insumos?.find(i => i.id === item.id);
-              return (
-                <div key={item.id} className="flex items-center gap-2 p-2 border rounded">
-                  <span className="flex-1">{insumo?.nome}</span>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={item.quantidade}
-                    onChange={(e) => handleQuantidadeChange(item.id, parseInt(e.target.value) || 1)}
-                    className="w-20"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleInsumoRemove(item.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              })}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
 
       <div className="flex gap-4">
         <Button type="submit" disabled={mutation.isPending}>
