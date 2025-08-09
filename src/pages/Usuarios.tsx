@@ -47,6 +47,7 @@ const Usuarios = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { userRole, canManageUnidades } = useUserRole();
 
   const [formData, setFormData] = useState({
@@ -57,6 +58,15 @@ const Usuarios = () => {
   });
 
   useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    
+    getCurrentUser();
+    
     if (canManageUnidades) {
       fetchUsers();
     } else {
@@ -147,6 +157,12 @@ const Usuarios = () => {
   };
 
   const startEdit = (user: Profile) => {
+    // Não permitir editar o próprio usuário
+    if (user.id === currentUserId) {
+      toast.error("Você não pode editar seu próprio perfil aqui. Use a página 'Meu Perfil'.");
+      return;
+    }
+    
     setFormData({
       nome: user.nome,
       email: user.email,
@@ -288,11 +304,16 @@ const Usuarios = () => {
             </Card>
           ) : (
             users.map((user) => (
-              <Card key={user.id}>
+              <Card 
+                key={user.id} 
+                className={user.id === currentUserId ? "border-blue-300 bg-blue-50/30 shadow-md ring-1 ring-blue-200" : ""}
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle>{user.nome}</CardTitle>
+                      <CardTitle className={user.id === currentUserId ? "text-blue-800" : ""}>
+                        {user.nome}
+                      </CardTitle>
                       <CardDescription className="mt-1">
                         {user.email}
                       </CardDescription>
@@ -300,19 +321,26 @@ const Usuarios = () => {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                           {getRoleLabel(user.role)}
                         </span>
+                        {user.id === currentUserId && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
+                            Você
+                          </span>
+                        )}
                         <span className="text-xs text-gray-500">
                           Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                     </div>
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => startEdit(user)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    {user.id !== currentUserId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEdit(user)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
               </Card>
