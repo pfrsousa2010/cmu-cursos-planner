@@ -105,7 +105,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [curso]);
@@ -113,9 +113,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   // Carregar dados do curso para edição
   useEffect(() => {
     if (curso) {
-      console.log('curso is edição', curso);
-      console.log('curso.unidades:', curso.unidades);
-      console.log('curso.salas:', curso.salas);
       setTitulo(curso.titulo || "");
       setProfessor(curso.professor || "");
       setInicio(curso.inicio || "");
@@ -152,7 +149,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
 
       loadCursoData();
     } else {
-      console.log('curso is novo');
       // Limpar formulário para novo curso
       setTitulo("");
       setProfessor("");
@@ -171,15 +167,10 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
 
   // Garantir que os nomes sejam atualizados quando as queries carregarem
   useEffect(() => {
-    console.log('useEffect unidades - curso:', curso?.unidades?.id);
-    console.log('useEffect unidades - unidades:', unidades);
-    console.log('useEffect unidades - unidadeId atual:', unidadeId);
-    
     // Só atualizar se não houver uma seleção manual do usuário
     if (curso && unidades && unidades.length > 0 && curso.unidades?.id && !unidadeId) {
       const unidade = unidades.find(u => u.id === curso.unidades.id);
       if (unidade) {
-        console.log('Encontrou unidade:', unidade.nome);
         setUnidadeNome(unidade.nome);
         setUnidadeId(unidade.id);
       }
@@ -187,18 +178,12 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   }, [curso, unidades, unidadeId]);
 
   useEffect(() => {
-    console.log('useEffect salas - curso:', curso?.salas?.id);
-    console.log('useEffect salas - salas:', salas);
-    console.log('useEffect salas - salasCurso:', salasCurso);
-    console.log('useEffect salas - salaId atual:', salaId);
-    
     // Só atualizar se não houver uma seleção manual do usuário
     if (curso && !salaId) {
       // Tentar encontrar a sala nas salas da unidade
       if (salas && salas.length > 0 && curso.salas?.id) {
         const sala = salas.find(s => s.id === curso.salas.id);
         if (sala) {
-          console.log('Encontrou sala nas salas da unidade:', sala.nome);
           setSalaNome(sala.nome);
           setSalaId(sala.id);
           return;
@@ -209,7 +194,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       if (salasCurso && salasCurso.length > 0 && curso.salas?.id) {
         const sala = salasCurso.find(s => s.id === curso.salas.id);
         if (sala) {
-          console.log('Encontrou sala nas salas do curso:', sala.nome);
           setSalaNome(sala.nome);
           setSalaId(sala.id);
         }
@@ -222,7 +206,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     if (unidadeId && unidades && unidades.length > 0) {
       const unidade = unidades.find(u => u.id === unidadeId);
       if (unidade) {
-        console.log('Usuário selecionou unidade:', unidade.nome);
         setUnidadeNome(unidade.nome);
       }
     }
@@ -233,7 +216,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     if (salaId && salas && salas.length > 0) {
       const sala = salas.find(s => s.id === salaId);
       if (sala) {
-        console.log('Usuário selecionou sala:', sala.nome);
         setSalaNome(sala.nome);
       }
     }
@@ -313,7 +295,6 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       status
     };
 
-    console.log('Enviando dados do curso:', data);
     mutation.mutate(data);
   };
 
