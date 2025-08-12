@@ -28,6 +28,7 @@ const Cursos = () => {
   const [selectedUnidade, setSelectedUnidade] = useState("todas");
   const [selectedSala, setSelectedSala] = useState("todas");
   const [selectedYear, setSelectedYear] = useState("todos");
+  const [selectedStatus, setSelectedStatus] = useState("todos");
   
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
@@ -78,9 +79,12 @@ const Cursos = () => {
         if (cursoYear !== selectedYear) return false;
       }
       
+      // Filtro por status
+      if (selectedStatus !== "todos" && curso.status !== selectedStatus) return false;
+      
       return true;
     });
-  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear]);
+  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear, selectedStatus]);
 
   // Obter dados únicos para filtros
   const getUnidades = () => {
@@ -151,7 +155,7 @@ const Cursos = () => {
   };
 
   const getStatusColor = (status: string) => {
-    return status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+    return status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
   };
 
   const getPeriodoColor = (periodo: string) => {
@@ -169,6 +173,7 @@ const Cursos = () => {
     setSelectedUnidade("todas");
     setSelectedSala("todas");
     setSelectedYear("todos");
+    setSelectedStatus("todos");
   };
 
   if (isLoading) {
@@ -309,22 +314,36 @@ const Cursos = () => {
                 </Select>
               </div>
 
-              {/* Botão Limpar Filtros */}
+              {/* Filtro por Status */}
               <div className="space-y-2">
-                <label className="text-sm font-medium opacity-0">Ações</label>
-                <Button 
-                  variant="outline" 
-                  onClick={clearFilters}
-                  className="w-full"
-                >
-                  Limpar Filtros
-                </Button>
+                <label className="text-sm font-medium">Status</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os status</SelectItem>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+
             </div>
 
-            {/* Contador de resultados */}
-            <div className="mt-4 text-sm text-muted-foreground">
-              Mostrando {filteredCursos.length} de {cursos?.length || 0} cursos
+            {/* Contador de resultados e Botão Limpar Filtros */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {filteredCursos.length} de {cursos?.length || 0} cursos
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={clearFilters}
+                size="sm"
+              >
+                Limpar Filtros
+              </Button>
             </div>
           </CardContent>
         </Card>
