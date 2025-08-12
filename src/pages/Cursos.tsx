@@ -16,11 +16,25 @@ import CursoForm from "@/components/CursoForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import CursoInsumosList from "@/components/CursoInsumosList";
 
+interface Curso {
+  id: string;
+  titulo: string;
+  professor: string;
+  periodo: 'manha' | 'tarde' | 'noite';
+  inicio: string;
+  fim: string;
+  sala_id: string | null;
+  unidade_id: string;
+  status: 'ativo' | 'finalizado';
+  unidades: { nome: string, id: string } | null;
+  salas: { nome: string; id: string } | null;
+}
+
 const Cursos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCurso, setEditingCurso] = useState<any>(null);
+  const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
   const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
-  const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<any>(null);
+  const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,7 +48,7 @@ const Cursos = () => {
   const queryClient = useQueryClient();
 
   // Buscar cursos
-  const { data: cursos, isLoading } = useQuery({
+  const { data: cursos, isLoading } = useQuery<Curso[]>({
     queryKey: ['cursos'],
     queryFn: async () => {
       const { data } = await supabase
@@ -119,7 +133,8 @@ const Cursos = () => {
     }
   });
 
-  const handleEdit = (curso: any) => {
+  const handleEdit = (curso: Curso) => {
+    console.log(curso);
     setEditingCurso(curso);
     setIsDialogOpen(true);
   };
@@ -135,14 +150,9 @@ const Cursos = () => {
     setEditingCurso(null);
   };
 
-  const handleViewInsumos = (curso: any) => {
+  const handleViewInsumos = (curso: Curso) => {
     setSelectedCursoInsumos(curso);
     setInsumosDialogOpen(true);
-  };
-
-  const handleDownloadPDF = () => {
-    // TODO: Implementar download do PDF
-    toast.success("Função de download será implementada em breve");
   };
 
   const formatPeriodo = (periodo: string) => {
@@ -351,7 +361,7 @@ const Cursos = () => {
         {/* Grid de Cursos */}
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCursos && filteredCursos.length > 0 ? (
-            filteredCursos.map((curso) => (
+            filteredCursos.map((curso: Curso) => (
               <Card key={curso.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">

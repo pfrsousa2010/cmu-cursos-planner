@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +10,22 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 
+interface Curso {
+  id: string;
+  titulo: string;
+  professor: string;
+  periodo: 'manha' | 'tarde' | 'noite';
+  inicio: string;
+  fim: string;
+  sala_id: string | null;
+  unidade_id: string;
+  status: 'ativo' | 'finalizado';
+  unidades: { nome: string, id: string } | null;
+  salas: { nome: string; id: string } | null;
+}
+
 interface CursoFormProps {
-  curso?: any;
+  curso?: Curso;
   onSuccess: () => void;
 }
 
@@ -22,7 +36,9 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   const [fim, setFim] = useState("");
   const [periodo, setPeriodo] = useState("");
   const [unidadeId, setUnidadeId] = useState("");
+  const [unidadeNome, setUnidadeNome] = useState("");
   const [salaId, setSalaId] = useState("");
+  const [salaNome, setSalaNome] = useState("");
   const [status, setStatus] = useState("ativo");
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [selectedInsumos, setSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
@@ -69,16 +85,35 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     enabled: !!unidadeId
   });
 
+  // Query adicional para buscar salas quando não há unidadeId (para edição)
+  const { data: salasCurso } = useQuery({
+    queryKey: ['salas-curso', curso?.salas?.id],
+    queryFn: async () => {
+      if (!curso?.salas?.id) return [];
+      const { data } = await supabase
+        .from('salas')
+        .select('*')
+        .eq('id', curso.salas.id);
+      return data || [];
+    },
+    enabled: !!curso?.salas?.id
+  });
+
   // Carregar dados do curso para edição
   useEffect(() => {
     if (curso) {
-      console.log('Carregando dados do curso para edição:', curso);
+      console.log('curso is edição', curso);
+      console.log('curso.unidades:', curso.unidades);
+      console.log('curso.salas:', curso.salas);
       setTitulo(curso.titulo || "");
       setProfessor(curso.professor || "");
       setInicio(curso.inicio || "");
       setFim(curso.fim || "");
       setPeriodo(curso.periodo || "");
-      setUnidadeId(curso.unidade_id || "");
+      setUnidadeId(curso.unidades?.id || "");
+      setUnidadeNome(curso.unidades?.nome || "");
+      setSalaId(curso.salas?.id || "");
+      setSalaNome(curso.salas?.nome || "");
       setStatus(curso.status || "ativo");
 
       // Carregar matérias e insumos do curso
@@ -106,6 +141,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
 
       loadCursoData();
     } else {
+      console.log('curso is novo');
       // Limpar formulário para novo curso
       setTitulo("");
       setProfessor("");
@@ -113,31 +149,84 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       setFim("");
       setPeriodo("");
       setUnidadeId("");
+      setUnidadeNome("");
       setSalaId("");
+      setSalaNome("");
       setStatus("ativo");
       setSelectedMaterias([]);
       setSelectedInsumos([]);
     }
   }, [curso]);
 
-  // Definir sala quando as salas são carregadas e existe um curso sendo editado
+  // Garantir que os nomes sejam atualizados quando as queries carregarem
   useEffect(() => {
-    if (curso && curso.sala_id && salas && salas.length > 0) {
-      // Verificar se a sala do curso está na lista de salas carregadas
-      const salaExists = salas.find(sala => sala.id === curso.sala_id);
-      if (salaExists) {
-        console.log('Definindo sala ID:', curso.sala_id);
-        setSalaId(curso.sala_id);
+    console.log('useEffect unidades - curso:', curso?.unidades?.id);
+    console.log('useEffect unidades - unidades:', unidades);
+    console.log('useEffect unidades - unidadeId atual:', unidadeId);
+    
+    // Só atualizar se não houver uma seleção manual do usuário
+    if (curso && unidades && unidades.length > 0 && curso.unidades?.id && !unidadeId) {
+      const unidade = unidades.find(u => u.id === curso.unidades.id);
+      if (unidade) {
+        console.log('Encontrou unidade:', unidade.nome);
+        setUnidadeNome(unidade.nome);
+        setUnidadeId(unidade.id);
       }
     }
-  }, [salas, curso]);
+  }, [curso, unidades, unidadeId]);
 
-  // Quando a unidade mudar, limpar a sala se não for da mesma unidade
   useEffect(() => {
-    if (curso && curso.unidade_id && unidadeId !== curso.unidade_id) {
-      setSalaId("");
+    console.log('useEffect salas - curso:', curso?.salas?.id);
+    console.log('useEffect salas - salas:', salas);
+    console.log('useEffect salas - salasCurso:', salasCurso);
+    console.log('useEffect salas - salaId atual:', salaId);
+    
+    // Só atualizar se não houver uma seleção manual do usuário
+    if (curso && !salaId) {
+      // Tentar encontrar a sala nas salas da unidade
+      if (salas && salas.length > 0 && curso.salas?.id) {
+        const sala = salas.find(s => s.id === curso.salas.id);
+        if (sala) {
+          console.log('Encontrou sala nas salas da unidade:', sala.nome);
+          setSalaNome(sala.nome);
+          setSalaId(sala.id);
+          return;
+        }
+      }
+      
+      // Se não encontrou, tentar nas salas do curso
+      if (salasCurso && salasCurso.length > 0 && curso.salas?.id) {
+        const sala = salasCurso.find(s => s.id === curso.salas.id);
+        if (sala) {
+          console.log('Encontrou sala nas salas do curso:', sala.nome);
+          setSalaNome(sala.nome);
+          setSalaId(sala.id);
+        }
+      }
     }
-  }, [unidadeId, curso]);
+  }, [curso, salas, salasCurso, salaId]);
+
+  // Atualizar unidadeNome quando unidadeId mudar (seleção manual do usuário)
+  useEffect(() => {
+    if (unidadeId && unidades && unidades.length > 0) {
+      const unidade = unidades.find(u => u.id === unidadeId);
+      if (unidade) {
+        console.log('Usuário selecionou unidade:', unidade.nome);
+        setUnidadeNome(unidade.nome);
+      }
+    }
+  }, [unidadeId, unidades]);
+
+  // Atualizar salaNome quando salaId mudar (seleção manual do usuário)
+  useEffect(() => {
+    if (salaId && salas && salas.length > 0) {
+      const sala = salas.find(s => s.id === salaId);
+      if (sala) {
+        console.log('Usuário selecionou sala:', sala.nome);
+        setSalaNome(sala.nome);
+      }
+    }
+  }, [salaId, salas]);
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
@@ -242,55 +331,127 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     );
   };
 
+  // Validação dos campos obrigatórios
+  const isFormValid = useMemo(() => {
+    // Validação básica dos campos obrigatórios
+    const basicValidation = (
+      titulo.trim() !== "" &&
+      professor.trim() !== "" &&
+      inicio !== "" &&
+      fim !== "" &&
+      periodo !== "" &&
+      status !== "" &&
+      unidadeId !== "" &&
+      salaId !== "" &&
+      selectedMaterias.length > 0
+    );
+
+    // Validação adicional das datas
+    if (inicio && fim) {
+      const dataInicio = new Date(inicio);
+      const dataFim = new Date(fim);
+      if (dataFim <= dataInicio) {
+        return false;
+      }
+    }
+
+    return basicValidation;
+  }, [
+    titulo,
+    professor,
+    inicio,
+    fim,
+    periodo,
+    status,
+    unidadeId,
+    salaId,
+    selectedMaterias
+  ]);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Indicador de validação */}
+      {!isFormValid && (
+        <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
+          <p className="font-medium mb-2">⚠️ Campos obrigatórios não preenchidos ou inválidos:</p>
+          <ul className="list-disc list-inside space-y-1">
+            {!titulo.trim() && <li>Título do curso</li>}
+            {!professor.trim() && <li>Professor</li>}
+            {!inicio && <li>Data de início</li>}
+            {!fim && <li>Data de fim</li>}
+            {inicio && fim && new Date(fim) <= new Date(inicio) && (
+              <li>Data de fim deve ser posterior à data de início</li>
+            )}
+            {!periodo && <li>Período</li>}
+            {!status && <li>Status</li>}
+            {!unidadeId && <li>Unidade</li>}
+            {!salaId && <li>Sala</li>}
+            {selectedMaterias.length === 0 && <li>Pelo menos uma matéria</li>}
+          </ul>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="titulo">Título do Curso</Label>
+          <Label htmlFor="titulo" className={!titulo.trim() ? "text-red-600" : ""}>
+            Título do Curso *
+          </Label>
           <Input
             id="titulo"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
             required
+            className={!titulo.trim() ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="professor">Professor</Label>
+          <Label htmlFor="professor" className={!professor.trim() ? "text-red-600" : ""}>
+            Professor *
+          </Label>
           <Input
             id="professor"
             value={professor}
             onChange={(e) => setProfessor(e.target.value)}
             required
+            className={!professor.trim() ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="inicio">Data de Início</Label>
+          <Label htmlFor="inicio" className={!inicio ? "text-red-600" : ""}>
+            Data de Início *
+          </Label>
           <Input
             id="inicio"
             type="date"
             value={inicio}
             onChange={(e) => setInicio(e.target.value)}
             required
+            className={!inicio ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="fim">Data de Fim</Label>
+          <Label htmlFor="fim" className={!fim || (inicio && fim && new Date(fim) <= new Date(inicio)) ? "text-red-600" : ""}>
+            Data de Fim *
+          </Label>
           <Input
             id="fim"
             type="date"
             value={fim}
             onChange={(e) => setFim(e.target.value)}
             required
+            className={!fim || (inicio && fim && new Date(fim) <= new Date(inicio)) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="periodo">Período</Label>
+          <Label htmlFor="periodo" className={!periodo ? "text-red-600" : ""}>
+            Período *
+          </Label>
           <Select value={periodo} onValueChange={setPeriodo} required>
-            <SelectTrigger>
+            <SelectTrigger className={!periodo ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
               <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
             <SelectContent>
@@ -302,9 +463,11 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
+          <Label htmlFor="status" className={!status ? "text-red-600" : ""}>
+            Status *
+          </Label>
           <Select value={status} onValueChange={setStatus} required>
-            <SelectTrigger>
+            <SelectTrigger className={!status ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -315,9 +478,11 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="unidade">Unidade</Label>
+          <Label htmlFor="unidade" className={!unidadeId ? "text-red-600" : ""}>
+            Unidade *
+          </Label>
           <Select value={unidadeId} onValueChange={setUnidadeId} required>
-            <SelectTrigger>
+            <SelectTrigger className={!unidadeId ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
               <SelectValue placeholder="Selecione a unidade" />
             </SelectTrigger>
             <SelectContent>
@@ -331,17 +496,19 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="sala">Sala</Label>
-          <Select value={salaId} onValueChange={setSalaId}>
-            <SelectTrigger>
+          <Label htmlFor="sala" className={!salaId ? "text-red-600" : ""}>
+            Sala *
+          </Label>
+          <Select value={salaId} onValueChange={setSalaId} required>
+            <SelectTrigger className={!salaId ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
               <SelectValue placeholder="Selecione a sala" />
             </SelectTrigger>
             <SelectContent>
-              {salas?.map(sala => (
-                <SelectItem key={sala.id} value={sala.id}>
-                  {sala.nome} (Cap. {sala.capacidade})
-                </SelectItem>
-              ))}
+                              {salas?.map(sala => (
+                  <SelectItem key={sala.id} value={sala.id}>
+                    {sala.nome} (Cap. {sala.capacidade})
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -349,7 +516,9 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
 
       {/* Matérias */}
       <div className="space-y-4">
-        <Label>Matérias do Curso</Label>
+        <Label className={selectedMaterias.length === 0 ? "text-red-600" : ""}>
+          Matérias do Curso *
+        </Label>
         <div className="grid gap-2 md:grid-cols-3">
           {materias?.map(materia => {
             const isSelected = selectedMaterias.includes(materia.id);
@@ -466,7 +635,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
       </Collapsible>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button type="submit" disabled={mutation.isPending || !isFormValid}>
           {mutation.isPending ? "Salvando..." : (curso ? "Atualizar" : "Criar")}
         </Button>
         <Button type="button" variant="outline" onClick={onSuccess}>

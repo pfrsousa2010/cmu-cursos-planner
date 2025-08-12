@@ -1,9 +1,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, FileText, Download } from "lucide-react";
+import { Edit, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { toast } from "sonner";
 
 interface Curso {
   id: string;
@@ -26,9 +25,6 @@ interface CursoDetailsProps {
 }
 
 const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
-  console.log('CursoDetails - Curso recebido:', curso);
-  console.log('CursoDetails - Sala info:', curso.salas);
-
   const formatPeriodo = (periodo: string) => {
     const periodos = {
       'manha': 'Manhã',
@@ -45,10 +41,6 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
       'noite': 'bg-blue-100 text-blue-800'
     };
     return colors[periodo as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const handleDownloadPDF = () => {
-    toast.success("Função de download será implementada em breve");
   };
 
   return (
