@@ -27,7 +27,7 @@ interface Curso {
   sala_id: string;
   unidade_id: string;
   status: 'ativo' | 'finalizado';
-  unidades: { nome: string } | null;
+  unidades: { nome: string; id: string } | null;
   salas: { nome: string; id: string } | null;
 }
 
@@ -102,8 +102,8 @@ const Calendario = () => {
         .from('cursos')
         .select(`
           *,
-          unidades (nome),
-          salas (nome, id)
+          unidades (id, nome),
+          salas (id, nome)
         `)
         .eq('status', 'ativo');
 
@@ -259,6 +259,11 @@ const Calendario = () => {
     const queryKey = viewMode === 'semana' ? 'cursos-semana' : 'cursos-mes';
     queryClient.invalidateQueries({ queryKey: [queryKey] });
     toast.success("Curso atualizado com sucesso!");
+  };
+
+  const handleEditCancel = () => {
+    setEditDialogOpen(false);
+    setCursoToEdit(null);
   };
 
   // Resetar filtros dependentes quando unidade muda
@@ -792,6 +797,7 @@ const Calendario = () => {
               <CursoForm 
                 curso={cursoToEdit}
                 onSuccess={handleEditSuccess}
+                onCancel={handleEditCancel}
               />
             )}
           </DialogContent>

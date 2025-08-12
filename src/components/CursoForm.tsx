@@ -27,9 +27,10 @@ interface Curso {
 interface CursoFormProps {
   curso?: Curso;
   onSuccess: () => void;
+  onCancel?: () => void;
 }
 
-const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
+const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
   const [titulo, setTitulo] = useState("");
   const [professor, setProfessor] = useState("");
   const [inicio, setInicio] = useState("");
@@ -643,7 +644,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
         <Button type="submit" disabled={mutation.isPending || !isFormValid}>
           {mutation.isPending ? "Salvando..." : (curso ? "Atualizar" : "Criar")}
         </Button>
-        <Button type="button" variant="outline" onClick={onSuccess}>
+        <Button type="button" variant="outline" onClick={onCancel || onSuccess}>
           Cancelar
         </Button>
       </div>
