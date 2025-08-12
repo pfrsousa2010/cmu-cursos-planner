@@ -43,6 +43,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [selectedInsumos, setSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
   const [insumosExpanded, setInsumosExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const queryClient = useQueryClient();
 
@@ -98,6 +99,16 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
     },
     enabled: !!curso?.salas?.id
   });
+
+  // Loading de 1 segundos sempre que o modal for aberto
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [curso]);
 
   // Carregar dados do curso para edição
   useEffect(() => {
@@ -371,7 +382,7 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Indicador de validação */}
-      {!isFormValid && (
+      {!isFormValid && !isLoading && (
         <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
           <p className="font-medium mb-2">⚠️ Campos obrigatórios não preenchidos ou inválidos:</p>
           <ul className="list-disc list-inside space-y-1">
@@ -391,7 +402,20 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Loading de 2 segundos */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center space-y-4">
+            <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse mx-auto" />
+            <p className="text-lg font-medium text-muted-foreground">Carregando formulário...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Conteúdo do formulário - só exibe quando não estiver loading */}
+      {!isLoading && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="titulo" className={!titulo.trim() ? "text-red-600" : ""}>
             Título do Curso *
@@ -642,6 +666,8 @@ const CursoForm = ({ curso, onSuccess }: CursoFormProps) => {
           Cancelar
         </Button>
       </div>
+        </>
+      )}
     </form>
   );
 };
