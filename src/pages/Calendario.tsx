@@ -47,54 +47,11 @@ const Calendario = () => {
 
   const queryClient = useQueryClient();
 
-  // Buscar unidades para filtro
-  const { data: unidades, isLoading: loadingUnidades } = useQuery({
-    queryKey: ['unidades'],
-    queryFn: async () => {
-      const { data } = await supabase.from('unidades').select('*').order('nome');
-      return data || [];
-    }
-  });
-
-  // Buscar salas para filtro (filtradas por unidade)
-  const { data: salas, isLoading: loadingSalas } = useQuery({
-    queryKey: ['salas', selectedUnidade],
-    queryFn: async () => {
-      let query = supabase.from('salas').select('*, unidades(nome)').order('unidade_id').order('nome');
-      
-      if (selectedUnidade !== "all") {
-        query = query.eq('unidade_id', selectedUnidade);
-      }
-      
-      const { data } = await query;
-      return data || [];
-    }
-  });
-
-  // Buscar professores únicos (filtrados por unidade)
-  const { data: professores, isLoading: loadingProfessores } = useQuery({
-    queryKey: ['professores', selectedUnidade],
-    queryFn: async () => {
-      let query = supabase.from('cursos').select('professor');
-      
-      if (selectedUnidade !== "all") {
-        query = query.eq('unidade_id', selectedUnidade);
-      }
-      
-      const { data } = await query.order('professor');
-      const uniqueProfessores = [...new Set(data?.map(item => item.professor) || [])];
-      return uniqueProfessores;
-    }
-  });
-
   // Buscar cursos da semana ou mês (filtrados por unidade, sala, professor)
   const { data: cursos, isLoading: loadingCursos } = useQuery({
     queryKey: [
       viewMode === 'semana' ? 'cursos-semana' : 'cursos-mes',
       currentWeek,
-      selectedUnidade,
-      selectedProfessor,
-      selectedSala,
       viewMode
     ],
     queryFn: async () => {
@@ -122,20 +79,61 @@ const Calendario = () => {
           .gte('fim', format(startMonth, 'yyyy-MM-dd'));
       }
 
-      if (selectedUnidade !== "all") {
-        query = query.eq('unidade_id', selectedUnidade);
-      }
-      if (selectedProfessor !== "all") {
-        query = query.eq('professor', selectedProfessor);
-      }
-      if (selectedSala !== "all") {
-        query = query.eq('sala_id', selectedSala);
-      }
-
       const { data } = await query.order('inicio');
       return data || [];
     }
   });
+
+  // Extrair dados únicos dos cursos para os filtros (sempre todas as opções disponíveis)
+  const unidades = React.useMemo(() => {
+    if (!cursos) return [];
+    const uniqueUnidades = new Map();
+    cursos.forEach(curso => {
+      if (curso.unidades) {
+        uniqueUnidades.set(curso.unidades.id, curso.unidades);
+      }
+    });
+    return Array.from(uniqueUnidades.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [cursos]);
+
+  const salas = React.useMemo(() => {
+    if (!cursos) return [];
+    const uniqueSalas = new Map();
+    cursos.forEach(curso => {
+      if (curso.salas) {
+        uniqueSalas.set(curso.salas.id, {
+          id: curso.salas.id,
+          nome: curso.salas.nome,
+          unidade_id: curso.unidade_id,
+          unidades: curso.unidades
+        });
+      }
+    });
+    return Array.from(uniqueSalas.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [cursos]);
+
+  const professores = React.useMemo(() => {
+    if (!cursos) return [];
+    const uniqueProfessores = [...new Set(cursos.map(curso => curso.professor))];
+    return uniqueProfessores.sort();
+  }, [cursos]);
+
+  // Filtrar cursos baseado nos filtros selecionados
+  const cursosFiltrados = React.useMemo(() => {
+    if (!cursos) return [];
+    
+    return cursos.filter(curso => {
+      if (selectedUnidade !== "all" && curso.unidade_id !== selectedUnidade) return false;
+      if (selectedProfessor !== "all" && curso.professor !== selectedProfessor) return false;
+      if (selectedSala !== "all" && curso.sala_id !== selectedSala) return false;
+      return true;
+    });
+  }, [cursos, selectedUnidade, selectedProfessor, selectedSala]);
+
+  // Estados de loading baseados apenas na query de cursos
+  const loadingUnidades = loadingCursos;
+  const loadingSalas = loadingCursos;
+  const loadingProfessores = loadingCursos;
 
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentWeek, { weekStartsOn: 0 }),
@@ -154,7 +152,7 @@ const Calendario = () => {
   const diasDoMes = Array.from({ length: totalDiasNoMes }, (_, i) => new Date(ano, mes, i + 1));
 
   const getCursosForSalaAndDay = (salaId: string, day: Date) => {
-    return cursos?.filter(curso => {
+    return cursosFiltrados?.filter(curso => {
       if (curso.sala_id !== salaId) return false;
       
       const cursoStart = parseISO(curso.inicio);
@@ -248,16 +246,12 @@ const Calendario = () => {
     setDialogOpen(false);
   };
 
-  const handleDownloadPDF = () => {
-    toast.success("Função de download será implementada em breve");
-  };
-
   const handleEditSuccess = () => {
     setEditDialogOpen(false);
     setCursoToEdit(null);
-    // Invalidar a query correta baseada no modo de visualização atual
-    const queryKey = viewMode === 'semana' ? 'cursos-semana' : 'cursos-mes';
-    queryClient.invalidateQueries({ queryKey: [queryKey] });
+    // Invalidar a query de cursos
+    queryClient.invalidateQueries({ queryKey: ['cursos-semana'] });
+    queryClient.invalidateQueries({ queryKey: ['cursos-mes'] });
     toast.success("Curso atualizado com sucesso!");
   };
 
@@ -328,13 +322,13 @@ const Calendario = () => {
     if (viewMode === 'semana') {
       salasToShow = salas.filter(sala => {
         return weekDaysFull.some(day => {
-          return (cursos || []).some(curso => curso.sala_id === sala.id && isWithinInterval(day, { start: parseISO(curso.inicio), end: parseISO(curso.fim) }));
+          return (cursosFiltrados || []).some(curso => curso.sala_id === sala.id && isWithinInterval(day, { start: parseISO(curso.inicio), end: parseISO(curso.fim) }));
         });
       });
     } else {
       // Mensal: pelo menos um curso no mês
       salasToShow = salas.filter(sala => {
-        return (cursos || []).some(curso => {
+        return (cursosFiltrados || []).some(curso => {
           if (curso.sala_id !== sala.id) return false;
           const inicio = parseISO(curso.inicio);
           const fim = parseISO(curso.fim);
@@ -349,7 +343,7 @@ const Calendario = () => {
   }
 
   // Estado de loading geral
-  const isLoading = loadingUnidades || loadingSalas || loadingProfessores || loadingCursos || isChangingWeek;
+  const isLoading = loadingCursos || isChangingWeek;
 
   // Paleta de cores pastel para cursos
   const cursoColors = [
@@ -394,7 +388,7 @@ const Calendario = () => {
   const linhasMensais = (salasToShow || []).flatMap((sala) => {
     const turnos = ['manha', 'tarde', 'noite'];
     return turnos.map((turno, turnoIdx) => {
-      const cursosTurno = (cursos || []).filter(curso =>
+      const cursosTurno = (cursosFiltrados || []).filter(curso =>
         curso.sala_id === sala.id &&
         curso.periodo === turno &&
         parseISO(curso.inicio) <= endMonth &&
@@ -439,7 +433,7 @@ const Calendario = () => {
       return (
         <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '') + ' h-[56px]'}>
           {turnoIdx === 0 ? (
-            <TableCell rowSpan={turnos.filter(t => (cursos || []).some(curso => curso.sala_id === sala.id && curso.periodo === t && parseISO(curso.inicio) <= endMonth && parseISO(curso.fim) >= startMonth)).length} className="font-medium align-middle h-full" style={{ height: '100%' }}>
+            <TableCell rowSpan={turnos.filter(t => (cursosFiltrados || []).some(curso => curso.sala_id === sala.id && curso.periodo === t && parseISO(curso.inicio) <= endMonth && parseISO(curso.fim) >= startMonth)).length} className="font-medium align-middle h-full" style={{ height: '100%' }}>
               <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
                 <div className="font-semibold text-sm">{sala.nome}</div>
                 <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
