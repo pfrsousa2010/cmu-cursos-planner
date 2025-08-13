@@ -202,9 +202,6 @@ const Cursos = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Cursos</h1>
-            <p className="text-muted-foreground">
-              Gerencie os cursos da CMU
-            </p>
           </div>
 
           {canManageCursos && (

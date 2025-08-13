@@ -452,10 +452,7 @@ const Calendario = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>
-            <p className="text-muted-foreground">
-              Visualização semanal ou mensal dos cursos por sala
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>            
           </div>
           <div className="flex gap-2 items-center">
             <Button
