@@ -345,7 +345,7 @@ const Calendario = () => {
   // Estado de loading geral
   const isLoading = loadingCursos || isChangingWeek;
 
-  // Paleta de cores pastel para cursos
+  // Paleta de cores pastel para cursos - expandida para mais variedade
   const cursoColors = [
     'bg-blue-200 border-blue-400',
     'bg-green-200 border-green-400',
@@ -359,15 +359,46 @@ const Calendario = () => {
     'bg-rose-200 border-rose-400',
     'bg-indigo-200 border-indigo-400',
     'bg-teal-200 border-teal-400',
+    'bg-emerald-200 border-emerald-400',
+    'bg-violet-200 border-violet-400',
+    'bg-fuchsia-200 border-fuchsia-400',
+    'bg-sky-200 border-sky-400',
+    'bg-slate-200 border-slate-400',
+    'bg-zinc-200 border-zinc-400',
+    'bg-stone-200 border-stone-400',
+    'bg-red-200 border-red-400',
+    'bg-orange-200 border-orange-400',
+    'bg-amber-200 border-amber-400',
+    'bg-yellow-200 border-yellow-400',
+    'bg-lime-200 border-lime-400',
+    'bg-green-200 border-green-400',
+    'bg-emerald-200 border-emerald-400',
+    'bg-teal-200 border-teal-400',
+    'bg-cyan-200 border-cyan-400',
+    'bg-sky-200 border-sky-400',
+    'bg-blue-200 border-blue-400',
+    'bg-indigo-200 border-indigo-400',
+    'bg-violet-200 border-violet-400',
+    'bg-purple-200 border-purple-400',
+    'bg-fuchsia-200 border-fuchsia-400',
+    'bg-pink-200 border-pink-400',
+    'bg-rose-200 border-rose-400',
   ];
-  // Função para pegar cor baseada no id do curso
+  // Função para pegar cor baseada no id do curso - versão melhorada
   function getCursoColor(cursoId: string) {
-    let hash = 0;
-    for (let i = 0; i < cursoId.length; i++) {
-      hash = ((hash << 5) - hash) + cursoId.charCodeAt(i);
-      hash = hash & hash;
-    }
-    return cursoColors[Math.abs(hash) % cursoColors.length];
+    // Criar um mapeamento único de cores para cada curso
+    if (!cursosFiltrados) return cursoColors[0];
+    
+    // Encontrar o índice do curso na lista filtrada
+    const cursoIndex = cursosFiltrados.findIndex(c => c.id === cursoId);
+    if (cursoIndex === -1) return cursoColors[0];
+    
+    // Usar o índice para garantir cores únicas
+    const colorIndex = cursoIndex % cursoColors.length;
+    const curso = cursosFiltrados[cursoIndex];
+    
+    console.log(`Curso ${cursoId} - ${curso.titulo} - Índice: ${cursoIndex} - Cor: ${colorIndex} - ${cursoColors[colorIndex]}`);
+    return cursoColors[colorIndex];
   }
 
   // Função para pegar cor baseada no turno (para barras do mensal)
@@ -411,7 +442,7 @@ const Calendario = () => {
           <TableCell
             key={`curso-${curso.id}`}
             colSpan={endIdx - startIdx + 1}
-            className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getTurnoBarColor(curso.periodo)} border cursor-pointer`}
+            className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getCursoColor(curso.id)} border cursor-pointer`}
             style={{ minWidth: (endIdx - startIdx + 1) * 20 }}
             onClick={() => handleCursoClick(curso)}
           >
