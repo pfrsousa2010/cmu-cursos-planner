@@ -26,11 +26,12 @@ interface Curso {
 
 interface CursoFormProps {
   curso?: Curso;
+  cursoParaDuplicar?: Curso;
   onSuccess: () => void;
   onCancel?: () => void;
 }
 
-const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
+const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormProps) => {
   const [titulo, setTitulo] = useState("");
   const [professor, setProfessor] = useState("");
   const [inicio, setInicio] = useState("");
@@ -87,21 +88,22 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
     enabled: !!unidadeId
   });
 
-  // Query adicional para buscar salas quando não há unidadeId (para edição)
+  // Query adicional para buscar salas quando não há unidadeId (para edição ou duplicação)
   const { data: salasCurso } = useQuery({
-    queryKey: ['salas-curso', curso?.salas?.id],
+    queryKey: ['salas-curso', curso?.salas?.id, cursoParaDuplicar?.salas?.id],
     queryFn: async () => {
-      if (!curso?.salas?.id) return [];
+      const salaId = curso?.salas?.id || cursoParaDuplicar?.salas?.id;
+      if (!salaId) return [];
       const { data } = await supabase
         .from('salas')
         .select('*')
-        .eq('id', curso.salas.id);
+        .eq('id', salaId);
       return data || [];
     },
-    enabled: !!curso?.salas?.id
+    enabled: !!(curso?.salas?.id || cursoParaDuplicar?.salas?.id)
   });
 
-  // Loading de 1 segundos sempre que o modal for aberto
+  // Loading sempre que o modal for aberto (edição, duplicação ou novo)
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
@@ -109,9 +111,9 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [curso]);
+  }, [curso, cursoParaDuplicar]);
 
-  // Carregar dados do curso para edição
+  // Carregar dados do curso para edição ou duplicação
   useEffect(() => {
     if (curso) {
       setTitulo(curso.titulo || "");
@@ -149,6 +151,43 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
       };
 
       loadCursoData();
+    } else if (cursoParaDuplicar) {
+      // Carregar dados do curso para duplicação
+      setTitulo(`${cursoParaDuplicar.titulo}`);
+      setProfessor(cursoParaDuplicar.professor || "");
+      setInicio(cursoParaDuplicar.inicio || "");
+      setFim(cursoParaDuplicar.fim || "");
+      setPeriodo(cursoParaDuplicar.periodo || "");
+      setUnidadeId(cursoParaDuplicar.unidades?.id || "");
+      setUnidadeNome(cursoParaDuplicar.unidades?.nome || "");
+      setSalaId(cursoParaDuplicar.salas?.id || "");
+      setSalaNome(cursoParaDuplicar.salas?.nome || "");
+      setStatus("ativo"); // Sempre ativo para duplicação
+
+      // Carregar matérias e insumos do curso para duplicação
+      const loadCursoData = async () => {
+        try {
+          const [materiasRes, insumosRes] = await Promise.all([
+            supabase.from('curso_materias').select('materia_id').eq('curso_id', cursoParaDuplicar.id),
+            supabase.from('curso_insumos').select('insumo_id, quantidade').eq('curso_id', cursoParaDuplicar.id)
+          ]);
+
+          if (materiasRes.data) {
+            setSelectedMaterias(materiasRes.data.map(m => m.materia_id));
+          }
+
+          if (insumosRes.data) {
+            setSelectedInsumos(insumosRes.data.map(i => ({
+              id: i.insumo_id,
+              quantidade: i.quantidade
+            })));
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados do curso para duplicação:', error);
+        }
+      };
+
+      loadCursoData();
     } else {
       // Limpar formulário para novo curso
       setTitulo("");
@@ -164,26 +203,28 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
       setSelectedMaterias([]);
       setSelectedInsumos([]);
     }
-  }, [curso]);
+  }, [curso, cursoParaDuplicar]);
 
   // Garantir que os nomes sejam atualizados quando as queries carregarem
   useEffect(() => {
     // Só atualizar se não houver uma seleção manual do usuário
-    if (curso && unidades && unidades.length > 0 && curso.unidades?.id && !unidadeId) {
-      const unidade = unidades.find(u => u.id === curso.unidades.id);
+    const cursoAtual = curso || cursoParaDuplicar;
+    if (cursoAtual && unidades && unidades.length > 0 && cursoAtual.unidades?.id && !unidadeId) {
+      const unidade = unidades.find(u => u.id === cursoAtual.unidades.id);
       if (unidade) {
         setUnidadeNome(unidade.nome);
         setUnidadeId(unidade.id);
       }
     }
-  }, [curso, unidades, unidadeId]);
+  }, [curso, cursoParaDuplicar, unidades, unidadeId]);
 
   useEffect(() => {
     // Só atualizar se não houver uma seleção manual do usuário
-    if (curso && !salaId) {
+    const cursoAtual = curso || cursoParaDuplicar;
+    if (cursoAtual && !salaId) {
       // Tentar encontrar a sala nas salas da unidade
-      if (salas && salas.length > 0 && curso.salas?.id) {
-        const sala = salas.find(s => s.id === curso.salas.id);
+      if (salas && salas.length > 0 && cursoAtual.salas?.id) {
+        const sala = salas.find(s => s.id === cursoAtual.salas.id);
         if (sala) {
           setSalaNome(sala.nome);
           setSalaId(sala.id);
@@ -192,15 +233,15 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
       }
       
       // Se não encontrou, tentar nas salas do curso
-      if (salasCurso && salasCurso.length > 0 && curso.salas?.id) {
-        const sala = salasCurso.find(s => s.id === curso.salas.id);
+      if (salasCurso && salasCurso.length > 0 && cursoAtual.salas?.id) {
+        const sala = salasCurso.find(s => s.id === cursoAtual.salas.id);
         if (sala) {
           setSalaNome(sala.nome);
           setSalaId(sala.id);
         }
       }
     }
-  }, [curso, salas, salasCurso, salaId]);
+  }, [curso, cursoParaDuplicar, salas, salasCurso, salaId]);
 
   // Atualizar unidadeNome quando unidadeId mudar (seleção manual do usuário)
   useEffect(() => {
@@ -208,9 +249,14 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
       const unidade = unidades.find(u => u.id === unidadeId);
       if (unidade) {
         setUnidadeNome(unidade.nome);
+        // Limpar sala quando mudar unidade (exceto se for edição)
+        if (!curso) {
+          setSalaId("");
+          setSalaNome("");
+        }
       }
     }
-  }, [unidadeId, unidades]);
+  }, [unidadeId, unidades, curso]);
 
   // Atualizar salaNome quando salaId mudar (seleção manual do usuário)
   useEffect(() => {
@@ -233,7 +279,7 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
         if (error) throw error;
         return curso.id;
       } else {
-        // Criar novo curso
+        // Criar novo curso (novo ou duplicado)
         const { data: newCurso, error } = await supabase
           .from('cursos')
           .insert(data)
@@ -273,12 +319,21 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
 
       queryClient.invalidateQueries({ queryKey: ['cursos'] });
       queryClient.invalidateQueries({ queryKey: ['cursos-semana'] });
-      toast.success(curso ? "Curso atualizado com sucesso!" : "Curso criado com sucesso!");
+      
+      if (curso) {
+        toast.success("Curso atualizado com sucesso!");
+      } else if (cursoParaDuplicar) {
+        toast.success("Curso duplicado com sucesso!");
+      } else {
+        toast.success("Curso criado com sucesso!");
+      }
+      
       onSuccess();
     },
     onError: (error) => {
       console.error('Erro ao salvar curso:', error);
-      toast.error("Erro ao salvar curso: " + error.message);
+      const action = curso ? "atualizar" : cursoParaDuplicar ? "duplicar" : "criar";
+      toast.error(`Erro ao ${action} curso: ` + error.message);
     }
   });
 
@@ -361,12 +416,20 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
     selectedMaterias
   ]);
 
+  // Determinar o modo do formulário
+  const isEditMode = !!curso;
+  const isDuplicateMode = !!cursoParaDuplicar;
+  const isNewMode = !curso && !cursoParaDuplicar;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Indicador de validação */}
       {!isFormValid && !isLoading && (
         <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
-          <p className="font-medium mb-2">⚠️ Campos obrigatórios não preenchidos ou inválidos:</p>
+          <p className="font-medium mb-2">
+            ⚠️ Campos obrigatórios não preenchidos ou inválidos
+            {isDuplicateMode && " para duplicação"}:
+          </p>
           <ul className="list-disc list-inside space-y-1">
             {!titulo.trim() && <li>Título do curso</li>}
             {!professor.trim() && <li>Professor</li>}
@@ -389,7 +452,9 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
         <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
             <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse mx-auto" />
-            <p className="text-lg font-medium text-muted-foreground">Carregando formulário...</p>
+            <p className="text-lg font-medium text-muted-foreground">
+              {isDuplicateMode ? "Carregando dados para duplicação..." : "Carregando formulário..."}
+            </p>
           </div>
         </div>
       )}
@@ -642,7 +707,11 @@ const CursoForm = ({ curso, onSuccess, onCancel }: CursoFormProps) => {
 
       <div className="flex gap-4">
         <Button type="submit" disabled={mutation.isPending || !isFormValid}>
-          {mutation.isPending ? "Salvando..." : (curso ? "Atualizar" : "Criar")}
+          {mutation.isPending ? "Salvando..." : (
+            curso ? "Atualizar" : 
+            cursoParaDuplicar ? "Duplicar" : 
+            "Criar"
+          )}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel || onSuccess}>
           Cancelar

@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Plus, Edit, Trash2, FileText, Download, Search, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Download, Search, Filter, Copy, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CursoForm from "@/components/CursoForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CursoInsumosList from "@/components/CursoInsumosList";
 
 interface Curso {
@@ -33,6 +34,7 @@ interface Curso {
 const Cursos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
+  const [duplicatingCurso, setDuplicatingCurso] = useState<Curso | null>(null);
   const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
   const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
   
@@ -134,8 +136,14 @@ const Cursos = () => {
   });
 
   const handleEdit = (curso: Curso) => {
-    console.log(curso);
     setEditingCurso(curso);
+    setDuplicatingCurso(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleDuplicate = (curso: Curso) => {
+    setDuplicatingCurso(curso);
+    setEditingCurso(null);
     setIsDialogOpen(true);
   };
 
@@ -148,6 +156,7 @@ const Cursos = () => {
   const handleDialogClose = () => {
     setIsDialogOpen(false);
     setEditingCurso(null);
+    setDuplicatingCurso(null);
   };
 
   const handleViewInsumos = (curso: Curso) => {
@@ -175,6 +184,35 @@ const Cursos = () => {
       'noite': 'bg-blue-100 text-blue-800'
     };
     return colors[periodo as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  // Gerar cor única para cada unidade
+  const getUnidadeColor = (unidadeNome: string) => {
+    const colors = [
+      'bg-purple-100 text-purple-800',
+      'bg-indigo-100 text-indigo-800',
+      'bg-blue-100 text-blue-800',
+      'bg-green-100 text-green-800',
+      'bg-emerald-100 text-emerald-800',
+      'bg-teal-100 text-teal-800',
+      'bg-cyan-100 text-cyan-800',
+      'bg-sky-100 text-sky-800',
+      'bg-violet-100 text-violet-800',
+      'bg-fuchsia-100 text-fuchsia-800',
+      'bg-pink-100 text-pink-800',
+      'bg-rose-100 text-rose-800',
+      'bg-orange-100 text-orange-800',
+      'bg-amber-100 text-amber-800',
+      'bg-lime-100 text-lime-800'
+    ];
+    
+    // Usar o nome da unidade para gerar um índice consistente
+    let hash = 0;
+    for (let i = 0; i < unidadeNome.length; i++) {
+      hash = unidadeNome.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   };
 
   const clearFilters = () => {
@@ -205,25 +243,29 @@ const Cursos = () => {
           </div>
 
           {canManageCursos && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingCurso(null)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Curso
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingCurso ? "Editar Curso" : "Novo Curso"}
-                  </DialogTitle>
-                </DialogHeader>
-                <CursoForm 
-                  curso={editingCurso} 
-                  onSuccess={handleDialogClose}
-                />
-              </DialogContent>
-            </Dialog>
+                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => {
+                    setEditingCurso(null);
+                    setDuplicatingCurso(null);
+                  }}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Curso
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingCurso ? "Editar Curso" : duplicatingCurso ? "Duplicar Curso" : "Novo Curso"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <CursoForm 
+                    curso={editingCurso}
+                    cursoParaDuplicar={duplicatingCurso}
+                    onSuccess={handleDialogClose}
+                  />
+                </DialogContent>
+              </Dialog>
           )}
         </div>
 
@@ -375,59 +417,66 @@ const Cursos = () => {
                     </div>
                     
                     {canManageCursos && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(curso)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(curso.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                                                 <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => handleViewInsumos(curso)}>
+                             <FileText className="mr-2 h-4 w-4" />
+                             Ver Insumos
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => handleDuplicate(curso)}>
+                             <Copy className="mr-2 h-4 w-4" />
+                             Duplicar curso
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => handleEdit(curso)}>
+                             <Edit className="mr-2 h-4 w-4" />
+                             Editar curso
+                           </DropdownMenuItem>
+                           <DropdownMenuItem 
+                             onClick={() => handleDelete(curso.id)}
+                             className="text-red-600 focus:text-red-600"
+                           >
+                             <Trash2 className="mr-2 h-4 w-4" />
+                             Apagar curso
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <div>
-                        <span className="font-medium">Professor:</span> {curso.professor}
-                      </div>
-                      <div>
-                        <span className="font-medium">Unidade:</span> {curso.unidades?.nome}
-                      </div>
-                      <div>
-                        <span className="font-medium">Sala:</span> {curso.salas?.nome || 'Não definida'}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="font-medium">Início:</span> {format(new Date(curso.inicio  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                      </div>
-                      <div>
-                        <span className="font-medium">Fim:</span> {format(new Date(curso.fim  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                      </div>
-                      <div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewInsumos(curso)}
-                        >
-                          <FileText className="mr-2 h-4 w-4" />
-                          Ver Insumos
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
+                                 <CardContent>
+                   <div className="space-y-2">
+                     <div>
+                       <span className="font-medium">Professor:</span> {curso.professor}
+                     </div>
+                     <div>
+                       <span className="font-medium">Unidade:</span>
+                       {curso.unidades?.nome && (
+                         <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUnidadeColor(curso.unidades.nome)}`}>
+                           {curso.unidades.nome}
+                         </span>
+                       )}
+                     </div>
+                     <div>
+                       <span className="font-medium">Sala:</span> {curso.salas?.nome || 'Não definida'}
+                     </div>
+                     <div>
+                       <span className="font-medium">Início:</span> {format(new Date(curso.inicio  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                     </div>
+                     <div>
+                       <span className="font-medium">Fim:</span> {format(new Date(curso.fim  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                     </div>
+                   </div>
+                 </CardContent>
               </Card>
             ))
           ) : (
