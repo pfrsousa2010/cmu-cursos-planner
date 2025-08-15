@@ -109,7 +109,17 @@ const Calendario = () => {
         });
       }
     });
-    return Array.from(uniqueSalas.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+    
+    // Ordenar por unidade primeiro, depois por nome da sala
+    return Array.from(uniqueSalas.values()).sort((a, b) => {
+      // Primeiro ordenar por nome da unidade
+      const unidadeComparison = (a.unidades?.nome || '').localeCompare(b.unidades?.nome || '');
+      if (unidadeComparison !== 0) {
+        return unidadeComparison;
+      }
+      // Se a unidade for a mesma, ordenar por nome da sala
+      return a.nome.localeCompare(b.nome);
+    });
   }, [cursos]);
 
   const professores = React.useMemo(() => {
