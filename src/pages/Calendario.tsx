@@ -322,16 +322,19 @@ const Calendario = () => {
     setSelectedProfessor('all');
   };
 
-  // Mostrar salas disponíveis (todas as salas para manter consistência entre visões)
+  // Mostrar apenas salas que têm cursos após a aplicação dos filtros
   let salasToShow: typeof salas = [];
-  if (salas) {
-    // Sempre mostrar todas as salas disponíveis para manter a estrutura da tabela
-    salasToShow = [...salas];
-    
-    // Filtro por sala específico
-    if (selectedSala !== "all") {
-      salasToShow = salasToShow.filter(sala => sala.id === selectedSala);
-    }
+  if (salas && cursosFiltrados) {
+    // Filtrar salas que têm pelo menos um curso após a aplicação dos filtros
+    salasToShow = salas.filter(sala => {
+      // Se um filtro de sala específica está ativo, mostrar apenas essa sala
+      if (selectedSala !== "all") {
+        return sala.id === selectedSala;
+      }
+      
+      // Verificar se a sala tem cursos após a aplicação dos filtros
+      return cursosFiltrados.some(curso => curso.sala_id === sala.id);
+    });
   }
 
   // Estado de loading geral
