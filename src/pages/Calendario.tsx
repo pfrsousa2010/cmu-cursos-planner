@@ -181,51 +181,47 @@ const Calendario = () => {
 
   // Função para gerar cor sutil baseada no nome da unidade
   const getUnidadeColor = (unidadeNome: string) => {
-    const colors = [
-      'bg-blue-50/50 border-l-4 border-l-blue-300',
-      'bg-green-50/50 border-l-4 border-l-green-300',
-      'bg-purple-50/50 border-l-4 border-l-purple-300',
-      'bg-orange-50/50 border-l-4 border-l-orange-300',
-      'bg-pink-50/50 border-l-4 border-l-pink-300',
-      'bg-indigo-50/50 border-l-4 border-l-indigo-300',
-      'bg-teal-50/50 border-l-4 border-l-teal-300',
-      'bg-amber-50/50 border-l-4 border-l-amber-300',
-      'bg-cyan-50/50 border-l-4 border-l-cyan-300',
-      'bg-emerald-50/50 border-l-4 border-l-emerald-300'
-    ];
+    // Mapeamento fixo de cores para cada unidade para manter consistência
+    const unidadeColors: { [key: string]: string } = {
+      'Unidade Centro': 'bg-green-50/50',
+      'Unidade Sul': 'bg-blue-50/50',
+      'Unidade Norte': 'bg-purple-50/50',
+      'Unidade Leste': 'bg-orange-50/50',
+      'Unidade Oeste': 'bg-pink-50/50'
+    };
     
-    // Gerar índice baseado no nome da unidade (hash simples)
-    let hash = 0;
-    for (let i = 0; i < unidadeNome.length; i++) {
-      hash = ((hash << 5) - hash) + unidadeNome.charCodeAt(i);
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    
-    return colors[Math.abs(hash) % colors.length];
+    // Retornar cor específica se existir, senão usar fallback
+    return unidadeColors[unidadeNome] || 'bg-gray-50/50';
   };
 
   // Função para obter cor do texto da unidade
   const getUnidadeTextColor = (unidadeNome: string) => {
-    const colors = [
-      'text-blue-700',
-      'text-green-700',
-      'text-purple-700',
-      'text-orange-700',
-      'text-pink-700',
-      'text-indigo-700',
-      'text-teal-700',
-      'text-amber-700',
-      'text-cyan-700',
-      'text-emerald-700'
-    ];
+    // Mapeamento fixo de cores de texto para cada unidade para manter consistência
+    const unidadeTextColors: { [key: string]: string } = {
+      'Unidade Centro': 'text-green-700',
+      'Unidade Sul': 'text-blue-700',
+      'Unidade Norte': 'text-purple-700',
+      'Unidade Leste': 'text-orange-700',
+      'Unidade Oeste': 'text-pink-700'
+    };
     
-    let hash = 0;
-    for (let i = 0; i < unidadeNome.length; i++) {
-      hash = ((hash << 5) - hash) + unidadeNome.charCodeAt(i);
-      hash = hash & hash;
-    }
+    // Retornar cor específica se existir, senão usar fallback
+    return unidadeTextColors[unidadeNome] || 'text-gray-700';
+  };
+
+  // Função para obter a borda esquerda da unidade
+  const getUnidadeBorder = (unidadeNome: string) => {
+    // Mapeamento fixo de bordas para cada unidade para manter consistência
+    const unidadeBorders: { [key: string]: string } = {
+      'Unidade Centro': 'border-l-4 border-l-green-300',
+      'Unidade Sul': 'border-l-4 border-l-blue-300',
+      'Unidade Norte': 'border-l-4 border-l-purple-300',
+      'Unidade Leste': 'border-l-4 border-l-orange-300',
+      'Unidade Oeste': 'border-l-4 border-l-pink-300'
+    };
     
-    return colors[Math.abs(hash) % colors.length];
+    // Retornar borda específica se existir, senão usar fallback
+    return unidadeBorders[unidadeNome] || 'border-l-4 border-l-gray-300';
   };
 
   const handleCursoClick = (curso: Curso) => {
@@ -316,26 +312,12 @@ const Calendario = () => {
     setSelectedProfessor('all');
   };
 
-  // Mostrar apenas salas com cursos na semana/mês
+  // Mostrar salas disponíveis (todas as salas para manter consistência entre visões)
   let salasToShow: typeof salas = [];
   if (salas) {
-    if (viewMode === 'semana') {
-      salasToShow = salas.filter(sala => {
-        return weekDaysFull.some(day => {
-          return (cursosFiltrados || []).some(curso => curso.sala_id === sala.id && isWithinInterval(day, { start: parseISO(curso.inicio), end: parseISO(curso.fim) }));
-        });
-      });
-    } else {
-      // Mensal: pelo menos um curso no mês
-      salasToShow = salas.filter(sala => {
-        return (cursosFiltrados || []).some(curso => {
-          if (curso.sala_id !== sala.id) return false;
-          const inicio = parseISO(curso.inicio);
-          const fim = parseISO(curso.fim);
-          return fim >= startMonth && inicio <= endMonth;
-        });
-      });
-    }
+    // Sempre mostrar todas as salas disponíveis para manter a estrutura da tabela
+    salasToShow = [...salas];
+    
     // Filtro por sala específico
     if (selectedSala !== "all") {
       salasToShow = salasToShow.filter(sala => sala.id === selectedSala);
@@ -415,7 +397,7 @@ const Calendario = () => {
     }
   };
 
-  // Geração das linhas da tabela mensal (corrige erro de sintaxe)
+  // Geração das linhas da tabela mensal
   const linhasMensais = (salasToShow || []).flatMap((sala) => {
     const turnos = ['manha', 'tarde', 'noite'];
     return turnos.map((turno, turnoIdx) => {
@@ -425,58 +407,76 @@ const Calendario = () => {
         parseISO(curso.inicio) <= endMonth &&
         parseISO(curso.fim) >= startMonth
       ).sort((a, b) => parseISO(a.inicio).getTime() - parseISO(b.inicio).getTime());
-      if (cursosTurno.length === 0) return null;
+      
+      // Sempre criar uma linha, mesmo sem cursos, para mostrar sala/unidade
       const cells = [];
       let currentDay = 0;
-      for (const curso of cursosTurno) {
-        const inicio = parseISO(curso.inicio);
-        const fim = parseISO(curso.fim);
-        const startIdx = Math.max(0, inicio.getMonth() === mes ? inicio.getDate() - 1 : 0);
-        const endIdx = Math.min(totalDiasNoMes - 1, fim.getMonth() === mes ? fim.getDate() - 1 : totalDiasNoMes - 1);
-        if (startIdx > currentDay) {
-          for (let i = currentDay; i < startIdx; i++) {
-            cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
+      
+      if (cursosTurno.length > 0) {
+        // Adicionar células para cursos existentes
+        for (const curso of cursosTurno) {
+          const inicio = parseISO(curso.inicio);
+          const fim = parseISO(curso.fim);
+          const startIdx = Math.max(0, inicio.getMonth() === mes ? inicio.getDate() - 1 : 0);
+          const endIdx = Math.min(totalDiasNoMes - 1, fim.getMonth() === mes ? fim.getDate() - 1 : totalDiasNoMes - 1);
+          
+          if (startIdx > currentDay) {
+            for (let i = currentDay; i < startIdx; i++) {
+              cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
+            }
           }
+          
+          cells.push(
+            <TableCell
+              key={`curso-${curso.id}`}
+              colSpan={endIdx - startIdx + 1}
+              className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getCursoColor(curso.id)} border cursor-pointer`}
+              style={{ minWidth: (endIdx - startIdx + 1) * 20 }}
+              onClick={() => handleCursoClick(curso)}
+            >
+              <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 24 }}>
+                <span className="block w-full truncate" style={{ fontSize: '0.8rem' }}>
+                  {curso.titulo} - {curso.professor} <br />
+                  <span className="text-xs">{format(parseISO(curso.inicio), 'dd/MM')} - {format(parseISO(curso.fim), 'dd/MM')}</span>
+                </span>
+              </div>
+            </TableCell>
+          );
+          currentDay = endIdx + 1;
         }
-        cells.push(
-          <TableCell
-            key={`curso-${curso.id}`}
-            colSpan={endIdx - startIdx + 1}
-            className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getCursoColor(curso.id)} border cursor-pointer`}
-            style={{ minWidth: (endIdx - startIdx + 1) * 20 }}
-            onClick={() => handleCursoClick(curso)}
-          >
-            <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 24 }}>
-              <span className="block w-full truncate" style={{ fontSize: '0.8rem' }}>
-                {curso.titulo} - {curso.professor} <br />
-                <span className="text-xs">{format(parseISO(curso.inicio), 'dd/MM')} - {format(parseISO(curso.fim), 'dd/MM')}</span>
-              </span>
-            </div>
-          </TableCell>
-        );
-        currentDay = endIdx + 1;
       }
+      
+      // Preencher células restantes com células vazias
       if (currentDay < totalDiasNoMes) {
         for (let i = currentDay; i < totalDiasNoMes; i++) {
           cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
         }
       }
+      
       return (
         <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '') + ' h-[56px]'}>
           {turnoIdx === 0 ? (
-            <TableCell rowSpan={turnos.filter(t => (cursosFiltrados || []).some(curso => curso.sala_id === sala.id && curso.periodo === t && parseISO(curso.inicio) <= endMonth && parseISO(curso.fim) >= startMonth)).length} className="font-medium align-middle h-full" style={{ height: '100%' }}>
+            <TableCell 
+              rowSpan={3} 
+              className={`font-medium align-middle h-full ${getUnidadeBorder(sala.unidades?.nome || '')}`}
+              style={{ height: '100%' }}
+            >
               <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
                 <div className="font-semibold text-sm">{sala.nome}</div>
-                <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>{sala.unidades?.nome}</div>
+                <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>
+                  {sala.unidades?.nome}
+                </div>
               </div>
             </TableCell>
           ) : null}
-          <TableCell className="font-medium align-middle w-16 text-right pr-2 h-[56px]">{formatPeriodo(turno)}</TableCell>
+          <TableCell className="font-medium align-middle w-16 text-right pr-2 h-[56px]">
+            {formatPeriodo(turno)}
+          </TableCell>
           {cells}
         </TableRow>
       );
     });
-  }).filter(Boolean);
+  });
 
   return (
     <Layout>
