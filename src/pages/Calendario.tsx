@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Edit, Download, FileText } from "lucide-react";
@@ -498,23 +499,14 @@ const Calendario = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>            
           </div>
-          <div className="flex gap-2 items-center">
-            <Button
-              variant={viewMode === 'semana' ? 'default' : 'outline'}
-              size="sm"
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">Visão Semanal</span>
+            <Switch
+              checked={viewMode === 'mes'}
+              onCheckedChange={(checked) => setViewMode(checked ? 'mes' : 'semana')}
               disabled={isLoading}
-              onClick={() => setViewMode('semana')}
-            >
-              Visão Semanal
-            </Button>
-            <Button
-              variant={viewMode === 'mes' ? 'default' : 'outline'}
-              size="sm"
-              disabled={isLoading}
-              onClick={() => setViewMode('mes')}
-            >
-              Visão Mensal
-            </Button>
+            />
+            <span className="text-sm font-medium">Visão Mensal</span>
           </div>
         </div>
 
