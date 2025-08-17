@@ -97,6 +97,7 @@ const Calendario = () => {
     return Array.from(uniqueUnidades.values()).sort((a, b) => a.nome.localeCompare(b.nome));
   }, [cursos]);
 
+  // Filtrar salas baseado na unidade selecionada
   const salas = React.useMemo(() => {
     if (!cursos) return [];
     const uniqueSalas = new Map();
@@ -123,11 +124,45 @@ const Calendario = () => {
     });
   }, [cursos]);
 
+  // Filtrar professores baseado na unidade selecionada
   const professores = React.useMemo(() => {
     if (!cursos) return [];
     const uniqueProfessores = [...new Set(cursos.map(curso => curso.professor))];
     return uniqueProfessores.sort();
   }, [cursos]);
+
+  // Filtrar salas baseado na unidade selecionada para os filtros
+  const salasFiltradas = React.useMemo(() => {
+    if (!cursos) return [];
+    
+    // Se nenhuma unidade específica está selecionada, mostrar todas as salas
+    if (selectedUnidade === "all") {
+      return salas;
+    }
+    
+    // Filtrar apenas salas da unidade selecionada
+    return salas.filter(sala => sala.unidade_id === selectedUnidade);
+  }, [salas, selectedUnidade]);
+
+  // Filtrar professores baseado na unidade selecionada para os filtros
+  const professoresFiltrados = React.useMemo(() => {
+    if (!cursos) return [];
+    
+    // Se nenhuma unidade específica está selecionada, mostrar todos os professores
+    if (selectedUnidade === "all") {
+      return professores;
+    }
+    
+    // Filtrar apenas professores que têm cursos na unidade selecionada
+    const professoresUnidade = new Set<string>();
+    cursos.forEach(curso => {
+      if (curso.unidade_id === selectedUnidade) {
+        professoresUnidade.add(curso.professor);
+      }
+    });
+    
+    return Array.from(professoresUnidade).sort();
+  }, [cursos, selectedUnidade, professores]);
 
   // Filtrar cursos baseado nos filtros selecionados
   const cursosFiltrados = React.useMemo(() => {
@@ -393,7 +428,6 @@ const Calendario = () => {
     const colorIndex = cursoIndex % cursoColors.length;
     const curso = cursosFiltrados[cursoIndex];
     
-    console.log(`Curso ${cursoId} - ${curso.titulo} - Índice: ${cursoIndex} - Cor: ${colorIndex} - ${cursoColors[colorIndex]}`);
     return cursoColors[colorIndex];
   }
 
@@ -551,7 +585,7 @@ const Calendario = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as salas</SelectItem>
-                    {salas?.map(sala => (
+                    {salasFiltradas?.map(sala => (
                       <SelectItem key={sala.id} value={sala.id}>
                         {sala.nome} - {sala.unidades?.nome}
                       </SelectItem>
@@ -572,7 +606,7 @@ const Calendario = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os professores</SelectItem>
-                    {professores?.map(professor => (
+                    {professoresFiltrados?.map(professor => (
                       <SelectItem key={professor} value={professor}>
                         {professor}
                       </SelectItem>
