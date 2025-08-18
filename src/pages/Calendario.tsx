@@ -554,15 +554,6 @@ const Calendario = () => {
         },
         columnStyles,
         didParseCell: function (data) {
-          // Ocultar a primeira linha da tabela (linha vazia)
-          console.log(`data.cell.raw: ${data.cell.raw} \n data.column.index: ${data.column.index} \n data.row.index: ${data.row.index} \n data.section: ${data.section}`);
-          // if (data.section === 'body' && data.row.index === 0) {
-          //   data.cell.styles.fillColor = [255, 255, 255]; // Fundo branco
-          //   data.cell.styles.textColor = [255, 255, 255]; // Texto branco (invisível)
-          //   data.cell.styles.lineWidth = 0; // Sem bordas
-          // }
-          
-          // Mesclar células da coluna Turno quando o valor for o mesmo
           if (data.section === 'body' && data.column.index === 0 && data.row.index >= 0) {
             const currentValue = tableData[data.row.index][0];
             const prevValue = data.row.index > 0 ? tableData[data.row.index - 1][0] : null;
@@ -623,17 +614,21 @@ const Calendario = () => {
               data.cell.styles.fillColor = [255, 255, 255]; // Fundo branco para células mescladas
             }
           }
-        },
-        didDrawPage: function (data) {
-          // Rodapé com numeração de páginas
-          const pageHeight = doc.internal.pageSize.getHeight();
-          doc.setFontSize(8);
-          doc.setTextColor(100);
-          doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
-          const pageCount = doc.getNumberOfPages();
-          doc.text(`Página ${data.pageNumber} de ${pageCount}`, 280, pageHeight - 10, { align: 'right' });
         }
       });
+      
+      // Após a renderização da tabela, atualizar a numeração de todas as páginas
+      const finalTotalPages = doc.getNumberOfPages();
+      
+      // Atualizar a numeração de todas as páginas
+      for (let pageNum = 1; pageNum <= finalTotalPages; pageNum++) {
+        doc.setPage(pageNum);
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
+        doc.text(`Página ${pageNum} de ${finalTotalPages}`, 280, pageHeight - 10, { align: 'right' });
+      }
       
     } else {
       // Cabeçalho da tabela mensal
@@ -642,7 +637,7 @@ const Calendario = () => {
         headers.push(String(i + 1).padStart(2, '0'));
       });
       
-      // Dados da tabela mensal
+      // Dados da tabela mensal com novo estilo
       salasToShow.forEach(sala => {
         const turnos = ['manha', 'tarde', 'noite'];
         turnos.forEach(turno => {
@@ -651,19 +646,35 @@ const Calendario = () => {
             formatPeriodo(turno)
           ];
           
-          diasDoMes.forEach(dia => {
-            const cursosTurno = cursosFiltrados.filter(curso =>
-              curso.sala_id === sala.id &&
-              curso.periodo === turno &&
-              parseISO(curso.inicio) <= dia &&
-              parseISO(curso.fim) >= dia
-            );
+          // Inicializar todas as células dos dias como vazias
+          diasDoMes.forEach(() => {
+            row.push('');
+          });
+          
+          // Encontrar cursos para este turno e sala
+          const cursosTurno = cursosFiltrados.filter(curso =>
+            curso.sala_id === sala.id &&
+            curso.periodo === turno &&
+            parseISO(curso.inicio) <= endMonth &&
+            parseISO(curso.fim) >= startMonth
+          );
+          
+          // Aplicar cursos nas células apropriadas
+          cursosTurno.forEach(curso => {
+            const inicio = parseISO(curso.inicio);
+            const fim = parseISO(curso.fim);
+            const startIdx = Math.max(0, inicio.getMonth() === currentWeek.getMonth() ? inicio.getDate() - 1 : 0);
+            const endIdx = Math.min(diasDoMes.length - 1, fim.getMonth() === currentWeek.getMonth() ? fim.getDate() - 1 : diasDoMes.length - 1);
             
-            if (cursosTurno.length > 0) {
-              const curso = cursosTurno[0]; // Pegar o primeiro curso se houver múltiplos
-              row.push(`${curso.titulo}\n${curso.professor}`);
-            } else {
-              row.push('-');
+            // Calcular duração do curso
+            const duracao = endIdx - startIdx + 1;
+            
+            // Aplicar o curso apenas na primeira célula
+            row[startIdx + 2] = `${curso.titulo}\n${curso.professor}`;
+            
+            // Marcar as outras células para merge (serão tratadas no didParseCell)
+            for (let i = startIdx + 1; i <= endIdx; i++) {
+              row[i + 2] = `__MERGE_${startIdx + 2}_${duracao}`;
             }
           });
           
@@ -673,11 +684,11 @@ const Calendario = () => {
       
       // Configuração da tabela mensal
       const columnStyles: any = {
-        0: { cellWidth: 35, halign: 'center' as const },
-        1: { cellWidth: 20, halign: 'center' as const }
+        0: { cellWidth: 20, halign: 'center' as const },
+        1: { cellWidth: 10, halign: 'center' as const }
       };
       
-      // Largura das colunas dos dias (muito estreitas)
+      // Largura das colunas dos dias
       diasDoMes.forEach((_, i) => {
         columnStyles[i + 2] = { cellWidth: 8, halign: 'center' as const };
       });
@@ -685,8 +696,8 @@ const Calendario = () => {
       autoTable(doc, {
         head: [headers],
         body: tableData,
-        startY: infoY + 1, // Reduzido o espaçamento
-        margin: { left: 14, right: 0 }, // Diminu打da margem direita
+        startY: infoY + 1,
+        margin: { left: 14, right: 14 },
         theme: 'grid',
         headStyles: { 
           fillColor: [41, 128, 185], 
@@ -704,16 +715,103 @@ const Calendario = () => {
           cellPadding: 0.5
         },
         columnStyles,
-        didDrawPage: function (data) {
-          // Rodapé com numeração de páginas
-          const pageHeight = doc.internal.pageSize.getHeight();
-          doc.setFontSize(8);
-          doc.setTextColor(100);
-          doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
-          const pageCount = doc.getNumberOfPages();
-          doc.text(`Página ${data.pageNumber} de ${pageCount}`, 280, pageHeight - 10, { align: 'right' });
+        didParseCell: function (data) {
+          // Mesclar células da coluna Salas quando o valor for o mesmo
+          if (data.section === 'body' && data.column.index === 0 && data.row.index >= 0) {
+            const currentValue = tableData[data.row.index][1];
+            
+            // Verificar se é a primeira ocorrência desta sala
+            let isFirstOccurrence = true;
+            for (let i = data.row.index - 1; i >= 0; i--) {
+              if (tableData[i][1] === currentValue) {
+                isFirstOccurrence = false;
+                break;
+              }
+            }
+            
+            if (isFirstOccurrence) {
+              // É a primeira ocorrência da sala - contar quantas linhas consecutivas têm o mesmo valor
+              let rowSpan = 1;
+              for (let i = data.row.index + 1; i < tableData.length; i++) {
+                if (tableData[i][1] === currentValue) {
+                  rowSpan++;
+                } else {
+                  break;
+                }
+              }
+              
+              // Aplicar rowSpan para mesclar as células
+              data.cell.rowSpan = rowSpan;
+              // Centralizar verticalmente o texto nas células mescladas
+              data.cell.styles.valign = 'middle';
+            } else {
+              // Não é a primeira ocorrência - ocultar a célula (será mesclada com a primeira)
+              data.cell.rowSpan = 1;
+              data.cell.styles.cellPadding = 0;
+              data.cell.styles.fillColor = [255, 255, 255]; // Fundo branco para células mescladas
+            }
+          }
+          
+          // Tratar merge das células dos cursos e aplicar cores
+          if (data.section === 'body' && data.column.index >= 2 && data.row.index >= 0) {
+            const cellValue = tableData[data.row.index][data.column.index];
+            
+            // Verificar se é uma célula de merge
+            if (typeof cellValue === 'string' && cellValue.startsWith('__MERGE_')) {
+              // Ocultar células de merge
+              data.cell.text = [''];
+              data.cell.styles.cellPadding = 0;
+              data.cell.styles.fillColor = [255, 255, 255] as [number, number, number];
+            } else if (cellValue && cellValue !== '') {
+              // É uma célula com curso - aplicar cor e merge
+              const cursoInfo = cellValue.split('\n');
+              const cursoTitulo = cursoInfo[0];
+              
+              // Encontrar o curso correspondente para obter a cor
+              const curso = cursosFiltrados.find(c => 
+                c.titulo === cursoTitulo && 
+                c.sala_id === salasToShow[Math.floor(data.row.index / 3)].id &&
+                c.periodo === ['manha', 'tarde', 'noite'][data.row.index % 3]
+              );
+              
+              if (curso) {
+                // Aplicar cor do curso
+                const cursoColor = getCursoColorRGB(curso.id);
+                data.cell.styles.fillColor = cursoColor as [number, number, number];
+                
+                // Calcular duração do curso para aplicar colSpan
+                const inicio = parseISO(curso.inicio);
+                const fim = parseISO(curso.fim);
+                const startIdx = Math.max(0, inicio.getMonth() === currentWeek.getMonth() ? inicio.getDate() - 1 : 0);
+                const endIdx = Math.min(diasDoMes.length - 1, fim.getMonth() === currentWeek.getMonth() ? fim.getDate() - 1 : diasDoMes.length - 1);
+                const duracao = endIdx - startIdx + 1;
+                
+                // Aplicar colSpan para mesclar as células
+                if (duracao > 1) {
+                  data.cell.colSpan = duracao;
+                }
+                
+                // Centralizar o texto
+                data.cell.styles.halign = 'center';
+                data.cell.styles.valign = 'middle';
+              }
+            }
+          }
         }
       });
+
+      // Após a renderização da tabela, atualizar a numeração de todas as páginas
+      const finalTotalPages = doc.getNumberOfPages();
+      
+      // Atualizar a numeração de todas as páginas
+      for (let pageNum = 1; pageNum <= finalTotalPages; pageNum++) {
+        doc.setPage(pageNum);
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
+        doc.text(`Página ${pageNum} de ${finalTotalPages}`, 280, pageHeight - 10, { align: 'right' });
+      }
     }
     
     // Nome do arquivo
@@ -814,6 +912,43 @@ const Calendario = () => {
       default:
         return 'bg-gray-200 border-gray-400';
     }
+  };
+
+  // Função para converter cores Tailwind para RGB (para PDF)
+  const getCursoColorRGB = (cursoId: string) => {
+    if (!cursosFiltrados) return [200, 200, 200]; // Cinza padrão
+    
+    // Encontrar o índice do curso na lista filtrada
+    const cursoIndex = cursosFiltrados.findIndex(c => c.id === cursoId);
+    if (cursoIndex === -1) return [200, 200, 200];
+    
+    // Mapeamento de cores Tailwind para RGB (versões pastel)
+    const colorMap = [
+      [173, 216, 230], // bg-blue-200
+      [144, 238, 144], // bg-green-200
+      [255, 182, 193], // bg-pink-200
+      [255, 255, 224], // bg-yellow-200
+      [221, 160, 221], // bg-purple-200
+      [255, 218, 185], // bg-orange-200
+      [224, 255, 255], // bg-cyan-200
+      [255, 236, 139], // bg-amber-200
+      [190, 255, 0],   // bg-lime-200
+      [255, 192, 203], // bg-rose-200
+      [199, 199, 255], // bg-indigo-200
+      [175, 238, 238], // bg-teal-200
+      [144, 238, 144], // bg-emerald-200
+      [221, 160, 221], // bg-violet-200
+      [255, 192, 203], // bg-fuchsia-200
+      [135, 206, 235], // bg-sky-200
+      [211, 211, 211], // bg-slate-200
+      [220, 220, 220], // bg-zinc-200
+      [245, 245, 245], // bg-stone-200
+      [255, 182, 193], // bg-red-200
+    ];
+    
+    // Usar o índice para garantir cores únicas
+    const colorIndex = cursoIndex % colorMap.length;
+    return colorMap[colorIndex];
   };
 
   // Geração das linhas da tabela mensal
