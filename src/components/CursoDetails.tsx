@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { useUserRole } from "@/hooks/useUserRole";
 
 interface Curso {
   id: string;
@@ -23,11 +22,10 @@ interface CursoDetailsProps {
   curso: Curso;
   onEdit?: (curso: Curso) => void;
   onViewInsumos?: (curso: Curso) => void;
+  showActions?: boolean;
 }
 
-const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
-  const { canViewOnly } = useUserRole();
-  
+const CursoDetails = ({ curso, onEdit, onViewInsumos, showActions = true }: CursoDetailsProps) => {
   const formatPeriodo = (periodo: string) => {
     const periodos = {
       'manha': 'Manhã',
@@ -77,7 +75,7 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
         </div>
       </div>
 
-      {!canViewOnly && (
+      {showActions && (
         <div className="flex gap-2 pt-4">
           <Button 
             variant="outline" 

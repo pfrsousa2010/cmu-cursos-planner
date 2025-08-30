@@ -14,6 +14,7 @@ import {
   useCalendarioNavegacao, 
   useCalendarioExport 
 } from "@/hooks";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // Componentes
 import { 
@@ -45,6 +46,7 @@ const Calendario = () => {
 
   // Hooks personalizados
   const { currentWeek, isChangingWeek, navigateByViewMode } = useCalendarioNavegacao();
+  const { canViewOnly } = useUserRole();
   const { data: cursos, isLoading: loadingCursos } = useCalendarioCursos(currentWeek, viewMode);
   const {
     selectedUnidade,
@@ -204,7 +206,12 @@ const Calendario = () => {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
             {selectedCurso && (
-              <CursoDetails curso={selectedCurso} onEdit={handleEditCurso} onViewInsumos={handleViewInsumos} />
+              <CursoDetails 
+                curso={selectedCurso} 
+                onEdit={handleEditCurso} 
+                onViewInsumos={handleViewInsumos}
+                showActions={!canViewOnly}
+              />
             )}
           </DialogContent>
         </Dialog>
