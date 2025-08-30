@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 
 interface Insumo {
   id: string;
@@ -90,7 +90,7 @@ const Insumos = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este insumo?")) {
+    if (confirm("Tem certeza que deseja excluir este insumo? Esta ação não pode ser desfeita e pode causar impactos em cursos que possuem esse insumo.")) {
       const { error } = await supabase
         .from('insumos')
         .delete()
@@ -214,76 +214,54 @@ const Insumos = () => {
           )}
         </div>
 
-        {/* Barra de busca centralizada */}
-        <div className="flex justify-center">
-          <div className="w-full max-w-2xl relative">
+        <div className="flex justify-between items-center">
+          <div className="flex-1 max-w-sm">
             <Input
-              placeholder="Buscar insumo pelo nome..."
+              placeholder="Buscar insumo..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="text-center pr-10"
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                type="button"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="md:col-span-2 lg:col-span-3">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  {!canViewOnly && <TableHead>Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInsumos.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={canViewOnly ? 2 : 3} className="text-center text-muted-foreground">Nenhum insumo encontrado</TableCell>
-                  </TableRow>
-                ) : (
-                  filteredInsumos.map((insumo, idx) => (
-                    <TableRow key={insumo.id} className={idx % 2 === 1 ? 'bg-gray-50' : ''}>
-                      <TableCell>{insumo.nome}</TableCell>
-                      <TableCell>{new Date(insumo.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                      {!canViewOnly && (
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => startEdit(insumo)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(insumo.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+        <div className="bg-white rounded-lg border">
+          {filteredInsumos.length === 0 ? (
+            <div className="p-6 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? "Nenhum insumo encontrado para a busca" : "Nenhum insumo encontrado"}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {filteredInsumos.map((insumo) => (
+                <div key={insumo.id} className="p-4 flex justify-between items-center hover:bg-gray-50">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">{insumo.nome}</h3>
+                  </div>
+                  
+                  {!canViewOnly && (
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEdit(insumo)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(insumo.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Layout>
