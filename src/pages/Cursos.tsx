@@ -65,11 +65,11 @@ const Cursos = () => {
     }
   });
 
-  // Filtrar cursos
-  const filteredCursos = useMemo(() => {
-    if (!cursos) return [];
+  // Filtrar e agrupar cursos
+  const { filteredCursos, groupedCursos } = useMemo(() => {
+    if (!cursos) return { filteredCursos: [], groupedCursos: {} };
     
-    return cursos.filter(curso => {
+    const filtered = cursos.filter(curso => {
       // Filtro de busca por texto
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -100,6 +100,37 @@ const Cursos = () => {
       
       return true;
     });
+
+    // Agrupar por unidade e depois por sala
+    const grouped = filtered.reduce((acc, curso) => {
+      const unidadeNome = curso.unidades?.nome || 'Sem Unidade';
+      const salaNome = curso.salas?.nome || 'Sem Sala';
+      
+      if (!acc[unidadeNome]) {
+        acc[unidadeNome] = {};
+      }
+      
+      if (!acc[unidadeNome][salaNome]) {
+        acc[unidadeNome][salaNome] = [];
+      }
+      
+      acc[unidadeNome][salaNome].push(curso);
+      return acc;
+    }, {} as Record<string, Record<string, Curso[]>>);
+
+    // Ordenar cursos dentro de cada sala por turno (Manhã, Tarde, Noite)
+    Object.keys(grouped).forEach(unidadeNome => {
+      Object.keys(grouped[unidadeNome]).forEach(salaNome => {
+        grouped[unidadeNome][salaNome].sort((a, b) => {
+          const turnoOrder = { 'manha': 1, 'tarde': 2, 'noite': 3 };
+          const aOrder = turnoOrder[a.periodo as keyof typeof turnoOrder] || 4;
+          const bOrder = turnoOrder[b.periodo as keyof typeof turnoOrder] || 4;
+          return aOrder - bOrder;
+        });
+      });
+    });
+
+    return { filteredCursos: filtered, groupedCursos: grouped };
   }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear, selectedStatus]);
 
   // Obter dados únicos para filtros
@@ -397,86 +428,106 @@ const Cursos = () => {
           </CardContent>
         </Card>
 
-        {/* Grid de Cursos */}
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Lista de Cursos Agrupados */}
+        <div className="space-y-6">
           {filteredCursos && filteredCursos.length > 0 ? (
-            filteredCursos.map((curso: Curso) => (
-              <Card key={curso.id}>
+            Object.entries(groupedCursos).map(([unidadeNome, salas]) => (
+              <Card key={unidadeNome}>
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="text-xl">{curso.titulo}</CardTitle>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={getStatusColor(curso.status)}>
-                          {curso.status === 'ativo' ? 'Ativo' : 'Finalizado'}
-                        </Badge>
-                        <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
-                          {formatPeriodo(curso.periodo)}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    {canManageCursos && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Abrir menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                                                 <DropdownMenuContent align="end">
-                           <DropdownMenuItem onClick={() => handleViewInsumos(curso)}>
-                             <FileText className="mr-2 h-4 w-4" />
-                             Ver Insumos
-                           </DropdownMenuItem>
-                           <DropdownMenuItem onClick={() => handleDuplicate(curso)}>
-                             <Copy className="mr-2 h-4 w-4" />
-                             Duplicar curso
-                           </DropdownMenuItem>
-                           <DropdownMenuItem onClick={() => handleEdit(curso)}>
-                             <Edit className="mr-2 h-4 w-4" />
-                             Editar curso
-                           </DropdownMenuItem>
-                           <DropdownMenuItem 
-                             onClick={() => handleDelete(curso.id)}
-                             className="text-red-600 focus:text-red-600"
-                           >
-                             <Trash2 className="mr-2 h-4 w-4" />
-                             Apagar curso
-                           </DropdownMenuItem>
-                         </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getUnidadeColor(unidadeNome)}`}>
+                      {unidadeNome}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      ({Object.values(salas).flat().length} curso{Object.values(salas).flat().length !== 1 ? 's' : ''})
+                    </span>
+                  </CardTitle>
                 </CardHeader>
-                                 <CardContent>
-                   <div className="space-y-2">
-                     <div>
-                       <span className="font-medium">Professor:</span> {curso.professor}
-                     </div>
-                     <div>
-                       <span className="font-medium">Unidade:</span>
-                       {curso.unidades?.nome && (
-                         <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUnidadeColor(curso.unidades.nome)}`}>
-                           {curso.unidades.nome}
-                         </span>
-                       )}
-                     </div>
-                     <div>
-                       <span className="font-medium">Sala:</span> {curso.salas?.nome || 'Não definida'}
-                     </div>
-                     <div>
-                       <span className="font-medium">Início:</span> {format(new Date(curso.inicio  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                     </div>
-                     <div>
-                       <span className="font-medium">Fim:</span> {format(new Date(curso.fim  + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                     </div>
-                   </div>
-                 </CardContent>
+                <CardContent>
+                  <div className="space-y-4">
+                    {Object.entries(salas).map(([salaNome, cursosSala]) => (
+                      <div key={salaNome} className="border-l-2 border-muted pl-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <h4 className="font-medium text-sm text-muted-foreground">
+                            Sala: {salaNome}
+                          </h4>
+                          <span className="text-xs text-muted-foreground">
+                            ({cursosSala.length} curso{cursosSala.length !== 1 ? 's' : ''})
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {cursosSala.map((curso) => (
+                            <div key={curso.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <h5 className="font-medium">{curso.titulo}</h5>
+                                  <div className="flex items-center gap-1">
+                                    <Badge className={getStatusColor(curso.status)}>
+                                      {curso.status === 'ativo' ? 'Ativo' : 'Finalizado'}
+                                    </Badge>
+                                    <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
+                                      {formatPeriodo(curso.periodo)}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                                  <div>
+                                    <span className="font-medium">Professor:</span> {curso.professor}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Início:</span> {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Fim:</span> {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Período:</span> {formatPeriodo(curso.periodo)}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {canManageCursos && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                      <span className="sr-only">Abrir menu</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleViewInsumos(curso)}>
+                                      <FileText className="mr-2 h-4 w-4" />
+                                      Ver Insumos
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDuplicate(curso)}>
+                                      <Copy className="mr-2 h-4 w-4" />
+                                      Duplicar curso
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleEdit(curso)}>
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Editar curso
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDelete(curso.id)}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Apagar curso
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
               </Card>
             ))
           ) : (
