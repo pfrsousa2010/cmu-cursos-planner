@@ -55,7 +55,7 @@ export const useCalendarioExport = () => {
     
     // Período da visualização e Data de emissão na mesma linha
     if (viewMode === 'semana') {
-      const startDate = startOfWeek(currentWeek, { weekStartsOn: 0 });
+      const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
       const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
       doc.text(`Período: ${format(startDate, 'dd/MM/yyyy', { locale: ptBR })} a ${format(endDate, 'dd/MM/yyyy', { locale: ptBR })} (Segunda a Sábado)`, 14, infoY);
     } else {
@@ -100,7 +100,7 @@ export const useCalendarioExport = () => {
     }).filter(day => day.getDay() !== 0); // Remove domingos (0 = domingo)
 
     // Cabeçalho da tabela semanal
-    const headers = ['Turno', 'Salas'];
+    const headers = ['Turno', 'Unidade\nSala'];
     weekDays.forEach(day => {
       const dayName = format(day, 'EEEE', { locale: ptBR });
       const shortDayName = dayName.replace('-feira', '');
@@ -240,7 +240,7 @@ export const useCalendarioExport = () => {
     const diasDoMes = Array.from({ length: totalDiasNoMes }, (_, i) => new Date(currentWeek.getFullYear(), currentWeek.getMonth(), i + 1));
 
     // Cabeçalho da tabela MENSAL
-    const headers = ['Sala\nUnidade', 'Turno'];
+    const headers = ['Unidade\nSala', 'Turno'];
     diasDoMes.forEach((_, i) => {
       headers.push(String(i + 1).padStart(2, '0'));
     });
@@ -251,7 +251,7 @@ export const useCalendarioExport = () => {
       const turnos = ['manha', 'tarde', 'noite'];
       turnos.forEach(turno => {
         const row = [
-          sala.nome + '\n' + (sala.unidades?.nome || ''),
+          `${sala.unidades?.nome}\n${sala.nome}`,
           formatPeriodo(turno)
         ];
         
