@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Curso {
   id: string;
@@ -25,6 +26,8 @@ interface CursoDetailsProps {
 }
 
 const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
+  const { canViewOnly } = useUserRole();
+  
   const formatPeriodo = (periodo: string) => {
     const periodos = {
       'manha': 'Manhã',
@@ -74,26 +77,28 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos }: CursoDetailsProps) => {
         </div>
       </div>
 
-      <div className="flex gap-2 pt-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex-1"
-          onClick={() => onEdit?.(curso)}
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Editar
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex-1"
-          onClick={() => onViewInsumos?.(curso)}
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Insumos
-        </Button>
-      </div>
+      {!canViewOnly && (
+        <div className="flex gap-2 pt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={() => onEdit?.(curso)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Editar
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={() => onViewInsumos?.(curso)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Insumos
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
