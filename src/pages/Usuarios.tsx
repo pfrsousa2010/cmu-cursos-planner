@@ -50,7 +50,7 @@ const Usuarios = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { userRole, canManageUnidades } = useUserRole();
+  const { userRole, userId, loading: userRoleLoading } = useUserRole();
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -60,26 +60,21 @@ const Usuarios = () => {
   });
 
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    };
+    if (userId) {
+      setCurrentUserId(userId);
+    }
     
-    getCurrentUser();
-    
-    if (canManageUnidades) {
+    if (userRole === 'admin') {
       fetchUsers();
     } else {
       setLoading(false);
     }
-  }, [canManageUnidades]);
+  }, [userRole, userId]);
 
   const fetchUsers = async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, nome, email, role, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -216,7 +211,7 @@ const Usuarios = () => {
   const getRoleLabel = (role: UserRole) => UserRoleLabel[role] || role;
   const getRoleColor = (role: UserRole) => UserRoleColor[role] || 'text-gray-600 bg-gray-50';
 
-  if (loading) {
+  if (loading || userRoleLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -226,7 +221,7 @@ const Usuarios = () => {
     );
   }
 
-  if (!canManageUnidades) {
+  if (userRole !== 'admin') {
     return (
       <Layout>
         <div className="text-center py-12">

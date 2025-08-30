@@ -7,6 +7,7 @@ type UserRole = Database['public']['Enums']['user_role'];
 
 export const useUserRole = () => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,6 +15,7 @@ export const useUserRole = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
+        setUserId(user.id);
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -23,6 +25,8 @@ export const useUserRole = () => {
         if (profile) {
           setUserRole(profile.role);
         }
+      } else {
+        setUserId(null);
       }
       setLoading(false);
     };
@@ -34,6 +38,7 @@ export const useUserRole = () => {
         getUserRole();
       } else {
         setUserRole(null);
+        setUserId(null);
         setLoading(false);
       }
     });
@@ -47,6 +52,7 @@ export const useUserRole = () => {
 
   return {
     userRole,
+    userId,
     loading,
     canManageUnidades,
     canManageCursos,
