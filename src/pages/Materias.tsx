@@ -19,9 +19,11 @@ interface Materia {
 
 const Materias = () => {
   const [materias, setMaterias] = useState<Materia[]>([]);
+  const [filteredMaterias, setFilteredMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMateria, setEditingMateria] = useState<Materia | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { canViewOnly } = useUserRole();
 
   const [formData, setFormData] = useState({
@@ -31,6 +33,17 @@ const Materias = () => {
   useEffect(() => {
     fetchMaterias();
   }, []);
+
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredMaterias(materias);
+    } else {
+      const filtered = materias.filter(materia =>
+        materia.nome.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredMaterias(filtered);
+    }
+  }, [materias, searchTerm]);
 
   const fetchMaterias = async () => {
     const { data, error } = await supabase
@@ -81,7 +94,7 @@ const Materias = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta matéria?")) {
+    if (confirm("Tem certeza que deseja excluir esta matéria? Esta ação não pode ser desfeita e pode causar impactos em cursos que possuem essa matéria.")) {
       const { error } = await supabase
         .from('materias')
         .delete()
@@ -154,6 +167,7 @@ const Materias = () => {
                       onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                       required
                       placeholder="Ex: Português, Matemática, Informática..."
+                      className="mt-1"
                     />
                   </div>
                   
@@ -171,48 +185,53 @@ const Materias = () => {
           )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {materias.length === 0 ? (
-            <Card className="md:col-span-2 lg:col-span-3">
-              <CardContent className="p-6 text-center">
-                <p className="text-gray-500">Nenhuma matéria encontrada</p>
-              </CardContent>
-            </Card>
+        <div className="flex justify-between items-center">
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Buscar matéria..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border">
+          {filteredMaterias.length === 0 ? (
+            <div className="p-6 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? "Nenhuma matéria encontrada para a busca" : "Nenhuma matéria encontrada"}
+              </p>
+            </div>
           ) : (
-            materias.map((materia) => (
-              <Card key={materia.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{materia.nome}</CardTitle>
-                      <CardDescription>
-                        Criada em {new Date(materia.created_at).toLocaleDateString('pt-BR')}
-                      </CardDescription>
-                    </div>
-                    
-                    {!canViewOnly && (
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEdit(materia)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(materia.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+            <div className="divide-y">
+              {filteredMaterias.map((materia) => (
+                <div key={materia.id} className="p-4 flex justify-between items-center hover:bg-gray-50">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">{materia.nome}</h3>
                   </div>
-                </CardHeader>
-              </Card>
-            ))
+                  
+                  {!canViewOnly && (
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEdit(materia)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(materia.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
