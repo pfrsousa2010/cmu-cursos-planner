@@ -10,8 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Calendario from "./pages/Calendario";
 import Cursos from "./pages/Cursos";
-import Unidades from "./pages/Unidades";
-import Salas from "./pages/Salas";
+import UnidadeSalas from "./pages/UnidadeSalas";
 import Materias from "./pages/Materias";
 import Insumos from "./pages/Insumos";
 import Usuarios from "./pages/Usuarios";
@@ -54,14 +53,9 @@ const App = () => {
                 <Cursos />
               </ProtectedRoute>
             } />
-            <Route path="/unidades" element={
+            <Route path="/unidades-salas" element={
               <ProtectedRoute>
-                <Unidades />
-              </ProtectedRoute>
-            } />
-            <Route path="/salas" element={
-              <ProtectedRoute>
-                <Salas />
+                <UnidadeSalas />
               </ProtectedRoute>
             } />
             <Route path="/materias" element={
