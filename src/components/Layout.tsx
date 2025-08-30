@@ -93,7 +93,7 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: FileText, label: "Matérias", path: "/materias", editorAccess: true },
     { icon: Package, label: "Insumos", path: "/insumos", editorAccess: true },
     { icon: Users, label: "Usuários", path: "/usuarios", adminOnly: true },
-    { icon: Lightbulb, label: "Relatórios", path: "/relatorios" },
+
     { icon: User, label: "Meu Perfil", path: "/meu-perfil" }, // Adicionado menu Meu Perfil
   ];
 

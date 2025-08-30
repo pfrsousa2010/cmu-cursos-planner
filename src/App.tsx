@@ -14,7 +14,7 @@ import UnidadeSalas from "./pages/UnidadeSalas";
 import Materias from "./pages/Materias";
 import Insumos from "./pages/Insumos";
 import Usuarios from "./pages/Usuarios";
-import Relatorios from "./pages/Relatorios";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import MeuPerfil from "./pages/MeuPerfil";
 
@@ -73,11 +73,7 @@ const App = () => {
                 <Usuarios />
               </ProtectedRoute>
             } />
-            <Route path="/relatorios" element={
-              <ProtectedRoute>
-                <Relatorios />
-              </ProtectedRoute>
-            } />
+
             <Route path="/meu-perfil" element={
               <ProtectedRoute>
                 <MeuPerfil />
