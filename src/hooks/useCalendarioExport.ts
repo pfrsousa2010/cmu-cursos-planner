@@ -57,7 +57,7 @@ export const useCalendarioExport = () => {
     if (viewMode === 'semana') {
       const startDate = startOfWeek(currentWeek, { weekStartsOn: 0 });
       const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
-      doc.text(`Período: ${format(startDate, 'dd/MM/yyyy', { locale: ptBR })} a ${format(endDate, 'dd/MM/yyyy', { locale: ptBR })}`, 14, infoY);
+      doc.text(`Período: ${format(startDate, 'dd/MM/yyyy', { locale: ptBR })} a ${format(endDate, 'dd/MM/yyyy', { locale: ptBR })} (Segunda a Sábado)`, 14, infoY);
     } else {
       const startMonth = startOfMonth(currentWeek);
       const endMonth = endOfMonth(currentWeek);
@@ -97,7 +97,7 @@ export const useCalendarioExport = () => {
     const weekDays = eachDayOfInterval({
       start: startOfWeek(currentWeek, { weekStartsOn: 0 }),
       end: endOfWeek(currentWeek, { weekStartsOn: 0 })
-    });
+    }).filter(day => day.getDay() !== 0); // Remove domingos (0 = domingo)
 
     // Cabeçalho da tabela semanal
     const headers = ['Turno', 'Salas'];
@@ -134,11 +134,11 @@ export const useCalendarioExport = () => {
     // Configuração da tabela semanal
     const columnStyles: any = {
       0: { cellWidth: 15, halign: 'center' as const },
-      1: { cellWidth: 25, halign: 'center' as const }
+      1: { cellWidth: 30, halign: 'center' as const }
     };
     
     weekDays.forEach((_, index) => {
-      columnStyles[index + 2] = { cellWidth: 32, halign: 'center' as const };
+      columnStyles[index + 2] = { cellWidth: 37, halign: 'center' as const };
     });
     
     autoTable(doc, {
@@ -240,7 +240,7 @@ export const useCalendarioExport = () => {
     const diasDoMes = Array.from({ length: totalDiasNoMes }, (_, i) => new Date(currentWeek.getFullYear(), currentWeek.getMonth(), i + 1));
 
     // Cabeçalho da tabela MENSAL
-    const headers = ['Sala/Unidade', 'Turno'];
+    const headers = ['Sala\nUnidade', 'Turno'];
     diasDoMes.forEach((_, i) => {
       headers.push(String(i + 1).padStart(2, '0'));
     });
@@ -286,7 +286,7 @@ export const useCalendarioExport = () => {
     
     // Configuração da tabela mensal
     const columnStyles: any = {
-      0: { cellWidth: 20, halign: 'center' as const },
+      0: { cellWidth: 18, halign: 'center' as const },
       1: { cellWidth: 10, halign: 'center' as const }
     };
     

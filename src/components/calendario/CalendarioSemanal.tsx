@@ -10,6 +10,7 @@ import {
   getCursosForSalaAndDay, 
   getUnidadeColor, 
   getUnidadeTextColor, 
+  getUnidadeBorder,
   getPeriodoColor, 
   formatPeriodo 
 } from "@/utils/calendarioUtils";
@@ -34,7 +35,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentWeek, { weekStartsOn: 0 }),
     end: endOfWeek(currentWeek, { weekStartsOn: 0 })
-  });
+  }).filter(day => day.getDay() !== 0); // Remove domingos (0 = domingo)
 
   if (loadingSalas) {
     return (
@@ -71,12 +72,12 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                         <Skeleton className="h-3 w-16" />
                       </div>
                     </TableCell>
+                    <TableCell className="font-medium bg-gray-50 align-top">
+                      <Skeleton className="h-4 w-12" />
+                    </TableCell>
                     {weekDays.map((day) => (
                       <TableCell key={day.toISOString()} className="align-top p-2">
-                        <div className="space-y-2">
-                          <Skeleton className="h-16 w-full" />
-                          <Skeleton className="h-12 w-full" />
-                        </div>
+                        <Skeleton className="h-16 w-full" />
                       </TableCell>
                     ))}
                   </TableRow>
@@ -114,7 +115,8 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
           <Table className="table-fixed" style={{ minWidth: '100%' }}>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32 font-semibold">SALAS</TableHead>
+                <TableHead className="w-32 font-semibold">Sala/Unidade</TableHead>
+                <TableHead className="w-16 font-semibold">Turno</TableHead>
                 {weekDays.map((day) => (
                   <TableHead key={day.toISOString()} className="text-center min-w-[200px] font-semibold">
                     <div className="flex flex-col">
@@ -130,59 +132,61 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {salasToShow.map((sala) => (
-                <TableRow key={sala.id} className={getUnidadeColor(sala.unidades?.nome || '')}>
-                  <TableCell className="font-medium align-middle">
-                    <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
-                      <div className="font-semibold text-sm">{sala.nome}</div>
-                      <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>
-                        {sala.unidades?.nome}
-                      </div>
-                    </div>
-                  </TableCell>
-                  {weekDays.map((day) => {
-                    const periodoOrder = ['manha', 'tarde', 'noite'];
-                    const cursosDay = [...getCursosForSalaAndDay(cursosFiltrados, sala.id, day)]
-                      .sort((a, b) => periodoOrder.indexOf(a.periodo) - periodoOrder.indexOf(b.periodo));
-                    
-                    return (
-                      <TableCell key={day.toISOString()} className="align-top p-2">
-                        <div className="space-y-2">
-                          {loadingCursos ? (
-                            Array.from({ length: 2 }).map((_, index) => (
-                              <Skeleton key={index} className="h-16 w-full" />
-                            ))
-                          ) : (
-                            cursosDay.map((curso) => (
-                              <div
-                                key={curso.id}
-                                className={`p-2 rounded border bg-white hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')}`}
-                                onClick={() => onCursoClick(curso)}
-                              >
-                                <div className="space-y-1">
-                                  <div className="font-medium leading-tight">{curso.titulo}</div>
-                                  <div className="text-muted-foreground">{curso.professor}</div>
-                                  <Badge 
-                                    variant="secondary" 
-                                    className={getPeriodoColor(curso.periodo) + " text-xs px-1 py-0"}
-                                  >
-                                    {formatPeriodo(curso.periodo)}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                          {!loadingCursos && cursosDay.length === 0 && (
-                            <div className="text-center text-muted-foreground text-xs py-2">
-                              -
-                            </div>
-                          )}
+              {salasToShow.flatMap((sala) => {
+                const turnos = ['manha', 'tarde', 'noite'];
+                return turnos.map((turno, turnoIdx) => (
+                  <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '')}>
+                    {turnoIdx === 0 ? (
+                      <TableCell 
+                        rowSpan={3} 
+                        className={`font-medium align-middle ${getUnidadeBorder(sala.unidades?.nome || '')}`}
+                      >
+                        <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
+                          <div className="font-semibold text-sm">{sala.nome}</div>
+                          <div className={`text-xs font-medium ${getUnidadeTextColor(sala.unidades?.nome || '')}`}>
+                            {sala.unidades?.nome}
+                          </div>
                         </div>
                       </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
+                    ) : null}
+                    <TableCell className="font-medium align-middle w-16 text-right pr-2">
+                      {formatPeriodo(turno)}
+                    </TableCell>
+                    {weekDays.map((day) => {
+                      const cursosTurno = getCursosForSalaAndDay(cursosFiltrados, sala.id, day)
+                        .filter(curso => curso.periodo === turno);
+                      
+                      return (
+                        <TableCell key={day.toISOString()} className="align-top p-2">
+                          <div className="space-y-2">
+                            {loadingCursos ? (
+                              <Skeleton className="h-16 w-full" />
+                            ) : (
+                              cursosTurno.map((curso) => (
+                                <div
+                                  key={curso.id}
+                                  className={`p-2 rounded border bg-white hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')}`}
+                                  onClick={() => onCursoClick(curso)}
+                                >
+                                  <div className="space-y-1">
+                                    <div className="font-medium leading-tight">{curso.titulo}</div>
+                                    <div className="text-muted-foreground">{curso.professor}</div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                            {!loadingCursos && cursosTurno.length === 0 && (
+                              <div className="text-center text-muted-foreground text-xs py-2">
+                                -
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ));
+              })}
             </TableBody>
           </Table>
         </div>
