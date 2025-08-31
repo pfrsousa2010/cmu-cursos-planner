@@ -20,6 +20,7 @@ interface Profile {
   nome: string;
   email: string;
   role: UserRole;
+  isActive: boolean;
   created_at: string;
 }
 
@@ -74,7 +75,7 @@ const Usuarios = () => {
   const fetchUsers = async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, nome, email, role, created_at')
+      .select('id, nome, email, role, isActive, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
