@@ -104,7 +104,7 @@ const Usuarios = () => {
     const { data, error } = await supabase
       .from('profiles')
       .select('id, nome, email, role, isActive, created_at')
-      .order('created_at', { ascending: false });
+      .order('nome', { ascending: true });
 
     if (error) {
       toast.error("Erro ao carregar usuários");
