@@ -2,11 +2,11 @@
 import { useUser } from '@/contexts/UserContext';
 
 export const useUserRole = () => {
-  const { user, loading, canManageUnidades, canManageCursos, canViewOnly } = useUser();
+  const { profile, loading, canManageUnidades, canManageCursos, canViewOnly } = useUser();
 
   return {
-    userRole: user?.role || null,
-    userId: user?.id || null,
+    userRole: profile?.role || null,
+    userId: profile?.id || null,
     loading,
     canManageUnidades,
     canManageCursos,

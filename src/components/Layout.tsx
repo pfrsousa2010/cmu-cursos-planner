@@ -12,12 +12,9 @@ import {
   X,
   LogOut,
   Package,
-  Lightbulb,
-  DoorOpen,
   User
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,17 +45,17 @@ const UserRoleColor: Record<string, string> = {
 
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, loading: userLoading, canManageUnidades, canManageCursos } = useUser();
+  const { profile, loading: userLoading, canManageUnidades, canManageCursos, signOut } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Erro ao fazer logout");
-    } else {
+    try {
+      await signOut();
       toast.success("Logout realizado com sucesso!");
       navigate("/login");
+    } catch (error) {
+      toast.error("Erro ao fazer logout");
     }
   };
 
@@ -75,8 +72,8 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   const filteredMenuItems = menuItems.filter(item => {
-    if (item.adminOnly && user?.role !== 'admin') return false;
-    if (item.editorAccess && user?.role === 'visualizador') return false;
+    if (item.adminOnly && profile?.role !== 'admin') return false;
+    if (item.editorAccess && profile?.role === 'visualizador') return false;
     return true;
   });
 
@@ -149,19 +146,19 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {userLoading || !user ? (
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-32 rounded" />
-                  <Skeleton className="h-5 w-20 rounded" />
-                </div>
-              ) : (
-                <span className="text-sm text-gray-600 flex items-center gap-2">
-                  <span className="font-medium">{user.nome || user.email}</span>
-                  <Badge className={UserRoleColor[user.role] || 'text-gray-600 bg-gray-50'}>
-                    {UserRoleLabel[user.role] || user.role}
-                  </Badge>
-                </span>
-              )}
+                           {userLoading || !profile ? (
+               <div className="flex items-center gap-2">
+                 <Skeleton className="h-5 w-32 rounded" />
+                 <Skeleton className="h-5 w-20 rounded" />
+               </div>
+             ) : (
+               <span className="text-sm text-gray-600 flex items-center gap-2">
+                 <span className="font-medium">{profile.nome || profile.email}</span>
+                 <Badge className={UserRoleColor[profile.role] || 'text-gray-600 bg-gray-50'}>
+                   {UserRoleLabel[profile.role] || profile.role}
+                 </Badge>
+               </span>
+             )}
               <Button
                 variant="outline"
                 size="sm"

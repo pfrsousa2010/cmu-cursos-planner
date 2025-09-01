@@ -3,8 +3,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { UserProvider } from "@/contexts/UserContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -22,15 +20,6 @@ import MeuPerfil from "./pages/MeuPerfil";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => {
-    // Log quando usuário faz login/logout
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

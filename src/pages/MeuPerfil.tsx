@@ -11,32 +11,42 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 
 const MeuPerfil = () => {
-  const { user, refreshUser } = useUser();
+  const { profile: userProfile, user } = useUser();
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [nome, setNome] = useState('');
   const [nomeLoading, setNomeLoading] = useState(false);
-  const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [senhaLoading, setSenhaLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (data) {
-        setProfile(data);
-        setNome(data.nome);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (data) {
+          setProfile(data);
+          setNome(data.nome);
+        } else {
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar perfil:', error);
+        setProfile(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     fetchProfile();
@@ -58,8 +68,6 @@ const MeuPerfil = () => {
       } else {
         toast.success('Nome atualizado com sucesso!');
         setProfile(prev => prev ? { ...prev, nome } : null);
-        // Atualizar o contexto do usuário
-        await refreshUser();
       }
     } catch (error) {
       toast.error('Erro inesperado');
@@ -82,7 +90,6 @@ const MeuPerfil = () => {
         toast.error('Erro ao atualizar senha: ' + error.message);
       } else {
         toast.success('Senha atualizada com sucesso!');
-        setSenhaAtual('');
         setNovaSenha('');
       }
     } catch (error) {

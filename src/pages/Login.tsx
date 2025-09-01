@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,42 +15,23 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useUser();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error("Erro ao fazer login: " + error.message);
-      } else if (data.user) {
-        // Verificar se o usuário está ativo
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('isActive')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) {
-          toast.error("Erro ao verificar status do usuário");
-          // Fazer logout se não conseguir verificar o perfil
-          await supabase.auth.signOut();
-        } else if (!profile.isActive) {
-          toast.error("Usuário inativo. Entre em contato com seu administrador.");
-          // Fazer logout do usuário inativo
-          await supabase.auth.signOut();
-        } else {
-          toast.success("Login realizado com sucesso!");
-          navigate("/dashboard");
-        }
+      const result = await signIn(email, password);
+      
+      if (result === 'success') {
+        toast.success("Login realizado com sucesso!");
+        navigate("/dashboard");
+      } else if (result === 'inactive') {
+        toast.error("Usuário inativo. Entre em contato com seu administrador.");
       }
     } catch (error) {
-      toast.error("Erro inesperado ao fazer login");
+      toast.error(error instanceof Error ? error.message : "Erro inesperado ao fazer login");
     } finally {
       setLoading(false);
     }
