@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, UserCheck, UserX, Trash2, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,7 +58,8 @@ const Usuarios = () => {
     nome: "",
     email: "",
     password: "",
-    role: "visualizador" as UserRole
+    role: "visualizador" as UserRole,
+    isActive: true
   });
 
   useEffect(() => {
@@ -98,7 +100,8 @@ const Usuarios = () => {
           .from('profiles')
           .update({
             nome: formData.nome,
-            role: formData.role
+            role: formData.role,
+            isActive: formData.isActive
           })
           .eq('id', editingUser.id);
 
@@ -151,7 +154,8 @@ const Usuarios = () => {
       nome: "",
       email: "",
       password: "",
-      role: "visualizador" as UserRole
+      role: "visualizador" as UserRole,
+      isActive: true
     });
     setEditingUser(null);
     setShowPassword(false);
@@ -169,7 +173,8 @@ const Usuarios = () => {
       nome: user.nome,
       email: user.email,
       password: "",
-      role: user.role
+      role: user.role,
+      isActive: user.isActive
     });
     setEditingUser(user);
     setDialogOpen(true);
@@ -329,6 +334,19 @@ const Usuarios = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {editingUser && (
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isActive"
+                      checked={formData.isActive}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                    />
+                    <Label htmlFor="isActive" className="text-sm font-medium">
+                      Usuário ativo
+                    </Label>
+                  </div>
+                )}
                 
                 <div className="flex justify-end space-x-2">
                   <Button 
@@ -384,6 +402,9 @@ const Usuarios = () => {
                       <div className="mt-2 flex items-center space-x-2">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                           {getRoleLabel(user.role)}
+                        </span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
+                          {user.isActive ? "Ativo" : "Inativo"}
                         </span>
                         {user.id === currentUserId && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
