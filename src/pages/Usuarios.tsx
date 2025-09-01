@@ -46,12 +46,15 @@ const UserRoleColor: Record<string, string> = {
 
 const Usuarios = () => {
   const [users, setUsers] = useState<Profile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const { userRole, userId, loading: userRoleLoading } = useUserRole();
 
   const [formData, setFormData] = useState({
@@ -73,6 +76,29 @@ const Usuarios = () => {
       setLoading(false);
     }
   }, [userRole, userId]);
+
+  useEffect(() => {
+    let filtered = users;
+
+    // Filtrar por termo de busca (nome ou email)
+    if (searchTerm.trim() !== "") {
+      filtered = filtered.filter(user =>
+        user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtrar por status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(user => {
+        if (statusFilter === "active") return user.isActive;
+        if (statusFilter === "inactive") return !user.isActive;
+        return true;
+      });
+    }
+
+    setFilteredUsers(filtered);
+  }, [users, searchTerm, statusFilter]);
 
   const fetchUsers = async () => {
     const { data, error } = await supabase
@@ -376,70 +402,90 @@ const Usuarios = () => {
           </Dialog>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {users.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <UserCheck className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-2 text-gray-500">Nenhum usuário encontrado</p>
-              </CardContent>
-            </Card>
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Buscar por nome ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="inactive">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border">
+          {filteredUsers.length === 0 ? (
+            <div className="p-6 text-center">
+              <UserCheck className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-gray-500">
+                {searchTerm || statusFilter !== "all" ? "Nenhum usuário encontrado para os filtros aplicados" : "Nenhum usuário encontrado"}
+              </p>
+            </div>
           ) : (
-            users.map((user) => (
-              <Card 
-                key={user.id} 
-                className={user.id === currentUserId ? "border-blue-300 bg-blue-50/30 shadow-md ring-1 ring-blue-200" : ""}
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className={user.id === currentUserId ? "text-blue-800" : ""}>
+            <div className="divide-y">
+              {filteredUsers.map((user) => (
+                <div 
+                  key={user.id} 
+                  className={`p-4 flex justify-between items-center hover:bg-gray-50 ${user.id === currentUserId ? "bg-blue-50/30" : ""}`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className={`text-lg font-medium ${user.id === currentUserId ? "text-blue-800" : "text-gray-900"}`}>
                         {user.nome}
-                      </CardTitle>
-                      <CardDescription className="mt-1">
-                        {user.email}
-                      </CardDescription>
-                      <div className="mt-2 flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                          {getRoleLabel(user.role)}
-                        </span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
-                          {user.isActive ? "Ativo" : "Inativo"}
-                        </span>
-                        {user.id === currentUserId && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
-                            Você
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
+                      </h3>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
+                        {user.isActive ? "Ativo" : "Inativo"}
+                      </span>
                     </div>
-                    
-                    {user.id !== currentUserId && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEdit(user)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteUser(user)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <p className="text-sm text-gray-600 mb-2">{user.email}</p>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                        {getRoleLabel(user.role)}
+                      </span>
+                      {user.id === currentUserId && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
+                          Você
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-500">
+                        Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
                   </div>
-                </CardHeader>
-              </Card>
-            ))
+                  
+                  {user.id !== currentUserId && (
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEdit(user)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteUser(user)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
