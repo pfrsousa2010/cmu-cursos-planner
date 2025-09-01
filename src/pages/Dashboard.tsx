@@ -708,7 +708,7 @@ const Dashboard = () => {
                               <div key={item.dataKey} className="mb-1 flex items-center gap-2">
                                 <span style={{ color: item.color, fontWeight: 500 }}>{item.dataKey}:</span>
                                 <span>
-                                  {item.value} Curso{Number(item.value) === 1 ? '' : 's'} Ativo{Number(item.value) === 1 ? '' : 's'}
+                                  {item.value} Curso{Number(item.value) === 1 ? '' : 's'}
                                 </span>
                               </div>
                             ))}
