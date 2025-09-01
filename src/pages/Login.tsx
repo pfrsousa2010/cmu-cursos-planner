@@ -21,16 +21,33 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         toast.error("Erro ao fazer login: " + error.message);
-      } else {
-        toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
+      } else if (data.user) {
+        // Verificar se o usuário está ativo
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('isActive')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          toast.error("Erro ao verificar status do usuário");
+          // Fazer logout se não conseguir verificar o perfil
+          await supabase.auth.signOut();
+        } else if (!profile.isActive) {
+          toast.error("Usuário inativo. Entre em contato com seu administrador.");
+          // Fazer logout do usuário inativo
+          await supabase.auth.signOut();
+        } else {
+          toast.success("Login realizado com sucesso!");
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
       toast.error("Erro inesperado ao fazer login");
