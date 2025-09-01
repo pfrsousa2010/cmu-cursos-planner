@@ -21,8 +21,8 @@ export const useCalendarioCursos = (currentWeek: Date, viewMode: ViewMode) => {
         .eq('status', 'ativo');
 
       if (viewMode === 'semana') {
-        const startDate = startOfWeek(currentWeek, { weekStartsOn: 0 });
-        const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
+        const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
+        const endDate = endOfWeek(currentWeek, { weekStartsOn: 1 });
         query = query
           .lte('inicio', format(endDate, 'yyyy-MM-dd'))
           .gte('fim', format(startDate, 'yyyy-MM-dd'));

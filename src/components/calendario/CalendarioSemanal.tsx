@@ -33,8 +33,8 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   onCursoClick
 }) => {
   const weekDays = eachDayOfInterval({
-    start: startOfWeek(currentWeek, { weekStartsOn: 0 }),
-    end: endOfWeek(currentWeek, { weekStartsOn: 0 })
+    start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
+    end: endOfWeek(currentWeek, { weekStartsOn: 1 })
   }).filter(day => day.getDay() !== 0); // Remove domingos (0 = domingo)
 
   if (loadingSalas) {

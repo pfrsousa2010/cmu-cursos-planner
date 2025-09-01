@@ -56,11 +56,12 @@ export const useCalendarioExport = () => {
     // Período da visualização e Data de emissão na mesma linha
     if (viewMode === 'semana') {
       const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
-      const endDate = endOfWeek(currentWeek, { weekStartsOn: 0 });
-      doc.text(`Período: ${format(startDate, 'dd/MM/yyyy', { locale: ptBR })} a ${format(endDate, 'dd/MM/yyyy', { locale: ptBR })} (Segunda a Sábado)`, 14, infoY);
+      // Calcular o sábado (5 dias após a segunda-feira)
+      const sabado = new Date(startDate);
+      sabado.setDate(startDate.getDate() + 5);
+      doc.text(`Período: ${format(startDate, 'dd/MM/yyyy', { locale: ptBR })} a ${format(sabado, 'dd/MM/yyyy', { locale: ptBR })} (Segunda a Sábado)`, 14, infoY);
     } else {
       const startMonth = startOfMonth(currentWeek);
-      const endMonth = endOfMonth(currentWeek);
       doc.text(`Mês: ${format(startMonth, 'MMMM yyyy', { locale: ptBR })}`, 14, infoY);
     }
     
@@ -95,8 +96,8 @@ export const useCalendarioExport = () => {
     cursosFiltrados: Curso[]
   ) => {
     const weekDays = eachDayOfInterval({
-      start: startOfWeek(currentWeek, { weekStartsOn: 0 }),
-      end: endOfWeek(currentWeek, { weekStartsOn: 0 })
+      start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
+      end: endOfWeek(currentWeek, { weekStartsOn: 1 })
     }).filter(day => day.getDay() !== 0); // Remove domingos (0 = domingo)
 
     // Cabeçalho da tabela semanal

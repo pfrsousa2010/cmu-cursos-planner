@@ -3,8 +3,9 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Download, Info } from "lucide-react";
 import { toast } from "sonner";
 
 // Hooks personalizados
@@ -133,8 +134,20 @@ const Calendario = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>            
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>
+            {viewMode === 'semana' && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-5 w-5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>O calendário semanal mostra apenas de segunda a sábado.<br />Os domingos não são exibidos.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <Button

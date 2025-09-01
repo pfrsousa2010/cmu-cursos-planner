@@ -33,10 +33,13 @@ const CalendarioNavegacao: React.FC<CalendarioNavegacaoProps> = ({
     }
 
     if (viewMode === 'semana') {
-      const weekDays = [startOfWeek(currentWeek, { weekStartsOn: 0 }), endOfWeek(currentWeek, { weekStartsOn: 0 })];
+      const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
+      // Calcular o sábado (5 dias após a segunda-feira)
+      const sabado = new Date(startDate);
+      sabado.setDate(startDate.getDate() + 5);
       return (
         <h2 className="text-lg font-semibold">
-          {format(weekDays[0], 'dd', { locale: ptBR })} - {format(weekDays[1], 'dd MMM yyyy', { locale: ptBR })}
+          {format(startDate, 'dd', { locale: ptBR })} - {format(sabado, 'dd MMM yyyy', { locale: ptBR })}
         </h2>
       );
     } else {

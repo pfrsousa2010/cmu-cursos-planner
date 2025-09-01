@@ -93,7 +93,7 @@ const Dashboard = () => {
       const endOfWeek = (date: Date) => {
         const d = new Date(date);
         const day = d.getDay();
-        const diff = d.getDate() - day + 7; // domingo
+        const diff = d.getDate() - day + 6; // sábado (para mostrar apenas segunda a sábado)
         return new Date(d.setDate(diff));
       };
       const inicioSemana = startOfWeek(hoje);
