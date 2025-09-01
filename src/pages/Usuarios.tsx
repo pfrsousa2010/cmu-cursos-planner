@@ -265,7 +265,7 @@ const Usuarios = () => {
     );
   }
 
-  if (userRole !== 'admin') {
+  if (userRole === 'visualizador' || userRole === 'editor') {
     return (
       <Layout>
         <div className="text-center py-12">

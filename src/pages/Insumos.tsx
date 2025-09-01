@@ -23,7 +23,7 @@ const Insumos = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInsumo, setEditingInsumo] = useState<Insumo | null>(null);
-  const { canViewOnly } = useUserRole();
+  const { canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
 
   const [formData, setFormData] = useState({
     nome: ""
@@ -124,11 +124,25 @@ const Insumos = () => {
     insumo.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading || userRoleLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
           <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (userRole === 'visualizador') {
+    return (
+      <Layout>
+        <div className="text-center py-12">
+          <Plus className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">Acesso restrito</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Apenas editores e administradores podem gerenciar insumos.
+          </p>
         </div>
       </Layout>
     );

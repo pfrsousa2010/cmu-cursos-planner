@@ -52,7 +52,7 @@ const UnidadeSalas = () => {
     observacoes: ""
   });
 
-  const { canManageUnidades, canViewOnly } = useUserRole();
+  const { canManageUnidades, canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
   const queryClient = useQueryClient();
 
   // Buscar unidades com suas salas
@@ -229,11 +229,25 @@ const UnidadeSalas = () => {
 
 
 
-  if (isLoading) {
+  if (isLoading || userRoleLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
           <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (userRole === 'visualizador') {
+    return (
+      <Layout>
+        <div className="text-center py-12">
+          <Building2 className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">Acesso restrito</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Apenas editores e administradores podem gerenciar unidades e salas.
+          </p>
         </div>
       </Layout>
     );
