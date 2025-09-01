@@ -41,9 +41,9 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src="/Logo CMU menor.png" alt="Logo CMU" className="mx-auto mb-2 h-16 w-auto" />
+          <img src="/Logo CMU menor.png" alt="Logo CMU" className="mx-auto mb-2 h-20 w-auto" />
           <CardTitle className="text-2xl font-bold text-blue-600">
-          Gerenciamento de Cursos CMU
+          Gestor de Cursos CMU
           </CardTitle>
           
         </CardHeader>

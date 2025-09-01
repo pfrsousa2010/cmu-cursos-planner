@@ -82,7 +82,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Mobile Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <h1 className="text-xl font-bold text-blue-600">Cursos CMU</h1>
+          <h1 className="text-l font-bold text-blue-600">Menu</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -141,7 +141,7 @@ const Layout = ({ children }: LayoutProps) => {
               </Button>
                              <div className="flex items-center gap-2">
                  <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
-                 <h1 className="hidden md:block text-xl font-bold text-blue-600">Sistema de Cursos CMU</h1>
+                 <h1 className="hidden md:block text-xl font-bold text-blue-600">Sistema Gestor de Cursos CMU</h1>
                </div>
             </div>
             
