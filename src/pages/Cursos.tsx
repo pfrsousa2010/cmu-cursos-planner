@@ -324,22 +324,6 @@ const Cursos = () => {
                 </div>
               </div>
 
-              {/* Filtro por Período */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Período</label>
-                <Select value={selectedPeriodo} onValueChange={setSelectedPeriodo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os períodos</SelectItem>
-                    <SelectItem value="manha">Manhã</SelectItem>
-                    <SelectItem value="tarde">Tarde</SelectItem>
-                    <SelectItem value="noite">Noite</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Filtro por Unidade */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Unidade</label>
@@ -376,6 +360,22 @@ const Cursos = () => {
                 </Select>
               </div>
 
+              {/* Filtro por Período */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Período</label>
+                <Select value={selectedPeriodo} onValueChange={setSelectedPeriodo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os períodos</SelectItem>
+                    <SelectItem value="manha">Manhã</SelectItem>
+                    <SelectItem value="tarde">Tarde</SelectItem>
+                    <SelectItem value="noite">Noite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Filtro por Ano */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Ano</label>
@@ -408,7 +408,6 @@ const Cursos = () => {
                   </SelectContent>
                 </Select>
               </div>
-
 
             </div>
 
