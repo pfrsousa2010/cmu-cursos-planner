@@ -1,5 +1,5 @@
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
@@ -14,13 +14,14 @@ import {
   Package,
   Lightbulb,
   DoorOpen,
-  User // Adicionado ícone de usuário
+  User
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUser } from "@/contexts/UserContext";
 
 interface LayoutProps {
   children: ReactNode;
@@ -47,33 +48,9 @@ const UserRoleColor: Record<string, string> = {
 
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
+  const { user, loading: userLoading, canManageUnidades, canManageCursos } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const getUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, nome')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserRole(profile.role);
-          setUserName(profile.nome || user.email || null);
-        } else {
-          // Fallback caso não encontre o profile
-          setUserName(user.email || null);
-        }
-      }
-    };
-
-    getUserProfile();
-  }, []);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -98,8 +75,8 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   const filteredMenuItems = menuItems.filter(item => {
-    if (item.adminOnly && userRole !== 'admin') return false;
-    if (item.editorAccess && userRole === 'visualizador') return false;
+    if (item.adminOnly && user?.role !== 'admin') return false;
+    if (item.editorAccess && user?.role === 'visualizador') return false;
     return true;
   });
 
@@ -172,16 +149,16 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {!userName || !userRole ? (
+              {userLoading || !user ? (
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-5 w-32 rounded" />
                   <Skeleton className="h-5 w-20 rounded" />
                 </div>
               ) : (
                 <span className="text-sm text-gray-600 flex items-center gap-2">
-                  <span className="font-medium">{userName}</span>
-                  <Badge className={UserRoleColor[userRole ?? ''] || 'text-gray-600 bg-gray-50'}>
-                    {UserRoleLabel[userRole ?? ''] || userRole}
+                  <span className="font-medium">{user.nome || user.email}</span>
+                  <Badge className={UserRoleColor[user.role] || 'text-gray-600 bg-gray-50'}>
+                    {UserRoleLabel[user.role] || user.role}
                   </Badge>
                 </span>
               )}

@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 
 const MeuPerfil = () => {
+  const { user, refreshUser } = useUser();
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [nome, setNome] = useState('');
@@ -21,55 +23,72 @@ const MeuPerfil = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!user) return;
+      
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
+      
       if (data) {
         setProfile(data);
         setNome(data.nome);
       }
       setLoading(false);
     };
+    
     fetchProfile();
-  }, []);
+  }, [user]);
 
   const handleNomeUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!user) return;
+
     setNomeLoading(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ nome })
-      .eq('id', profile.id);
-    setNomeLoading(false);
-    if (!error) {
-      toast.success('Nome atualizado com sucesso!');
-      setProfile({ ...profile, nome });
-    } else {
-      toast.error('Erro ao atualizar nome.');
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ nome })
+        .eq('id', user.id);
+
+      if (error) {
+        toast.error('Erro ao atualizar nome');
+      } else {
+        toast.success('Nome atualizado com sucesso!');
+        setProfile(prev => prev ? { ...prev, nome } : null);
+        // Atualizar o contexto do usuário
+        await refreshUser();
+      }
+    } catch (error) {
+      toast.error('Erro inesperado');
+    } finally {
+      setNomeLoading(false);
     }
   };
 
   const handleSenhaUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novaSenha) return;
+
     setSenhaLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    setSenhaLoading(false);
-    if (!error) {
-      toast.success('Senha atualizada com sucesso!');
-      setSenhaAtual('');
-      setNovaSenha('');
-    } else {
-      toast.error('Erro ao atualizar senha.');
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: novaSenha
+      });
+
+      if (error) {
+        toast.error('Erro ao atualizar senha: ' + error.message);
+      } else {
+        toast.success('Senha atualizada com sucesso!');
+        setSenhaAtual('');
+        setNovaSenha('');
+      }
+    } catch (error) {
+      toast.error('Erro inesperado');
+    } finally {
+      setSenhaLoading(false);
     }
   };
 
@@ -98,19 +117,20 @@ const MeuPerfil = () => {
                     disabled={nomeLoading}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <Input value={profile.email} disabled />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Papel</label>
-                  <Input value={profile.role || ''} disabled />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={nomeLoading || nome === profile.nome}>
-                    {nomeLoading ? 'Salvando...' : 'Salvar Nome'}
-                  </Button>
-                </div>
+                                 <div>
+                   <label className="block text-sm font-medium mb-1">Email</label>
+                   <Input value={user?.email || ''} disabled />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium mb-1">Papel</label>
+                   <Input value={user?.role === 'admin' ? 'Administrador' : 
+                           user?.role === 'editor' ? 'Editor' : 'Visualizador'} disabled />
+                 </div>
+                                 <div className="flex gap-2">
+                   <Button type="submit" disabled={nomeLoading || nome === profile?.nome}>
+                     {nomeLoading ? 'Salvando...' : 'Salvar Nome'}
+                   </Button>
+                 </div>
               </form>
             ) : (
               <div>Não foi possível carregar o perfil.</div>

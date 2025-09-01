@@ -1,58 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-
-type UserRole = Database['public']['Enums']['user_role'];
+import { useUser } from '@/contexts/UserContext';
 
 export const useUserRole = () => {
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const getUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        setUserId(user.id);
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserRole(profile.role);
-        }
-      } else {
-        setUserId(null);
-      }
-      setLoading(false);
-    };
-
-    getUserRole();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        getUserRole();
-      } else {
-        setUserRole(null);
-        setUserId(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const canManageUnidades = userRole === 'admin';
-  const canManageCursos = userRole === 'admin' || userRole === 'editor';
-  const canViewOnly = userRole === 'visualizador';
+  const { user, loading, canManageUnidades, canManageCursos, canViewOnly } = useUser();
 
   return {
-    userRole,
-    userId,
+    userRole: user?.role || null,
+    userId: user?.id || null,
     loading,
     canManageUnidades,
     canManageCursos,
