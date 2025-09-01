@@ -69,7 +69,7 @@ const Usuarios = () => {
     if (userId) {
       setCurrentUserId(userId);
     }
-    
+
     if (userRole === 'admin') {
       fetchUsers();
     } else {
@@ -118,7 +118,7 @@ const Usuarios = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       if (editingUser) {
         // Atualizar apenas o perfil (não pode atualizar auth.users diretamente)
@@ -164,7 +164,7 @@ const Usuarios = () => {
               toast.error("Erro ao definir função do usuário");
             }
           }
-          
+
           toast.success("Usuário criado com sucesso!");
           fetchUsers();
           resetForm();
@@ -194,7 +194,7 @@ const Usuarios = () => {
       toast.error("Você não pode editar seu próprio perfil aqui. Use a página 'Meu Perfil'.");
       return;
     }
-    
+
     setFormData({
       nome: user.nome,
       email: user.email,
@@ -213,7 +213,7 @@ const Usuarios = () => {
     }
 
     if (window.confirm(`Tem certeza que deseja deletar o usuário "${user.nome}"? Esta ação não pode ser desfeita.`)) {
-      try {        
+      try {
         // Deletar o perfil
         const { data, error } = await supabase
           .from('profiles')
@@ -274,7 +274,7 @@ const Usuarios = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Usuários</h1>
           </div>
-          
+
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => resetForm()}>
@@ -291,7 +291,7 @@ const Usuarios = () => {
                   {editingUser ? "Edite os dados do usuário" : "Adicione um novo usuário ao sistema"}
                 </DialogDescription>
               </DialogHeader>
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="nome">Nome</Label>
@@ -302,7 +302,7 @@ const Usuarios = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -314,7 +314,7 @@ const Usuarios = () => {
                     disabled={!!editingUser}
                   />
                 </div>
-                
+
                 {!editingUser && (
                   <div>
                     <Label htmlFor="password">Senha</Label>
@@ -342,7 +342,7 @@ const Usuarios = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div>
                   <Label htmlFor="role">Função</Label>
                   <Select
@@ -354,9 +354,21 @@ const Usuarios = () => {
                       <SelectValue placeholder="Selecione uma função" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="visualizador">Visualizador</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="visualizador">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-50">
+                          Visualizador
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="editor">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-50">
+                          Editor
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50">
+                          Administrador
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -373,18 +385,18 @@ const Usuarios = () => {
                     </Label>
                   </div>
                 )}
-                
+
                 <div className="flex justify-end space-x-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={resetForm}
                     disabled={isSubmitting}
                   >
                     Cancelar
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
@@ -417,8 +429,20 @@ const Usuarios = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="active">Ativos</SelectItem>
-                <SelectItem value="inactive">Inativos</SelectItem>
+                <SelectItem value="active">
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-50">
+                      Ativo
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="inactive">
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50">
+                      Inativo
+                    </span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -435,8 +459,8 @@ const Usuarios = () => {
           ) : (
             <div className="divide-y">
               {filteredUsers.map((user) => (
-                <div 
-                  key={user.id} 
+                <div
+                  key={user.id}
                   className={`p-4 flex justify-between items-center hover:bg-gray-50 ${user.id === currentUserId ? "bg-blue-50/30" : ""}`}
                 >
                   <div className="flex-1">
@@ -463,7 +487,7 @@ const Usuarios = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {user.id !== currentUserId && (
                     <div className="flex space-x-2">
                       <Button
