@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
@@ -92,6 +92,16 @@ const MeuPerfil = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="max-w-xl mx-auto py-8">
@@ -101,13 +111,7 @@ const MeuPerfil = () => {
             <CardTitle>Dados do Perfil</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-8 w-2/3" />
-                <Skeleton className="h-8 w-1/3" />
-              </div>
-            ) : profile ? (
+            {profile ? (
               <form onSubmit={handleNomeUpdate} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Nome</label>
