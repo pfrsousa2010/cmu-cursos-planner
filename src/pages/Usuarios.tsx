@@ -140,6 +140,8 @@ const Usuarios = () => {
         }
       } else {
         // Criar novo usuário
+        console.log("Criando usuário:", { email: formData.email, nome: formData.nome, role: formData.role });
+        
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -151,23 +153,33 @@ const Usuarios = () => {
         });
 
         if (authError) {
+          console.error("Erro no signUp:", authError);
           toast.error("Erro ao criar usuário: " + authError.message);
-        } else {
-          // Atualizar o role no perfil
-          if (authData.user) {
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .update({ role: formData.role })
-              .eq('id', authData.user.id);
+        } else if (authData.user) {
+          console.log("Usuário criado com sucesso:", authData.user.id);
+          
+          // Criar o perfil diretamente (não dependemos do trigger)
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: authData.user.id,
+              nome: formData.nome,
+              email: formData.email,
+              role: formData.role,
+              isActive: true
+            });
 
-            if (profileError) {
-              toast.error("Erro ao definir função do usuário");
-            }
+          if (createProfileError) {
+            console.error("Erro ao criar perfil:", createProfileError);
+            toast.error("Erro ao criar perfil do usuário: " + createProfileError.message);
+          } else {
+            console.log("Perfil criado com sucesso");
+            toast.success("Usuário criado com sucesso!");
+            fetchUsers();
+            resetForm();
           }
-
-          toast.success("Usuário criado com sucesso!");
-          fetchUsers();
-          resetForm();
+        } else {
+          toast.error("Erro inesperado ao criar usuário");
         }
       }
     } finally {
