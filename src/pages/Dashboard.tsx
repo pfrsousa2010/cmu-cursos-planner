@@ -3,16 +3,98 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, BookOpen, Building2, Users, AlertCircle } from "lucide-react";
 import { format, isAfter, isBefore, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatPeriodo } from "@/utils/calendarioUtils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
 import * as RechartsPrimitive from "recharts";
 
 const Dashboard = () => {
+  // Estados para controlar colapso das unidades em cada card
+  const [collapsedUnidadesSemana, setCollapsedUnidadesSemana] = useState<Set<string>>(new Set());
+  const [collapsedUnidadesMes, setCollapsedUnidadesMes] = useState<Set<string>>(new Set());
+
+  // Função para agrupar cursos por unidade e sala
+  const agruparCursosPorUnidadeSala = (cursos: any[]) => {
+    const grupos: { [key: string]: { [key: string]: any[] } } = {};
+    
+    cursos.forEach(curso => {
+      const unidadeNome = curso.unidades?.nome || 'Sem unidade';
+      const salaNome = curso.salas?.nome || 'Sem sala';
+      
+      if (!grupos[unidadeNome]) {
+        grupos[unidadeNome] = {};
+      }
+      
+      if (!grupos[unidadeNome][salaNome]) {
+        grupos[unidadeNome][salaNome] = [];
+      }
+      
+      grupos[unidadeNome][salaNome].push(curso);
+    });
+    
+    return grupos;
+  };
+
+  // Funções para alternar colapso de uma unidade em cada card
+  const toggleUnidadeSemana = (unidadeNome: string) => {
+    setCollapsedUnidadesSemana(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(unidadeNome)) {
+        newSet.delete(unidadeNome);
+      } else {
+        newSet.add(unidadeNome);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleUnidadeMes = (unidadeNome: string) => {
+    setCollapsedUnidadesMes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(unidadeNome)) {
+        newSet.delete(unidadeNome);
+      } else {
+        newSet.add(unidadeNome);
+      }
+      return newSet;
+    });
+  };
+
+  // Funções para recolher todas as unidades
+  const recolherTodasUnidadesSemana = () => {
+    if (cursosSemana && cursosSemana.length > 0) {
+      const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosSemana));
+      setCollapsedUnidadesSemana(new Set(todasUnidades));
+    }
+  };
+
+  const recolherTodasUnidadesMes = () => {
+    if (cursosMes && cursosMes.length > 0) {
+      const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosMes));
+      setCollapsedUnidadesMes(new Set(todasUnidades));
+    }
+  };
+
+  // Funções para verificar se há unidades expandidas
+  const temUnidadesExpandidasSemana = () => {
+    if (!cursosSemana || cursosSemana.length === 0) return false;
+    const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosSemana));
+    return todasUnidades.some(unidade => !collapsedUnidadesSemana.has(unidade));
+  };
+
+  const temUnidadesExpandidasMes = () => {
+    if (!cursosMes || cursosMes.length === 0) return false;
+    const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosMes));
+    return todasUnidades.some(unidade => !collapsedUnidadesMes.has(unidade));
+  };
+
   // Buscar estatísticas gerais
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -356,13 +438,27 @@ const Dashboard = () => {
           {/* Novo card: Cursos em andamento na semana */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-blue-500" />
-                Cursos em andamento na semana
-              </CardTitle>
-              <CardDescription>
-                Cursos que estão ocorrendo nesta semana
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5 text-blue-500" />
+                    Cursos em andamento na semana
+                  </CardTitle>
+                  <CardDescription>
+                    Cursos que estão ocorrendo nesta semana
+                  </CardDescription>
+                </div>
+                {cursosSemana && cursosSemana.length > 0 && temUnidadesExpandidasSemana() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={recolherTodasUnidadesSemana}
+                    className="text-xs"
+                  >
+                    Recolher tudo
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {!cursosSemana ? (
@@ -379,39 +475,79 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : cursosSemana.length > 0 ? (
-                <div className="space-y-3">
-                  {cursosSemana
-                    .slice()
-                    .sort((a, b) => {
-                      const aFim = new Date(a.fim + 'T23:59:59') < new Date();
-                      const bFim = new Date(b.fim + 'T23:59:59') < new Date();
-                      if (aFim === bFim) return 0;
-                      return aFim ? 1 : -1;
-                    })
-                    .map((curso) => {
-                      const fimJaPassou = new Date(curso.fim + 'T23:59:59') < new Date();
-                      return (
-                        <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                          <div>
-                            <p className="font-medium">{curso.titulo}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {curso.professor} • {formatPeriodo(curso.periodo)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {curso.unidades?.nome} - {curso.salas?.nome}
-                            </p>
+                <div className="space-y-4">
+                  {Object.entries(agruparCursosPorUnidadeSala(cursosSemana))
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([unidadeNome, salas]) => (
+                      <Collapsible
+                        key={unidadeNome}
+                        open={!collapsedUnidadesSemana.has(unidadeNome)}
+                        onOpenChange={() => toggleUnidadeSemana(unidadeNome)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-blue-500" />
+                              <span className="font-semibold text-sm">{unidadeNome}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {Object.values(salas).flat().length} curso{Object.values(salas).flat().length !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {collapsedUnidadesSemana.has(unidadeNome) ? 'Expandir' : 'Recolher'}
+                            </div>
                           </div>
-                          <div className="flex flex-col items-end min-w-[90px]">
-                            <Badge variant={fimJaPassou ? "destructive" : "outline"}>
-                              {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
-                            </Badge>
-                            {fimJaPassou && (
-                              <div className="text-xs text-red-600 font-semibold mt-1">Terminado</div>
-                            )}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="mt-3 space-y-3">
+                            {Object.entries(salas)
+                              .sort(([a], [b]) => a.localeCompare(b))
+                              .map(([salaNome, cursos]) => (
+                                <div key={salaNome} className="ml-4 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">{salaNome}</span>
+                                    <Badge variant="outline" className="text-xs">
+                                      {cursos.length} curso{cursos.length !== 1 ? 's' : ''}
+                                    </Badge>
+                                  </div>
+                                  <div className="ml-4 space-y-2">
+                                    {cursos
+                                      .slice()
+                                      .sort((a, b) => {
+                                        const aFim = new Date(a.fim + 'T23:59:59') < new Date();
+                                        const bFim = new Date(b.fim + 'T23:59:59') < new Date();
+                                        if (aFim === bFim) return 0;
+                                        return aFim ? 1 : -1;
+                                      })
+                                      .map((curso) => {
+                                        const fimJaPassou = new Date(curso.fim + 'T23:59:59') < new Date();
+                                        return (
+                                          <div key={curso.id} className="flex items-center justify-between border-b pb-2">
+                                            <div>
+                                              <p className="font-medium text-sm">{curso.titulo}</p>
+                                              <p className="text-xs text-muted-foreground">
+                                                {curso.professor} • {formatPeriodo(curso.periodo)}
+                                              </p>
+                                            </div>
+                                            <div className="flex flex-col items-end min-w-[90px]">
+                                              <Badge variant={fimJaPassou ? "destructive" : "outline"} className="text-xs">
+                                                {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
+                                              </Badge>
+                                              {fimJaPassou && (
+                                                <div className="text-xs text-red-600 font-semibold mt-1">Terminado</div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              ))}
                           </div>
-                        </div>
-                      );
-                    })}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
                 </div>
               ) : (
                 <p className="text-muted-foreground">Nenhum curso em andamento nesta semana</p>
@@ -422,13 +558,27 @@ const Dashboard = () => {
           {/* Novo card: Cursos do mês */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-purple-500" />
-                Cursos do mês
-              </CardTitle>
-              <CardDescription>
-                Cursos que estão ocorrendo neste mês
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5 text-purple-500" />
+                    Cursos do mês
+                  </CardTitle>
+                  <CardDescription>
+                    Cursos que estão ocorrendo neste mês
+                  </CardDescription>
+                </div>
+                {cursosMes && cursosMes.length > 0 && temUnidadesExpandidasMes() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={recolherTodasUnidadesMes}
+                    className="text-xs"
+                  >
+                    Recolher tudo
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {!cursosMes ? (
@@ -445,39 +595,79 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : cursosMes.length > 0 ? (
-                <div className="space-y-3">
-                  {cursosMes
-                    .slice()
-                    .sort((a, b) => {
-                      const aFim = new Date(a.fim + 'T23:59:59') < new Date();
-                      const bFim = new Date(b.fim + 'T23:59:59') < new Date();
-                      if (aFim === bFim) return 0;
-                      return aFim ? 1 : -1;
-                    })
-                    .map((curso) => {
-                      const fimJaPassou = new Date(curso.fim + 'T23:59:59') < new Date();
-                      return (
-                        <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                          <div>
-                            <p className="font-medium">{curso.titulo}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {curso.professor} • {formatPeriodo(curso.periodo)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {curso.unidades?.nome} - {curso.salas?.nome}
-                            </p>
+                <div className="space-y-4">
+                  {Object.entries(agruparCursosPorUnidadeSala(cursosMes))
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([unidadeNome, salas]) => (
+                      <Collapsible
+                        key={unidadeNome}
+                        open={!collapsedUnidadesMes.has(unidadeNome)}
+                        onOpenChange={() => toggleUnidadeMes(unidadeNome)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-purple-500" />
+                              <span className="font-semibold text-sm">{unidadeNome}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {Object.values(salas).flat().length} curso{Object.values(salas).flat().length !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {collapsedUnidadesMes.has(unidadeNome) ? 'Expandir' : 'Recolher'}
+                            </div>
                           </div>
-                          <div className="flex flex-col items-end min-w-[90px]">
-                            <Badge variant={fimJaPassou ? "destructive" : "outline"}>
-                              {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
-                            </Badge>
-                            {fimJaPassou && (
-                              <div className="text-xs text-red-600 font-semibold mt-1">Terminado</div>
-                            )}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="mt-3 space-y-3">
+                            {Object.entries(salas)
+                              .sort(([a], [b]) => a.localeCompare(b))
+                              .map(([salaNome, cursos]) => (
+                                <div key={salaNome} className="ml-4 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-purple-300 rounded-full"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">{salaNome}</span>
+                                    <Badge variant="outline" className="text-xs">
+                                      {cursos.length} curso{cursos.length !== 1 ? 's' : ''}
+                                    </Badge>
+                                  </div>
+                                  <div className="ml-4 space-y-2">
+                                    {cursos
+                                      .slice()
+                                      .sort((a, b) => {
+                                        const aFim = new Date(a.fim + 'T23:59:59') < new Date();
+                                        const bFim = new Date(b.fim + 'T23:59:59') < new Date();
+                                        if (aFim === bFim) return 0;
+                                        return aFim ? 1 : -1;
+                                      })
+                                      .map((curso) => {
+                                        const fimJaPassou = new Date(curso.fim + 'T23:59:59') < new Date();
+                                        return (
+                                          <div key={curso.id} className="flex items-center justify-between border-b pb-2">
+                                            <div>
+                                              <p className="font-medium text-sm">{curso.titulo}</p>
+                                              <p className="text-xs text-muted-foreground">
+                                                {curso.professor} • {formatPeriodo(curso.periodo)}
+                                              </p>
+                                            </div>
+                                            <div className="flex flex-col items-end min-w-[90px]">
+                                              <Badge variant={fimJaPassou ? "destructive" : "outline"} className="text-xs">
+                                                {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
+                                              </Badge>
+                                              {fimJaPassou && (
+                                                <div className="text-xs text-red-600 font-semibold mt-1">Terminado</div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              ))}
                           </div>
-                        </div>
-                      );
-                    })}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
                 </div>
               ) : (
                 <p className="text-muted-foreground">Nenhum curso em andamento neste mês</p>
