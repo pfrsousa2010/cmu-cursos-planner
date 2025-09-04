@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import * as XLSX from "xlsx";
 
 interface Curso {
   id: string;
@@ -52,7 +53,14 @@ export const useCursosExport = () => {
     });
   };
 
-  const exportToExcel = (filteredCursos: Curso[]) => {
+  const exportToExcel = (
+    filteredCursos: Curso[],
+    searchTerm: string = "",
+    selectedPeriodo: string = "todos",
+    selectedUnidade: string = "todas",
+    selectedSala: string = "todas",
+    selectedYear: string = "todos"
+  ) => {
     if (!filteredCursos || filteredCursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
       return;
@@ -73,28 +81,45 @@ export const useCursosExport = () => {
       'Total de Insumos': curso.total_insumos || 0
     }));
 
-    // Converter para CSV
-    const headers = Object.keys(excelData[0]);
-    const csvContent = [
-      headers.join(','),
-      ...excelData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
-    ].join('\n');
+    // Criar workbook e worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
 
-    // Download do arquivo
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio_cursos_${format(new Date(), 'dd-MM-yyyy HH:mm:ss')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Configurar largura das colunas
+    const colWidths = [
+      { wch: 30 }, // Título
+      { wch: 25 }, // Professor
+      { wch: 12 }, // Período
+      { wch: 12 }, // Data Início
+      { wch: 12 }, // Data Fim
+      { wch: 20 }, // Unidade
+      { wch: 15 }, // Sala
+      { wch: 15 }  // Total de Insumos
+    ];
+    ws['!cols'] = colWidths;
+
+    // Adicionar worksheet ao workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Cursos');
+
+    // Gerar arquivo Excel
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dataStr = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+    
+    const fileName = `relatorio_cursos_${dataStr}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 
     toast.success("Relatório Excel exportado com sucesso!");
   };
 
-  const exportToPDF = (filteredCursos: Curso[]) => {
+  const exportToPDF = (
+    filteredCursos: Curso[],
+    searchTerm: string = "",
+    selectedPeriodo: string = "todos",
+    selectedUnidade: string = "todas",
+    selectedSala: string = "todas",
+    selectedYear: string = "todos"
+  ) => {
     if (!filteredCursos || filteredCursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
       return;
@@ -113,6 +138,29 @@ export const useCursosExport = () => {
     // Informações do relatório
     doc.setFontSize(10);
     let infoY = 30;
+    
+    // Filtros aplicados
+    const filtros = [];
+    if (searchTerm) {
+      filtros.push(`Busca: "${searchTerm}"`);
+    }
+    if (selectedPeriodo !== "todos") {
+      filtros.push(`Período: ${formatPeriodo(selectedPeriodo)}`);
+    }
+    if (selectedUnidade !== "todas") {
+      filtros.push(`Unidade: ${selectedUnidade}`);
+    }
+    if (selectedSala !== "todas") {
+      filtros.push(`Sala: ${selectedSala}`);
+    }
+    if (selectedYear !== "todos") {
+      filtros.push(`Ano: ${selectedYear}`);
+    }
+    
+    if (filtros.length > 0) {
+      doc.text(`Filtros aplicados: ${filtros.join(' | ')}`, 14, infoY);
+      infoY += 6;
+    }
     
     // Data de emissão
     doc.text(`Data de emissão: ${dataAtual}`, 14, infoY);

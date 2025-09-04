@@ -276,12 +276,26 @@ const Cursos = () => {
 
   // Handlers para exportação
   const handleExportExcel = () => {
-    exportToExcel(filteredCursos);
+    exportToExcel(
+      filteredCursos,
+      searchTerm,
+      selectedPeriodo,
+      selectedUnidade,
+      selectedSala,
+      selectedYear
+    );
     setRelatorioDialogOpen(false);
   };
 
   const handleExportPDF = () => {
-    exportToPDF(filteredCursos);
+    exportToPDF(
+      filteredCursos,
+      searchTerm,
+      selectedPeriodo,
+      selectedUnidade,
+      selectedSala,
+      selectedYear
+    );
     setRelatorioDialogOpen(false);
   };
 
@@ -330,7 +344,7 @@ const Cursos = () => {
                       <div className="text-left">
                         <div className="font-medium">Exportar para Excel</div>
                         <div className="text-sm text-muted-foreground">
-                          Arquivo CSV compatível com Excel
+                          Arquivo XLSX compatível com Excel
                         </div>
                       </div>
                     </Button>
