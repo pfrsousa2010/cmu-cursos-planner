@@ -143,10 +143,22 @@ const Cursos = () => {
     return [...new Set(years)].sort((a, b) => b - a);
   };
 
-  // Obter salas únicas para filtro
+  // Obter salas únicas para filtro baseado na unidade selecionada
   const getSalas = () => {
     if (!cursos) return [];
-    return [...new Set(cursos.map(curso => curso.salas?.nome).filter(Boolean))];
+    
+    // Se nenhuma unidade específica está selecionada, mostrar todas as salas
+    if (selectedUnidade === "todas") {
+      return [...new Set(cursos.map(curso => curso.salas?.nome).filter(Boolean))];
+    }
+    
+    // Filtrar salas apenas da unidade selecionada
+    const salasDaUnidade = cursos
+      .filter(curso => curso.unidades?.nome === selectedUnidade)
+      .map(curso => curso.salas?.nome)
+      .filter(Boolean);
+    
+    return [...new Set(salasDaUnidade)];
   };
 
   // Deletar curso
@@ -323,7 +335,11 @@ const Cursos = () => {
               {/* Filtro por Unidade */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Unidade</label>
-                <Select value={selectedUnidade} onValueChange={setSelectedUnidade}>
+                <Select value={selectedUnidade} onValueChange={(value) => {
+                  setSelectedUnidade(value);
+                  // Resetar filtro de sala quando a unidade for alterada
+                  setSelectedSala("todas");
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar unidade" />
                   </SelectTrigger>
@@ -361,13 +377,39 @@ const Cursos = () => {
                 <label className="text-sm font-medium">Período</label>
                 <Select value={selectedPeriodo} onValueChange={setSelectedPeriodo}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecionar período" />
+                    <SelectValue placeholder="Selecionar período">
+                      {selectedPeriodo === "todos" ? (
+                        "Todos os períodos"
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPeriodoColor(selectedPeriodo)}`}>
+                          {formatPeriodo(selectedPeriodo)}
+                        </span>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos os períodos</SelectItem>
-                    <SelectItem value="manha">Manhã</SelectItem>
-                    <SelectItem value="tarde">Tarde</SelectItem>
-                    <SelectItem value="noite">Noite</SelectItem>
+                    <SelectItem value="manha">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPeriodoColor('manha')}`}>
+                          Manhã
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="tarde">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPeriodoColor('tarde')}`}>
+                          Tarde
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="noite">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPeriodoColor('noite')}`}>
+                          Noite
+                        </span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
