@@ -28,6 +28,7 @@ interface Curso {
   unidade_id: string;
   unidades: { nome: string, id: string } | null;
   salas: { nome: string; id: string } | null;
+  total_insumos?: number;
 }
 
 const Cursos = () => {
@@ -57,10 +58,18 @@ const Cursos = () => {
         .select(`
           *,
           unidades (id, nome),
-          salas (id, nome)
+          salas (id, nome),
+          curso_insumos (id)
         `)
         .order('created_at', { ascending: false });
-      return data || [];
+      
+      // Processar os dados para incluir contagem de insumos
+      const cursosComInsumos = data?.map(curso => ({
+        ...curso,
+        total_insumos: curso.curso_insumos?.length || 0
+      })) || [];
+      
+      return cursosComInsumos;
     }
   });
 
@@ -502,7 +511,7 @@ const Cursos = () => {
                                     <span className="font-medium">Fim:</span> {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                   </div>
                                   <div>
-                                    <span className="font-medium">Período:</span> {formatPeriodo(curso.periodo)}
+                                    <span className="font-medium">Total de Insumos:</span> {curso.total_insumos || 0}
                                   </div>
                                 </div>
                               </div>
