@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Plus, Edit, Trash2, FileText, Download, Search, Filter, Copy, MoreHorizontal } from "lucide-react";
+import { useCursosExport } from "@/hooks/useCursosExport";
+import { Plus, Edit, Trash2, FileText, Download, Search, Filter, Copy, MoreHorizontal, FileSpreadsheet, FileImage } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,6 +38,7 @@ const Cursos = () => {
   const [duplicatingCurso, setDuplicatingCurso] = useState<Curso | null>(null);
   const [insumosDialogOpen, setInsumosDialogOpen] = useState(false);
   const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
+  const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +50,7 @@ const Cursos = () => {
   
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
+  const { exportToExcel, exportToPDF } = useCursosExport();
 
   // Buscar cursos
   const { data: cursos, isLoading } = useQuery<Curso[]>({
@@ -269,7 +272,17 @@ const Cursos = () => {
     setSelectedUnidade("todas");
     setSelectedSala("todas");
     setSelectedYear("todos");
+  };
 
+  // Handlers para exportação
+  const handleExportExcel = () => {
+    exportToExcel(filteredCursos);
+    setRelatorioDialogOpen(false);
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(filteredCursos);
+    setRelatorioDialogOpen(false);
   };
 
   if (isLoading) {
@@ -290,8 +303,60 @@ const Cursos = () => {
             <h1 className="text-3xl font-bold tracking-tight">Cursos</h1>
           </div>
 
-          {canManageCursos && (
-                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <div className="flex items-center gap-2">
+            {/* Botão de Relatório */}
+            <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar Cursos
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Exportar Relatório de Cursos</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Selecione o formato para exportar o relatório dos cursos filtrados.
+                  </p>
+                  <div className="grid gap-3">
+                    <Button 
+                      onClick={handleExportExcel}
+                      variant="outline" 
+                      className="h-auto p-4 flex items-center justify-start gap-3"
+                    >
+                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Exportar para Excel</div>
+                        <div className="text-sm text-muted-foreground">
+                          Arquivo CSV compatível com Excel
+                        </div>
+                      </div>
+                    </Button>
+                    <Button 
+                      onClick={handleExportPDF}
+                      variant="outline" 
+                      className="h-auto p-4 flex items-center justify-start gap-3"
+                    >
+                      <FileImage className="h-6 w-6 text-red-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Exportar para PDF</div>
+                        <div className="text-sm text-muted-foreground">
+                          Documento PDF para impressão
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Total de cursos a serem exportados: {filteredCursos.length}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {canManageCursos && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={() => {
                     setEditingCurso(null);
@@ -314,7 +379,8 @@ const Cursos = () => {
                   />
                 </DialogContent>
               </Dialog>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Seção de Filtros */}
