@@ -82,6 +82,15 @@ const Dashboard = () => {
     }
   };
 
+  // Funções para expandir todas as unidades
+  const expandirTodasUnidadesSemana = () => {
+    setCollapsedUnidadesSemana(new Set());
+  };
+
+  const expandirTodasUnidadesMes = () => {
+    setCollapsedUnidadesMes(new Set());
+  };
+
   // Funções para verificar se há unidades expandidas
   const temUnidadesExpandidasSemana = () => {
     if (!cursosSemana || cursosSemana.length === 0) return false;
@@ -93,6 +102,19 @@ const Dashboard = () => {
     if (!cursosMes || cursosMes.length === 0) return false;
     const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosMes));
     return todasUnidades.some(unidade => !collapsedUnidadesMes.has(unidade));
+  };
+
+  // Funções para verificar se todas as unidades estão recolhidas
+  const todasUnidadesRecolhidasSemana = () => {
+    if (!cursosSemana || cursosSemana.length === 0) return false;
+    const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosSemana));
+    return todasUnidades.length > 0 && todasUnidades.every(unidade => collapsedUnidadesSemana.has(unidade));
+  };
+
+  const todasUnidadesRecolhidasMes = () => {
+    if (!cursosMes || cursosMes.length === 0) return false;
+    const todasUnidades = Object.keys(agruparCursosPorUnidadeSala(cursosMes));
+    return todasUnidades.length > 0 && todasUnidades.every(unidade => collapsedUnidadesMes.has(unidade));
   };
 
   // Buscar estatísticas gerais
@@ -448,14 +470,14 @@ const Dashboard = () => {
                     Cursos que estão ocorrendo nesta semana
                   </CardDescription>
                 </div>
-                {cursosSemana && cursosSemana.length > 0 && temUnidadesExpandidasSemana() && (
+                {cursosSemana && cursosSemana.length > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={recolherTodasUnidadesSemana}
+                    onClick={todasUnidadesRecolhidasSemana() ? expandirTodasUnidadesSemana : recolherTodasUnidadesSemana}
                     className="text-xs"
                   >
-                    Recolher tudo
+                    {todasUnidadesRecolhidasSemana() ? 'Expandir tudo' : 'Recolher tudo'}
                   </Button>
                 )}
               </div>
@@ -568,14 +590,14 @@ const Dashboard = () => {
                     Cursos que estão ocorrendo neste mês
                   </CardDescription>
                 </div>
-                {cursosMes && cursosMes.length > 0 && temUnidadesExpandidasMes() && (
+                {cursosMes && cursosMes.length > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={recolherTodasUnidadesMes}
+                    onClick={todasUnidadesRecolhidasMes() ? expandirTodasUnidadesMes : recolherTodasUnidadesMes}
                     className="text-xs"
                   >
-                    Recolher tudo
+                    {todasUnidadesRecolhidasMes() ? 'Expandir tudo' : 'Recolher tudo'}
                   </Button>
                 )}
               </div>
