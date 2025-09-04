@@ -92,7 +92,7 @@ export type Database = {
           periodo: Database["public"]["Enums"]["periodo_enum"]
           professor: string
           sala_id: string | null
-          status: Database["public"]["Enums"]["status_curso"] | null
+
           titulo: string
           unidade_id: string
           updated_at: string | null
@@ -105,7 +105,7 @@ export type Database = {
           periodo: Database["public"]["Enums"]["periodo_enum"]
           professor: string
           sala_id?: string | null
-          status?: Database["public"]["Enums"]["status_curso"] | null
+
           titulo: string
           unidade_id: string
           updated_at?: string | null
@@ -118,7 +118,7 @@ export type Database = {
           periodo?: Database["public"]["Enums"]["periodo_enum"]
           professor?: string
           sala_id?: string | null
-          status?: Database["public"]["Enums"]["status_curso"] | null
+
           titulo?: string
           unidade_id?: string
           updated_at?: string | null
@@ -283,7 +283,7 @@ export type Database = {
     }
     Enums: {
       periodo_enum: "manha" | "tarde" | "noite"
-      status_curso: "ativo" | "finalizado"
+
       user_role: "admin" | "editor" | "visualizador"
     }
     CompositeTypes: {
@@ -413,7 +413,7 @@ export const Constants = {
   public: {
     Enums: {
       periodo_enum: ["manha", "tarde", "noite"],
-      status_curso: ["ativo", "finalizado"],
+
       user_role: ["admin", "editor", "visualizador"],
     },
   },

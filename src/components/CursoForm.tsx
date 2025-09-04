@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 
 interface Curso {
@@ -19,7 +20,6 @@ interface Curso {
   fim: string;
   sala_id: string | null;
   unidade_id: string;
-  status: 'ativo' | 'finalizado';
   unidades: { nome: string, id: string } | null;
   salas: { nome: string; id: string } | null;
 }
@@ -41,11 +41,13 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
   const [unidadeNome, setUnidadeNome] = useState("");
   const [salaId, setSalaId] = useState("");
   const [salaNome, setSalaNome] = useState("");
-  const [status, setStatus] = useState("ativo");
+
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [selectedInsumos, setSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
-  const [insumosExpanded, setInsumosExpanded] = useState(false);
+  const [insumosExpanded, setInsumosExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [insumosModalOpen, setInsumosModalOpen] = useState(false);
+  const [tempSelectedInsumos, setTempSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
 
   const queryClient = useQueryClient();
 
@@ -125,7 +127,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
       setUnidadeNome(curso.unidades?.nome || "");
       setSalaId(curso.salas?.id || "");
       setSalaNome(curso.salas?.nome || "");
-      setStatus(curso.status || "ativo");
+
 
       // Carregar matérias e insumos do curso
       const loadCursoData = async () => {
@@ -162,7 +164,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
       setUnidadeNome(cursoParaDuplicar.unidades?.nome || "");
       setSalaId(cursoParaDuplicar.salas?.id || "");
       setSalaNome(cursoParaDuplicar.salas?.nome || "");
-      setStatus("ativo"); // Sempre ativo para duplicação
+
 
       // Carregar matérias e insumos do curso para duplicação
       const loadCursoData = async () => {
@@ -199,7 +201,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
       setUnidadeNome("");
       setSalaId("");
       setSalaNome("");
-      setStatus("ativo");
+
       setSelectedMaterias([]);
       setSelectedInsumos([]);
     }
@@ -347,8 +349,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
       fim,
       periodo,
       unidade_id: unidadeId,
-      sala_id: salaId || null,
-      status
+      sala_id: salaId || null
     };
 
     mutation.mutate(data);
@@ -362,15 +363,43 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
     );
   };
 
-  const handleInsumoAdd = (insumoId: string) => {
-    if (!selectedInsumos.find(i => i.id === insumoId)) {
+  const handleInsumoToggle = (insumoId: string) => {
+    const isSelected = selectedInsumos.find(i => i.id === insumoId);
+    if (isSelected) {
+      // Remover insumo
+      setSelectedInsumos(prev => prev.filter(i => i.id !== insumoId));
+    } else {
+      // Adicionar insumo
       setSelectedInsumos(prev => [{ id: insumoId, quantidade: 1 }, ...prev]);
       setInsumosExpanded(true); // Expandir automaticamente quando adicionar um insumo
     }
   };
 
-  const handleInsumoRemove = (insumoId: string) => {
-    setSelectedInsumos(prev => prev.filter(i => i.id !== insumoId));
+  const handleOpenInsumosModal = () => {
+    setTempSelectedInsumos([...selectedInsumos]);
+    setInsumosModalOpen(true);
+  };
+
+  const handleCloseInsumosModal = () => {
+    setInsumosModalOpen(false);
+    setTempSelectedInsumos([]);
+  };
+
+  const handleTempInsumoToggle = (insumoId: string) => {
+    const isSelected = tempSelectedInsumos.find(i => i.id === insumoId);
+    if (isSelected) {
+      // Remover insumo temporário
+      setTempSelectedInsumos(prev => prev.filter(i => i.id !== insumoId));
+    } else {
+      // Adicionar insumo temporário
+      setTempSelectedInsumos(prev => [{ id: insumoId, quantidade: 1 }, ...prev]);
+    }
+  };
+
+  const handleConfirmInsumos = () => {
+    setSelectedInsumos(tempSelectedInsumos);
+    setInsumosModalOpen(false);
+    setTempSelectedInsumos([]);
   };
 
   const handleQuantidadeChange = (insumoId: string, quantidade: number) => {
@@ -388,7 +417,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
       inicio !== "" &&
       fim !== "" &&
       periodo !== "" &&
-      status !== "" &&
+
       unidadeId !== "" &&
       salaId !== "" &&
       selectedMaterias.length > 0
@@ -410,7 +439,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
     inicio,
     fim,
     periodo,
-    status,
+
     unidadeId,
     salaId,
     selectedMaterias
@@ -438,10 +467,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
             {inicio && fim && new Date(fim) <= new Date(inicio) && (
               <li>Data de fim deve ser posterior à data de início</li>
             )}
-            {!periodo && <li>Período</li>}
-            {!status && <li>Status</li>}
             {!unidadeId && <li>Unidade</li>}
             {!salaId && <li>Sala</li>}
+            {!periodo && <li>Período</li>}
             {selectedMaterias.length === 0 && <li>Pelo menos uma matéria</li>}
           </ul>
         </div>
@@ -518,37 +546,6 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="periodo" className={!periodo ? "text-red-600" : ""}>
-            Período *
-          </Label>
-          <Select value={periodo} onValueChange={setPeriodo} required>
-            <SelectTrigger className={!periodo ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
-              <SelectValue placeholder="Selecione o período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="manha">Manhã</SelectItem>
-              <SelectItem value="tarde">Tarde</SelectItem>
-              <SelectItem value="noite">Noite</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status" className={!status ? "text-red-600" : ""}>
-            Status *
-          </Label>
-          <Select value={status} onValueChange={setStatus} required>
-            <SelectTrigger className={!status ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="finalizado">Finalizado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="unidade" className={!unidadeId ? "text-red-600" : ""}>
             Unidade *
           </Label>
@@ -570,16 +567,50 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
           <Label htmlFor="sala" className={!salaId ? "text-red-600" : ""}>
             Sala *
           </Label>
-          <Select value={salaId} onValueChange={setSalaId} required>
+          <Select value={salaId} onValueChange={setSalaId} required disabled={!unidadeId}>
             <SelectTrigger className={!salaId ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
-              <SelectValue placeholder="Selecione a sala" />
+              <SelectValue placeholder={!unidadeId ? "Selecione a unidade para carregar as salas" : "Selecione a sala"} />
             </SelectTrigger>
             <SelectContent>
-                              {salas?.map(sala => (
+              {!unidadeId ? (
+                <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                  Selecione uma unidade primeiro
+                </div>
+              ) : (
+                salas?.map(sala => (
                   <SelectItem key={sala.id} value={sala.id}>
                     {sala.nome} (Cap. {sala.capacidade})
                   </SelectItem>
-                ))}
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="periodo" className={!periodo ? "text-red-600" : ""}>
+            Período *
+          </Label>
+          <Select value={periodo} onValueChange={setPeriodo} required>
+            <SelectTrigger className={!periodo ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
+              <SelectValue placeholder="Selecione o período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="manha">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Manhã
+                </span>
+              </SelectItem>
+              <SelectItem value="tarde">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Tarde
+                </span>
+              </SelectItem>
+              <SelectItem value="noite">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Noite
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -650,30 +681,33 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
         </CollapsibleTrigger>
         
         <CollapsibleContent className="space-y-4">
-          <Select onValueChange={handleInsumoAdd}>
-            <SelectTrigger>
-              <SelectValue placeholder="Adicionar insumo" />
-            </SelectTrigger>
-            <SelectContent>
-              {(() => {
-                const insumosDisponiveis = insumos?.filter(insumo => !selectedInsumos.find(i => i.id === insumo.id)) || [];
-                
-                if (insumosDisponiveis.length === 0) {
-                  return (
-                    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                      Todos os insumos foram adicionados
-                    </div>
-                  );
-                }
-                
-                return insumosDisponiveis.map(insumo => (
-                  <SelectItem key={insumo.id} value={insumo.id}>
-                    {insumo.nome}
-                  </SelectItem>
-                ));
-              })()}
-            </SelectContent>
-          </Select>
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleOpenInsumosModal}
+              className="w-fit"
+            >
+              Adicionar Insumos
+            </Button>
+          </div>
+          
+          {selectedInsumos.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedInsumos.map(item => {
+                const insumo = insumos?.find(i => i.id === item.id);
+                return (
+                  <Badge key={item.id} variant="secondary">
+                    {insumo?.nome} ({item.quantidade})
+                    <X 
+                      className="ml-1 h-3 w-3 cursor-pointer" 
+                      onClick={() => handleInsumoToggle(item.id)}
+                    />
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
 
           {selectedInsumos.length > 0 && (
             <div className="space-y-2">
@@ -693,7 +727,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleInsumoRemove(item.id)}
+                      onClick={() => handleInsumoToggle(item.id)}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -705,20 +739,64 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
         </CollapsibleContent>
       </Collapsible>
 
-      <div className="flex gap-4">
-        <Button type="submit" disabled={mutation.isPending || !isFormValid}>
-          {mutation.isPending ? "Salvando..." : (
-            curso ? "Atualizar" : 
-            cursoParaDuplicar ? "Duplicar" : 
-            "Criar"
-          )}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel || onSuccess}>
-          Cancelar
-        </Button>
-      </div>
+             <div className="flex gap-4 justify-end">
+         <Button type="button" variant="outline" onClick={onCancel || onSuccess}>
+           Cancelar
+         </Button>
+         <Button type="submit" disabled={mutation.isPending || !isFormValid}>
+           {mutation.isPending ? "Salvando..." : (
+             curso ? "Atualizar" : 
+             cursoParaDuplicar ? "Duplicar" : 
+             "Criar"
+           )}
+         </Button>
+       </div>
         </>
       )}
+
+      {/* Modal de Seleção de Insumos */}
+      <Dialog open={insumosModalOpen} onOpenChange={setInsumosModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Selecionar Insumos</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="grid gap-2 md:grid-cols-3">
+              {insumos?.map(insumo => {
+                const isSelected = tempSelectedInsumos.find(i => i.id === insumo.id);
+                return (
+                  <div
+                    key={insumo.id}
+                    className={`p-2 border rounded cursor-pointer transition-colors ${
+                      isSelected ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleTempInsumoToggle(insumo.id)}
+                  >
+                    <span className="text-sm">{insumo.nome}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseInsumosModal}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmInsumos}
+            >
+              Adicionar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };

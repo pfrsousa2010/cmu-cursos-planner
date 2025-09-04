@@ -26,7 +26,6 @@ interface Curso {
   fim: string;
   sala_id: string | null;
   unidade_id: string;
-  status: 'ativo' | 'finalizado';
   unidades: { nome: string, id: string } | null;
   salas: { nome: string; id: string } | null;
 }
@@ -44,7 +43,7 @@ const Cursos = () => {
   const [selectedUnidade, setSelectedUnidade] = useState("todas");
   const [selectedSala, setSelectedSala] = useState("todas");
   const [selectedYear, setSelectedYear] = useState("todos");
-  const [selectedStatus, setSelectedStatus] = useState("todos");
+
   
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
@@ -95,8 +94,7 @@ const Cursos = () => {
         if (cursoYear !== selectedYear) return false;
       }
       
-      // Filtro por status
-      if (selectedStatus !== "todos" && curso.status !== selectedStatus) return false;
+
       
       return true;
     });
@@ -131,7 +129,7 @@ const Cursos = () => {
     });
 
     return { filteredCursos: filtered, groupedCursos: grouped };
-  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear, selectedStatus]);
+  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear]);
 
   // Obter dados únicos para filtros
   const getUnidades = () => {
@@ -204,9 +202,7 @@ const Cursos = () => {
     return periodos[periodo as keyof typeof periodos] || periodo;
   };
 
-  const getStatusColor = (status: string) => {
-    return status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-  };
+
 
   const getPeriodoColor = (periodo: string) => {
     const colors = {
@@ -252,7 +248,7 @@ const Cursos = () => {
     setSelectedUnidade("todas");
     setSelectedSala("todas");
     setSelectedYear("todos");
-    setSelectedStatus("todos");
+
   };
 
   if (isLoading) {
@@ -309,7 +305,7 @@ const Cursos = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {/* Busca por texto */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Buscar</label>
@@ -394,20 +390,7 @@ const Cursos = () => {
                 </Select>
               </div>
 
-              {/* Filtro por Status */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os status</SelectItem>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="finalizado">Finalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
 
             </div>
 
@@ -461,9 +444,6 @@ const Cursos = () => {
                                 <div className="flex items-center gap-2">
                                   <h5 className="font-medium">{curso.titulo}</h5>
                                   <div className="flex items-center gap-1">
-                                    <Badge className={getStatusColor(curso.status)}>
-                                      {curso.status === 'ativo' ? 'Ativo' : 'Finalizado'}
-                                    </Badge>
                                     <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
                                       {formatPeriodo(curso.periodo)}
                                     </Badge>

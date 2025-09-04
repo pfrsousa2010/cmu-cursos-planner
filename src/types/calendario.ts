@@ -7,7 +7,6 @@ export interface Curso {
   fim: string;
   sala_id: string;
   unidade_id: string;
-  status: 'ativo' | 'finalizado';
   unidades: { nome: string; id: string } | null;
   salas: { nome: string; id: string } | null;
 }
