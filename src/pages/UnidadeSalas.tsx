@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Plus, Edit, Trash2, Building2, Phone, MapPin, DoorOpen, Users } from "lucide-react";
+import { useUnidadeSalasExport } from "@/hooks/useUnidadeSalasExport";
+import { Plus, Edit, Trash2, Building2, Phone, MapPin, DoorOpen, Users, Download, FileSpreadsheet, FileImage } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -33,11 +34,12 @@ interface Sala {
 const UnidadeSalas = () => {
   const [isUnidadeDialogOpen, setIsUnidadeDialogOpen] = useState(false);
   const [isSalaDialogOpen, setIsSalaDialogOpen] = useState(false);
+  const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
   const [editingUnidade, setEditingUnidade] = useState<Unidade | null>(null);
   const [editingSala, setEditingSala] = useState<Sala | null>(null);
   const [selectedUnidadeId, setSelectedUnidadeId] = useState<string>("");
 
-  
+
   // Estados do formulário de unidade
   const [unidadeForm, setUnidadeForm] = useState({
     nome: "",
@@ -54,6 +56,7 @@ const UnidadeSalas = () => {
 
   const { canManageUnidades, canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
   const queryClient = useQueryClient();
+  const { exportToExcel, exportToPDF } = useUnidadeSalasExport();
 
   // Buscar unidades com suas salas
   const { data: unidades, isLoading } = useQuery({
@@ -74,7 +77,7 @@ const UnidadeSalas = () => {
             .select('*')
             .eq('unidade_id', unidade.id)
             .order('nome');
-          
+
           return {
             ...unidade,
             salas: salasData || []
@@ -227,6 +230,21 @@ const UnidadeSalas = () => {
     setIsSalaDialogOpen(true);
   };
 
+  // Handlers para exportação
+  const handleExportExcel = () => {
+    if (unidades) {
+      exportToExcel(unidades);
+      setRelatorioDialogOpen(false);
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (unidades) {
+      exportToPDF(unidades);
+      setRelatorioDialogOpen(false);
+    }
+  };
+
 
 
   if (isLoading || userRoleLoading) {
@@ -262,66 +280,124 @@ const UnidadeSalas = () => {
             <p className="text-muted-foreground">Gerencie unidades e suas salas</p>
           </div>
 
-          {canManageUnidades && (
-            <Dialog open={isUnidadeDialogOpen} onOpenChange={setIsUnidadeDialogOpen}>
+          <div className="flex items-center gap-2">
+            {/* Botão de Relatório */}
+            <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setEditingUnidade(null)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nova Unidade
+                <Button variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>
-                    {editingUnidade ? "Editar Unidade" : "Nova Unidade"}
-                  </DialogTitle>
+                  <DialogTitle>Exportar Relatório de Unidades e Salas</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleUnidadeSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome da Unidade</Label>
-                    <Input
-                      id="nome"
-                      value={unidadeForm.nome}
-                      onChange={(e) => setUnidadeForm({ ...unidadeForm, nome: e.target.value })}
-                      required
-                      placeholder="Ex: Unidade Centro"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input
-                      id="endereco"
-                      value={unidadeForm.endereco}
-                      onChange={(e) => setUnidadeForm({ ...unidadeForm, endereco: e.target.value })}
-                      required
-                      placeholder="Ex: Rua das Flores, 123 - Centro"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={unidadeForm.telefone}
-                      onChange={(e) => setUnidadeForm({ ...unidadeForm, telefone: e.target.value })}
-                      required
-                      placeholder="Ex: (11) 1234-5678"
-                    />
-                  </div>
-
-                  <div className="flex gap-4 pt-4">
-                    <Button type="submit" disabled={unidadeMutation.isPending}>
-                      {unidadeMutation.isPending ? "Salvando..." : (editingUnidade ? "Atualizar" : "Criar")}
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Selecione o formato para exportar o relatório das unidades e salas.
+                  </p>
+                  <div className="grid gap-3">
+                    <Button
+                      onClick={handleExportExcel}
+                      variant="outline"
+                      className="h-auto p-4 flex items-center justify-start gap-3"
+                    >
+                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Exportar para Excel</div>
+                        <div className="text-sm text-muted-foreground">
+                          Arquivo XLSX compatível com Excel
+                        </div>
+                      </div>
                     </Button>
-                    <Button type="button" variant="outline" onClick={handleUnidadeDialogClose}>
-                      Cancelar
+                    <Button
+                      onClick={handleExportPDF}
+                      variant="outline"
+                      className="h-auto p-4 flex items-center justify-start gap-3"
+                    >
+                      <FileImage className="h-6 w-6 text-red-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Exportar para PDF</div>
+                        <div className="text-sm text-muted-foreground">
+                          Documento PDF para impressão
+                        </div>
+                      </div>
                     </Button>
                   </div>
-                </form>
+                  <div className="text-xs text-muted-foreground">
+                    {unidades && (
+                      <>
+                        Total de unidades: {unidades.length} |
+                        Total de salas: {unidades.reduce((acc, unidade) => acc + unidade.salas.length, 0)}
+                      </>
+                    )}
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
-          )}
+
+            {canManageUnidades && (
+              <Dialog open={isUnidadeDialogOpen} onOpenChange={setIsUnidadeDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => setEditingUnidade(null)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nova Unidade
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingUnidade ? "Editar Unidade" : "Nova Unidade"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleUnidadeSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nome">Nome da Unidade</Label>
+                      <Input
+                        id="nome"
+                        value={unidadeForm.nome}
+                        onChange={(e) => setUnidadeForm({ ...unidadeForm, nome: e.target.value })}
+                        required
+                        placeholder="Ex: Unidade Centro"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="endereco">Endereço</Label>
+                      <Input
+                        id="endereco"
+                        value={unidadeForm.endereco}
+                        onChange={(e) => setUnidadeForm({ ...unidadeForm, endereco: e.target.value })}
+                        required
+                        placeholder="Ex: Rua das Flores, 123 - Centro"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="telefone">Telefone</Label>
+                      <Input
+                        id="telefone"
+                        value={unidadeForm.telefone}
+                        onChange={(e) => setUnidadeForm({ ...unidadeForm, telefone: e.target.value })}
+                        required
+                        placeholder="Ex: (11) 1234-5678"
+                      />
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <Button type="submit" disabled={unidadeMutation.isPending}>
+                        {unidadeMutation.isPending ? "Salvando..." : (editingUnidade ? "Atualizar" : "Criar")}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={handleUnidadeDialogClose}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -334,7 +410,7 @@ const UnidadeSalas = () => {
                       <Building2 className="h-5 w-5" />
                       {unidade.nome}
                     </CardTitle>
-                    
+
                     {canManageUnidades && (
                       <div className="flex gap-2">
                         <Button
@@ -366,7 +442,7 @@ const UnidadeSalas = () => {
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{unidade.telefone}</span>
                     </div>
-                    
+
                     {/* Seção de Salas */}
                     <div className="border-t pt-3">
                       <div className="flex items-center gap-2 mb-3">
@@ -375,7 +451,7 @@ const UnidadeSalas = () => {
                           Salas ({unidade.salas.length})
                         </span>
                       </div>
-                      
+
                       <div className="space-y-2">
                         {unidade.salas.length > 0 ? (
                           unidade.salas.map((sala) => (
@@ -419,7 +495,7 @@ const UnidadeSalas = () => {
                             Nenhuma sala cadastrada
                           </p>
                         )}
-                        
+
                         {!canViewOnly && (
                           <Button
                             variant="outline"
@@ -443,8 +519,8 @@ const UnidadeSalas = () => {
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-medium">Nenhuma unidade encontrada</h3>
                   <p className="text-muted-foreground">
-                    {canManageUnidades 
-                      ? "Comece criando sua primeira unidade." 
+                    {canManageUnidades
+                      ? "Comece criando sua primeira unidade."
                       : "Não há unidades cadastradas no momento."
                     }
                   </p>
