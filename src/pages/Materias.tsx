@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Download, FileSpreadsheet, FileImage } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useMateriasExport } from "@/hooks/useMateriasExport";
 
 interface Materia {
   id: string;
@@ -22,9 +23,11 @@ const Materias = () => {
   const [filteredMaterias, setFilteredMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
   const [editingMateria, setEditingMateria] = useState<Materia | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
+  const { exportToExcel, exportToPDF } = useMateriasExport();
 
   const [formData, setFormData] = useState({
     nome: ""
@@ -122,6 +125,17 @@ const Materias = () => {
     setDialogOpen(true);
   };
 
+  // Handlers para exportação
+  const handleExportExcel = () => {
+    exportToExcel(filteredMaterias);
+    setRelatorioDialogOpen(false);
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(filteredMaterias);
+    setRelatorioDialogOpen(false);
+  };
+
   if (loading || userRoleLoading) {
     return (
       <Layout>
@@ -154,7 +168,59 @@ const Materias = () => {
             <h1 className="text-3xl font-bold text-gray-900">Matérias</h1>
           </div>
           
-          {!canViewOnly && (
+          <div className="flex items-center gap-2">
+            {/* Botão de Relatório */}
+            <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Exportar Relatório de Matérias</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Selecione o formato para exportar o relatório das matérias.
+                  </p>
+                  <div className="grid gap-3">
+                    <Button
+                      onClick={handleExportExcel}
+                      variant="outline"
+                      className="h-auto p-4 flex items-center justify-start gap-3"
+                    >
+                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Exportar para Excel</div>
+                        <div className="text-sm text-muted-foreground">
+                          Arquivo XLSX compatível com Excel
+                        </div>
+                      </div>
+                    </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      variant="outline"
+                      className="h-auto p-4 flex items-center justify-start gap-3"
+                    >
+                      <FileImage className="h-6 w-6 text-red-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Exportar para PDF</div>
+                        <div className="text-sm text-muted-foreground">
+                          Documento PDF para impressão
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Total de matérias a serem exportadas: {filteredMaterias.length}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {!canViewOnly && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => resetForm()}>
@@ -196,7 +262,8 @@ const Materias = () => {
                 </form>
               </DialogContent>
             </Dialog>
-          )}
+            )}
+          </div>
         </div>
 
         <div className="flex justify-between items-center">
