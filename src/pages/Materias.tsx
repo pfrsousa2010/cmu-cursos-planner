@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useMateriasExport } from "@/hooks/useMateriasExport";
+import { useOrientation } from "@/hooks/useOrientation";
 
 interface Materia {
   id: string;
@@ -28,6 +29,10 @@ const Materias = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
   const { exportToExcel, exportToPDF } = useMateriasExport();
+  const { width } = useOrientation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
 
   const [formData, setFormData] = useState({
     nome: ""
@@ -168,13 +173,13 @@ const Materias = () => {
             <h1 className="text-3xl font-bold text-foreground">Matérias</h1>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${isMobile ? "gap-1" : "gap-2"}`}>
             {/* Botão de Relatório */}
             <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
+                <Button variant="outline" size={isMobile ? "sm" : "default"}>
+                  <Download className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                  {!isMobile && "Exportar"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -223,9 +228,12 @@ const Materias = () => {
             {!canViewOnly && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => resetForm()}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Matéria
+                <Button 
+                  onClick={() => resetForm()}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  <Plus className={isMobile ? "w-4 h-4" : "w-4 h-4 mr-2"} />
+                  {!isMobile && "Nova Matéria"}
                 </Button>
               </DialogTrigger>
               <DialogContent>

@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCursosExport } from "@/hooks/useCursosExport";
+import { useOrientation } from "@/hooks/useOrientation";
 import { Plus, Edit, Trash2, FileText, Download, Search, Filter, Copy, MoreHorizontal, FileSpreadsheet, FileImage } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -53,6 +54,10 @@ const Cursos = () => {
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
   const { exportToExcel, exportToPDF } = useCursosExport();
+  const { width } = useOrientation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
 
   // Função para verificar se o curso está finalizado
   const isCursoFinalizado = (dataFim: string) => {
@@ -336,13 +341,13 @@ const Cursos = () => {
             <h1 className="text-3xl font-bold tracking-tight">Cursos</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${isMobile ? "gap-1" : "gap-2"}`}>
             {/* Botão de Relatório */}
             <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
+                <Button variant="outline" size={isMobile ? "sm" : "default"}>
+                  <Download className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                  {!isMobile && "Exportar"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -391,12 +396,15 @@ const Cursos = () => {
             {canManageCursos && (
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => {
-                    setEditingCurso(null);
-                    setDuplicatingCurso(null);
-                  }}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Curso
+                  <Button 
+                    onClick={() => {
+                      setEditingCurso(null);
+                      setDuplicatingCurso(null);
+                    }}
+                    size={isMobile ? "sm" : "default"}
+                  >
+                    <Plus className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {!isMobile && "Novo Curso"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
@@ -590,9 +598,11 @@ const Cursos = () => {
               <Button 
                 variant="outline" 
                 onClick={clearFilters}
-                size="sm"
+                size={isMobile ? "sm" : "sm"}
+                className={isMobile ? "px-2" : ""}
               >
-                Limpar Filtros
+                <Filter className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                {!isMobile && "Limpar Filtros"}
               </Button>
             </div>
           </CardContent>
@@ -726,8 +736,14 @@ const Cursos = () => {
                     }
                   </p>
                   {cursos && cursos.length > 0 && (
-                    <Button variant="outline" onClick={clearFilters} className="mt-2">
-                      Limpar Filtros
+                    <Button 
+                      variant="outline" 
+                      onClick={clearFilters} 
+                      className={`mt-2 ${isMobile ? "px-2" : ""}`}
+                      size={isMobile ? "sm" : "default"}
+                    >
+                      <Filter className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                      {!isMobile && "Limpar Filtros"}
                     </Button>
                   )}
                 </div>

@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useOrientation } from "@/hooks/useOrientation";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database['public']['Enums']['user_role'];
@@ -56,6 +57,10 @@ const Usuarios = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const { userRole, userId, loading: userRoleLoading } = useUserRole();
+  const { width } = useOrientation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -289,9 +294,12 @@ const Usuarios = () => {
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Usuário
+              <Button 
+                onClick={() => resetForm()}
+                size={isMobile ? "sm" : "default"}
+              >
+                <Plus className={isMobile ? "w-4 h-4" : "w-4 h-4 mr-2"} />
+                {!isMobile && "Novo Usuário"}
               </Button>
             </DialogTrigger>
             <DialogContent>

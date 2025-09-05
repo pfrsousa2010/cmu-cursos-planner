@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUnidadeSalasExport } from "@/hooks/useUnidadeSalasExport";
+import { useOrientation } from "@/hooks/useOrientation";
 import { Plus, Edit, Trash2, Building2, Phone, MapPin, DoorOpen, Users, Download, FileSpreadsheet, FileImage } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -57,6 +58,10 @@ const UnidadeSalas = () => {
   const { canManageUnidades, canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
   const queryClient = useQueryClient();
   const { exportToExcel, exportToPDF } = useUnidadeSalasExport();
+  const { width } = useOrientation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
 
   // Buscar unidades com suas salas
   const { data: unidades, isLoading } = useQuery({
@@ -276,17 +281,16 @@ const UnidadeSalas = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Unidades / Salas</h1>
-            <p className="text-muted-foreground">Gerencie unidades e suas salas</p>
+            <h1 className="text-3xl font-bold tracking-tight">Unidades / Salas</h1>            
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${isMobile ? "gap-1" : "gap-2"}`}>
             {/* Botão de Relatório */}
             <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
+                <Button variant="outline" size={isMobile ? "sm" : "default"}>
+                  <Download className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                  {!isMobile && "Exportar"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -340,9 +344,12 @@ const UnidadeSalas = () => {
             {canManageUnidades && (
               <Dialog open={isUnidadeDialogOpen} onOpenChange={setIsUnidadeDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => setEditingUnidade(null)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nova Unidade
+                  <Button 
+                    onClick={() => setEditingUnidade(null)}
+                    size={isMobile ? "sm" : "default"}
+                  >
+                    <Plus className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {!isMobile && "Nova Unidade"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>

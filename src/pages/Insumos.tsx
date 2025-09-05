@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useInsumosExport } from "@/hooks/useInsumosExport";
+import { useOrientation } from "@/hooks/useOrientation";
 
 
 interface Insumo {
@@ -27,6 +28,10 @@ const Insumos = () => {
   const [editingInsumo, setEditingInsumo] = useState<Insumo | null>(null);
   const { canViewOnly, userRole, loading: userRoleLoading } = useUserRole();
   const { exportToExcel, exportToPDF } = useInsumosExport();
+  const { width } = useOrientation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
 
   const [formData, setFormData] = useState({
     nome: ""
@@ -170,13 +175,13 @@ const Insumos = () => {
             <h1 className="text-3xl font-bold text-foreground">Insumos</h1>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${isMobile ? "gap-1" : "gap-2"}`}>
             {/* Botão de Relatório */}
             <Dialog open={relatorioDialogOpen} onOpenChange={setRelatorioDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
+                <Button variant="outline" size={isMobile ? "sm" : "default"}>
+                  <Download className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                  {!isMobile && "Exportar"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -225,9 +230,12 @@ const Insumos = () => {
             {!canViewOnly && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => resetForm()}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Insumo
+                <Button 
+                  onClick={() => resetForm()}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  <Plus className={isMobile ? "w-4 h-4" : "w-4 h-4 mr-2"} />
+                  {!isMobile && "Novo Insumo"}
                 </Button>
               </DialogTrigger>
               <DialogContent>
