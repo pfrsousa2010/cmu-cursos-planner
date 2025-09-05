@@ -559,8 +559,23 @@ const Cursos = () => {
 
             {/* Contador de resultados e Botão Limpar Filtros */}
             <div className="mt-4 flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {filteredCursos.length} de {cursos?.length || 0} cursos
+              <div className="text-sm text-muted-foreground space-y-1">
+                {cursos && cursos.length > 0 && (
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Não finalizados: {cursos.filter(curso => !isCursoFinalizado(curso.fim)).length}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span>Finalizados: {cursos.filter(curso => isCursoFinalizado(curso.fim)).length}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      <span>Total: {cursos.length}</span>
+                    </span>
+                  </div>
+                )}
               </div>
               <Button 
                 variant="outline" 
