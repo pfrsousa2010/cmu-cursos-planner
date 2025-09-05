@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Info } from "lucide-react";
 import { toast } from "sonner";
+import OrientationMessage from "@/components/OrientationMessage";
+import { useOrientation } from "@/hooks/useOrientation";
 
 // Hooks personalizados
 import { 
@@ -44,6 +46,7 @@ const Calendario = () => {
   const [cursoToEdit, setCursoToEdit] = useState<Curso | null>(null);
 
   const queryClient = useQueryClient();
+  const { isPortrait } = useOrientation();
 
   // Hooks personalizados
   const { currentWeek, isChangingWeek, navigateByViewMode } = useCalendarioNavegacao();
@@ -129,6 +132,15 @@ const Calendario = () => {
   const handleNext = () => {
     navigateByViewMode(viewMode, 'next');
   };
+
+  // Se estiver em orientação vertical (retrato), mostrar mensagem
+  if (isPortrait) {
+    return (
+      <Layout>
+        <OrientationMessage />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
