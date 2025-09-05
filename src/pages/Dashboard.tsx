@@ -144,7 +144,7 @@ const Dashboard = () => {
       const hoje = new Date();
       const proximaSemana = addDays(hoje, 7);
       
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('cursos')
         .select(`
           *,
@@ -167,7 +167,7 @@ const Dashboard = () => {
       const hoje = new Date();
       const proximaSemana = addDays(hoje, 7);
       
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('cursos')
         .select(`
           *,
@@ -203,7 +203,7 @@ const Dashboard = () => {
       const inicioSemana = startOfWeek(hoje);
       const fimSemana = endOfWeek(hoje);
       
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('cursos')
         .select(`
           *,
@@ -226,7 +226,7 @@ const Dashboard = () => {
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
       
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('cursos')
         .select(`
           *,
@@ -704,7 +704,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg font-bold">Cursos por Unidade ao Longo do Ano ({anoAtual})</CardTitle>
               <CardDescription>
-                Distribuição mensal de cursos ativos por unidade
+                Distribuição mensal de cursos por unidade
               </CardDescription>
             </CardHeader>
             <CardContent>
