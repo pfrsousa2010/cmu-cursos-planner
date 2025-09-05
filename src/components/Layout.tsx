@@ -116,6 +116,23 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         <div className="absolute bottom-4 w-full px-2">
+          {/* Informações do perfil do usuário */}
+          {userLoading || !profile ? (
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="h-5 w-32 rounded" />
+              <Skeleton className="h-5 w-20 rounded" />
+            </div>
+          ) : (
+            <div className="mb-4 p-3 bg-muted rounded-lg">
+              <div className="text-sm text-muted-foreground flex flex-col gap-1">
+                <span className="font-medium text-foreground">{profile.nome || profile.email}</span>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}`}>
+                  {UserRoleLabel[profile.role] || profile.role}
+                </span>
+              </div>
+            </div>
+          )}
+          
           <Button
             variant="outline"
             className="w-full justify-start"
@@ -147,29 +164,34 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-4">
-                           {userLoading || !profile ? (
-               <div className="flex items-center gap-2">
-                 <Skeleton className="h-5 w-32 rounded" />
-                 <Skeleton className="h-5 w-20 rounded" />
-               </div>
-             ) : (
-               <span className="text-sm text-muted-foreground flex items-center gap-2">
-                 <span className="font-medium">{profile.nome || profile.email}</span>
-                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}`}>
-                   {UserRoleLabel[profile.role] || profile.role}
-                 </span>
-               </span>
-             )}
+              {/* Informações do perfil - apenas em desktop */}
+              <div className="hidden lg:flex items-center space-x-4">
+                {userLoading || !profile ? (
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-32 rounded" />
+                    <Skeleton className="h-5 w-20 rounded" />
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <span className="font-medium">{profile.nome || profile.email}</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}`}>
+                      {UserRoleLabel[profile.role] || profile.role}
+                    </span>
+                  </span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </Button>
+              </div>
+              
+              {/* ThemeToggle - sempre visível */}
               <ThemeToggle />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Sair
-              </Button>
             </div>
           </div>
         </div>
