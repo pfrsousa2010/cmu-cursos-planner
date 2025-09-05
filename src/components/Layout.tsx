@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/contexts/UserContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface LayoutProps {
   children: ReactNode;
@@ -38,8 +39,8 @@ const UserRoleLabel: Record<string, string> = {
 };
 
 const UserRoleColor: Record<string, string> = {
-  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50',
-  [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50',
+  [UserRoleEnum.ADMIN]: 'text-destructive bg-destructive/10',
+  [UserRoleEnum.EDITOR]: 'text-primary bg-primary/10',
   [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50',
 };
 
@@ -78,11 +79,11 @@ const Layout = ({ children }: LayoutProps) => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Mobile Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <h1 className="text-l font-bold text-blue-600">Menu</h1>
+          <h1 className="text-l font-bold text-primary">Menu</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -129,7 +130,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main content */}
       <div className="w-full">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b">
+        <div className="bg-card shadow-sm border-b">
           <div className="flex items-center justify-between h-16 px-4">
             <div className="flex items-center gap-4">
               <Button
@@ -141,7 +142,7 @@ const Layout = ({ children }: LayoutProps) => {
               </Button>
                              <div className="flex items-center gap-2">
                  <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
-                 <h1 className="hidden md:block text-xl font-bold text-blue-600">Sistema Gestor de Cursos CMU</h1>
+                 <h1 className="hidden md:block text-xl font-bold text-primary">Gestor de Cursos CMU</h1>
                </div>
             </div>
             
@@ -152,13 +153,14 @@ const Layout = ({ children }: LayoutProps) => {
                  <Skeleton className="h-5 w-20 rounded" />
                </div>
              ) : (
-               <span className="text-sm text-gray-600 flex items-center gap-2">
+               <span className="text-sm text-muted-foreground flex items-center gap-2">
                  <span className="font-medium">{profile.nome || profile.email}</span>
-                 <Badge className={UserRoleColor[profile.role] || 'text-gray-600 bg-gray-50'}>
+                 <Badge className={UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}>
                    {UserRoleLabel[profile.role] || profile.role}
                  </Badge>
                </span>
              )}
+              <ThemeToggle />
               <Button
                 variant="outline"
                 size="sm"
