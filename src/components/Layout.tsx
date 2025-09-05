@@ -80,10 +80,10 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - sempre como overlay */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <h1 className="text-l font-bold text-primary">Menu</h1>
+          <h1 className="text-lg font-bold text-primary">Menu</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -147,7 +147,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main content */}
       <div className="w-full">
         {/* Top bar */}
-        <div className="bg-card shadow-sm border-b">
+        <header className="bg-card shadow-sm border-b sticky top-0 z-40">
           <div className="flex items-center justify-between h-16 px-4">
             <div className="flex items-center gap-4">
               <Button
@@ -157,15 +157,15 @@ const Layout = ({ children }: LayoutProps) => {
               >
                 <Menu className="h-5 w-5" />
               </Button>
-                             <div className="flex items-center gap-2">
-                 <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
-                 <h1 className="hidden md:block text-xl font-bold text-primary">Gestor de Cursos CMU</h1>
-               </div>
+              <div className="flex items-center gap-2">
+                <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
+                <h1 className="hidden md:block text-xl font-bold text-primary">Gestor de Cursos CMU</h1>
+              </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Informações do perfil - apenas em desktop */}
-              <div className="hidden lg:flex items-center space-x-4">
+              {/* Informações do perfil - sempre visível */}
+              <div className="flex items-center space-x-4">
                 {userLoading || !profile ? (
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-5 w-32 rounded" />
@@ -185,7 +185,7 @@ const Layout = ({ children }: LayoutProps) => {
               <ThemeToggle />
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
         <main className="p-6">
@@ -193,7 +193,7 @@ const Layout = ({ children }: LayoutProps) => {
         </main>
       </div>
 
-      {/* Overlay */}
+      {/* Overlay - sempre ativo quando sidebar está aberta */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
