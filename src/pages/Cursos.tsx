@@ -246,11 +246,11 @@ const Cursos = () => {
 
   const getPeriodoColor = (periodo: string) => {
     const colors = {
-      'manha': 'bg-yellow-100 text-yellow-800',
-      'tarde': 'bg-orange-100 text-orange-800',
-      'noite': 'bg-blue-100 text-blue-800'
+      'manha': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+      'tarde': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+      'noite': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
     };
-    return colors[periodo as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[periodo as keyof typeof colors] || 'bg-muted text-muted-foreground';
   };
 
   // Gerar cor única para cada unidade
@@ -359,7 +359,7 @@ const Cursos = () => {
                       variant="outline" 
                       className="h-auto p-4 flex items-center justify-start gap-3"
                     >
-                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <FileSpreadsheet className="h-6 w-6 text-green-600 dark:text-green-400" />
                       <div className="text-left">
                         <div className="font-medium">Exportar para Excel</div>
                         <div className="text-sm text-muted-foreground">
@@ -372,7 +372,7 @@ const Cursos = () => {
                       variant="outline" 
                       className="h-auto p-4 flex items-center justify-start gap-3"
                     >
-                      <FileImage className="h-6 w-6 text-red-600" />
+                      <FileImage className="h-6 w-6 text-red-600 dark:text-red-400" />
                       <div className="text-left">
                         <div className="font-medium">Exportar para PDF</div>
                         <div className="text-sm text-muted-foreground">
@@ -573,15 +573,15 @@ const Cursos = () => {
                 {cursos && cursos.length > 0 && (
                   <div className="flex items-center gap-4 text-xs">
                     <span className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full"></div>
                       <span>Não finalizados: {cursos.filter(curso => !isCursoFinalizado(curso.fim)).length}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full"></div>
                       <span>Finalizados: {cursos.filter(curso => isCursoFinalizado(curso.fim)).length}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
                       <span>Total: {cursos.length}</span>
                     </span>
                   </div>
@@ -632,7 +632,7 @@ const Cursos = () => {
                               <div 
                                 key={curso.id} 
                                 className={`flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors ${
-                                  cursoFinalizado ? 'bg-red-50 border-red-200' : ''
+                                  cursoFinalizado ? 'bg-destructive/10 border-destructive/20' : ''
                                 }`}
                               >
                                 <div className="flex-1 space-y-1">
@@ -643,7 +643,7 @@ const Cursos = () => {
                                         {formatPeriodo(curso.periodo)}
                                       </Badge>
                                       {cursoFinalizado && (
-                                        <Badge variant="destructive" className="bg-red-500 text-white">
+                                        <Badge variant="destructive">
                                           Finalizado
                                         </Badge>
                                       )}
@@ -692,7 +692,7 @@ const Cursos = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem 
                                       onClick={() => handleDelete(curso.id)}
-                                      className="text-red-600 focus:text-red-600"
+                                      className="text-destructive focus:text-destructive"
                                     >
                                       <Trash2 className="mr-2 h-4 w-4" />
                                       Apagar curso

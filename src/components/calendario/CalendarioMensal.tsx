@@ -135,7 +135,7 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
               <TableBody>
                 {Array.from({ length: 3 }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium bg-gray-50 align-top">
+                    <TableCell className="font-medium bg-muted/50 align-top">
                       <Skeleton className="h-4 w-20" />
                     </TableCell>
                     {diasDoMes.map((_, i) => (

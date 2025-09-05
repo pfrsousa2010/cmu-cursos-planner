@@ -66,13 +66,13 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
               <TableBody>
                 {Array.from({ length: 3 }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium bg-gray-50 align-top">
+                    <TableCell className="font-medium bg-muted/50 align-top">
                       <div className="space-y-1">
                         <Skeleton className="h-4 w-20" />
                         <Skeleton className="h-3 w-16" />
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium bg-gray-50 align-top">
+                    <TableCell className="font-medium bg-muted/50 align-top">
                       <Skeleton className="h-4 w-12" />
                     </TableCell>
                     {weekDays.map((day) => (
@@ -165,7 +165,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                               cursosTurno.map((curso) => (
                                 <div
                                   key={curso.id}
-                                  className={`p-2 rounded border bg-white hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')}`}
+                                  className={`p-2 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')}`}
                                   onClick={() => onCursoClick(curso)}
                                 >
                                   <div className="space-y-1">

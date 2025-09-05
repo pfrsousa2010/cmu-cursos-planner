@@ -152,9 +152,9 @@ const Insumos = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <Plus className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Acesso restrito</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <Plus className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">Acesso restrito</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Apenas editores e administradores podem gerenciar insumos.
           </p>
         </div>
@@ -167,7 +167,7 @@ const Insumos = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Insumos</h1>
+            <h1 className="text-3xl font-bold text-foreground">Insumos</h1>
           </div>
           
           <div className="flex items-center gap-2">
@@ -193,7 +193,7 @@ const Insumos = () => {
                       variant="outline"
                       className="h-auto p-4 flex items-center justify-start gap-3"
                     >
-                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <FileSpreadsheet className="h-6 w-6 text-green-600 dark:text-green-400" />
                       <div className="text-left">
                         <div className="font-medium">Exportar para Excel</div>
                         <div className="text-sm text-muted-foreground">
@@ -206,7 +206,7 @@ const Insumos = () => {
                       variant="outline"
                       className="h-auto p-4 flex items-center justify-start gap-3"
                     >
-                      <FileImage className="h-6 w-6 text-red-600" />
+                      <FileImage className="h-6 w-6 text-red-600 dark:text-red-400" />
                       <div className="text-left">
                         <div className="font-medium">Exportar para PDF</div>
                         <div className="text-sm text-muted-foreground">
@@ -305,20 +305,21 @@ const Insumos = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border">
+        <Card>
           {filteredInsumos.length === 0 ? (
-            <div className="p-6 text-center">
-              <p className="text-gray-500">
+            <CardContent className="p-6 text-center">
+              <p className="text-muted-foreground">
                 {searchTerm ? "Nenhum insumo encontrado para a busca" : "Nenhum insumo encontrado"}
               </p>
-            </div>
+            </CardContent>
           ) : (
-            <div className="divide-y">
-              {filteredInsumos.map((insumo) => (
-                <div key={insumo.id} className="p-4 flex justify-between items-center hover:bg-gray-50">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{insumo.nome}</h3>
-                  </div>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {filteredInsumos.map((insumo) => (
+                  <div key={insumo.id} className="p-4 flex justify-between items-center hover:bg-muted/50">
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">{insumo.nome}</h3>
+                    </div>
                   
                   {!canViewOnly && (
                     <div className="flex space-x-2">
@@ -333,17 +334,18 @@ const Insumos = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(insumo.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </div>
     </Layout>
   );

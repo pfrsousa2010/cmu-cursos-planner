@@ -261,9 +261,9 @@ const UnidadeSalas = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Acesso restrito</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">Acesso restrito</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Apenas editores e administradores podem gerenciar unidades e salas.
           </p>
         </div>
@@ -303,7 +303,7 @@ const UnidadeSalas = () => {
                       variant="outline"
                       className="h-auto p-4 flex items-center justify-start gap-3"
                     >
-                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <FileSpreadsheet className="h-6 w-6 text-green-600 dark:text-green-400" />
                       <div className="text-left">
                         <div className="font-medium">Exportar para Excel</div>
                         <div className="text-sm text-muted-foreground">
@@ -316,7 +316,7 @@ const UnidadeSalas = () => {
                       variant="outline"
                       className="h-auto p-4 flex items-center justify-start gap-3"
                     >
-                      <FileImage className="h-6 w-6 text-red-600" />
+                      <FileImage className="h-6 w-6 text-red-600 dark:text-red-400" />
                       <div className="text-left">
                         <div className="font-medium">Exportar para PDF</div>
                         <div className="text-sm text-muted-foreground">
@@ -424,7 +424,7 @@ const UnidadeSalas = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteUnidade(unidade.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -455,7 +455,7 @@ const UnidadeSalas = () => {
                       <div className="space-y-2">
                         {unidade.salas.length > 0 ? (
                           unidade.salas.map((sala) => (
-                            <div key={sala.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                            <div key={sala.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium">{sala.nome}</span>
@@ -482,7 +482,7 @@ const UnidadeSalas = () => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteSala(sala.id)}
-                                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    className="h-6 w-6 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </Button>

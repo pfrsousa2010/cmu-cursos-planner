@@ -39,9 +39,9 @@ const UserRoleLabel: Record<string, string> = {
 };
 
 const UserRoleColor: Record<string, string> = {
-  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50',
-  [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50',
-  [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50',
+  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30',
+  [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30',
+  [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30',
 };
 
 const Usuarios = () => {
@@ -253,7 +253,7 @@ const Usuarios = () => {
   };
 
   const getRoleLabel = (role: UserRole) => UserRoleLabel[role] || role;
-  const getRoleColor = (role: UserRole) => UserRoleColor[role] || 'text-gray-600 bg-gray-50';
+  const getRoleColor = (role: UserRole) => UserRoleColor[role] || 'text-muted-foreground bg-muted';
 
   if (loading || userRoleLoading) {
     return (
@@ -269,9 +269,9 @@ const Usuarios = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <UserX className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Acesso restrito</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <UserX className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">Acesso restrito</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Apenas administradores podem gerenciar usuários.
           </p>
         </div>
@@ -284,7 +284,7 @@ const Usuarios = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Usuários</h1>
+            <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
           </div>
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -346,9 +346,9 @@ const Usuarios = () => {
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                         )}
                       </button>
                     </div>
@@ -367,17 +367,17 @@ const Usuarios = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="visualizador">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-50">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30">
                           Visualizador
                         </span>
                       </SelectItem>
                       <SelectItem value="editor">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-50">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30">
                           Editor
                         </span>
                       </SelectItem>
                       <SelectItem value="admin">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30">
                           Administrador
                         </span>
                       </SelectItem>
@@ -443,14 +443,14 @@ const Usuarios = () => {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="active">
                   <div className="flex items-center space-x-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-50">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30">
                       Ativo
                     </span>
                   </div>
                 </SelectItem>
                 <SelectItem value="inactive">
                   <div className="flex items-center space-x-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30">
                       Inativo
                     </span>
                   </div>
@@ -460,45 +460,46 @@ const Usuarios = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border">
+        <Card>
           {filteredUsers.length === 0 ? (
-            <div className="p-6 text-center">
-              <UserCheck className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-gray-500">
+            <CardContent className="p-6 text-center">
+              <UserCheck className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-2 text-muted-foreground">
                 {searchTerm || statusFilter !== "all" ? "Nenhum usuário encontrado para os filtros aplicados" : "Nenhum usuário encontrado"}
               </p>
-            </div>
+            </CardContent>
           ) : (
-            <div className="divide-y">
-              {filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className={`p-4 flex justify-between items-center hover:bg-gray-50 ${user.id === currentUserId ? "bg-blue-50/30" : ""}`}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <h3 className={`text-lg font-medium ${user.id === currentUserId ? "text-blue-800" : "text-gray-900"}`}>
-                        {user.nome}
-                      </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
-                        {user.isActive ? "Ativo" : "Inativo"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{user.email}</p>
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                        {getRoleLabel(user.role)}
-                      </span>
-                      {user.id === currentUserId && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
-                          Você
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {filteredUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className={`p-4 flex justify-between items-center hover:bg-muted/50 ${user.id === currentUserId ? "bg-primary/10" : ""}`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className={`text-lg font-medium ${user.id === currentUserId ? "text-primary" : "text-foreground"}`}>
+                          {user.nome}
+                        </h3>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30" : "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30"}`}>
+                          {user.isActive ? "Ativo" : "Inativo"}
                         </span>
-                      )}
-                      <span className="text-xs text-gray-500">
-                        Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                      </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
+                      <div className="flex items-center space-x-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                          {getRoleLabel(user.role)}
+                        </span>
+                        {user.id === currentUserId && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-primary bg-primary/10">
+                            Você
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
                   {user.id !== currentUserId && (
                     <div className="flex space-x-2">
@@ -513,17 +514,18 @@ const Usuarios = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDeleteUser(user)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </div>
     </Layout>
   );

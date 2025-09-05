@@ -39,9 +39,9 @@ const UserRoleLabel: Record<string, string> = {
 };
 
 const UserRoleColor: Record<string, string> = {
-  [UserRoleEnum.ADMIN]: 'text-destructive bg-destructive/10',
-  [UserRoleEnum.EDITOR]: 'text-primary bg-primary/10',
-  [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50',
+  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30',
+  [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30',
+  [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30',
 };
 
 const Layout = ({ children }: LayoutProps) => {
@@ -155,9 +155,9 @@ const Layout = ({ children }: LayoutProps) => {
              ) : (
                <span className="text-sm text-muted-foreground flex items-center gap-2">
                  <span className="font-medium">{profile.nome || profile.email}</span>
-                 <Badge className={UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}>
+                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}`}>
                    {UserRoleLabel[profile.role] || profile.role}
-                 </Badge>
+                 </span>
                </span>
              )}
               <ThemeToggle />

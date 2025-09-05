@@ -14,8 +14,11 @@ import { formatPeriodo } from "@/utils/calendarioUtils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
 import * as RechartsPrimitive from "recharts";
+import { useTheme } from "next-themes";
 
 const Dashboard = () => {
+  const { theme } = useTheme();
+  
   // Estados para controlar colapso das unidades em cada card
   const [collapsedUnidadesSemana, setCollapsedUnidadesSemana] = useState<Set<string>>(new Set());
   const [collapsedUnidadesMes, setCollapsedUnidadesMes] = useState<Set<string>>(new Set());
@@ -262,8 +265,11 @@ const Dashboard = () => {
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
   ];
   const unidades = Array.from(new Set((cursosAno || []).map(c => c.unidades?.nome).filter(Boolean)));
-  // Paleta de cores daltônico-friendly
-  const unidadeColors = [
+  
+  // Paleta de cores adaptável ao tema
+  const unidadeColors = theme === 'dark' ? [
+    "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#22c55e", "#eab308", "#f97316", "#6b7280", "#06b6d4", "#ef4444", "#3b82f6", "#84cc16"
+  ] : [
     "#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#666666", "#8dd3c7", "#fb8072", "#80b1d3", "#fdb462"
   ];
   // Montar dados: [{ mes: 'Janeiro', Unidade1: 2, Unidade2: 1, ... }, ...]
@@ -717,14 +723,18 @@ const Dashboard = () => {
                     <RechartsPrimitive.XAxis dataKey="mes" />
                     <RechartsPrimitive.YAxis allowDecimals={false} label={{ value: 'Quantidade de Cursos', angle: -90, position: 'insideLeft' }} />
                     <RechartsPrimitive.Tooltip
-                      cursor={{ fill: '#f3f4f6' }}
+                      cursor={{ fill: theme === 'dark' ? '#374151' : '#f3f4f6' }}
                       content={({ active, payload, label }) => {
                         if (!active || !payload || !payload.length) return null;
                         // Mostra apenas barras com valor > 0 ou todas se todas forem zero
                         const bars = payload.filter(p => Number(p.value) > 0)
                           .length > 0 ? payload.filter(p => Number(p.value) > 0) : payload;
                         return (
-                          <div className="rounded border bg-white p-2 shadow text-xs min-w-[180px]">
+                          <div className={`rounded border p-2 shadow text-xs min-w-[180px] ${
+                            theme === 'dark' 
+                              ? 'bg-card border-border text-card-foreground' 
+                              : 'bg-background border-border text-foreground'
+                          }`}>
                             <div className="font-semibold mb-1">Mês: {label}</div>
                             {bars.map((item, idx) => (
                               <div key={item.dataKey} className="mb-1 flex items-center gap-2">
@@ -742,9 +752,15 @@ const Dashboard = () => {
                       verticalAlign="top"
                       align="center"
                       iconType="rect"
-                      wrapperStyle={{ paddingBottom: 16 }}
+                      wrapperStyle={{ 
+                        paddingBottom: 16,
+                        color: theme === 'dark' ? '#e5e7eb' : '#374151'
+                      }}
                       formatter={(value, entry, idx) => (
-                        <span style={{ color: unidadeColors[idx % unidadeColors.length], fontWeight: 500 }}>{value}</span>
+                        <span style={{ 
+                          color: theme === 'dark' ? '#e5e7eb' : '#374151', 
+                          fontWeight: 500 
+                        }}>{value}</span>
                       )}
                     />
                     {unidades.map((unidade, idx) => (
