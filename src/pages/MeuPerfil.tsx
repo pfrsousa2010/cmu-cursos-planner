@@ -133,7 +133,7 @@ const MeuPerfil = () => {
                    <Input value={user?.email || ''} disabled />
                  </div>
                  <div>
-                   <label className="block text-sm font-medium mb-1">Papel</label>
+                   <label className="block text-sm font-medium mb-1">Função</label>
                    <Input value={user?.role === 'admin' ? 'Administrador' : 
                            user?.role === 'editor' ? 'Editor' : 'Visualizador'} disabled />
                  </div>
