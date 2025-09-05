@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Info } from "lucide-react";
@@ -220,9 +220,13 @@ const Calendario = () => {
           <DialogContent>
             {selectedCurso && (
               <CursoDetails 
-                curso={selectedCurso} 
-                onEdit={handleEditCurso} 
-                onViewInsumos={handleViewInsumos}
+                curso={{
+                  ...selectedCurso,
+                  status: 'ativo' as const,
+                  unidades: selectedCurso.unidades ? { nome: selectedCurso.unidades.nome } : null
+                }} 
+                onEdit={(curso) => handleEditCurso(selectedCurso)} 
+                onViewInsumos={(curso) => handleViewInsumos(selectedCurso)}
                 showActions={!canViewOnly}
               />
             )}
@@ -244,14 +248,26 @@ const Calendario = () => {
 
         {/* Formulário de Edição de Curso (se selecionado) */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            {cursoToEdit && (
-              <CursoForm 
-                curso={cursoToEdit}
-                onSuccess={handleEditSuccess}
-                onCancel={handleEditCancel}
-              />
-            )}
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 pb-4">
+              <DialogTitle>Editar Curso</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {cursoToEdit && (
+                <CursoForm 
+                  curso={cursoToEdit}
+                  onSuccess={handleEditSuccess}
+                />
+              )}
+            </div>
+            <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={handleEditCancel}>
+                Cancelar
+              </Button>
+              <Button type="submit" form="curso-form">
+                Atualizar
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

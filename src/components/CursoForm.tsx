@@ -28,10 +28,9 @@ interface CursoFormProps {
   curso?: Curso;
   cursoParaDuplicar?: Curso;
   onSuccess: () => void;
-  onCancel?: () => void;
 }
 
-const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormProps) => {
+const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
   const [titulo, setTitulo] = useState("");
   const [professor, setProfessor] = useState("");
   const [inicio, setInicio] = useState("");
@@ -251,14 +250,12 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
       const unidade = unidades.find(u => u.id === unidadeId);
       if (unidade) {
         setUnidadeNome(unidade.nome);
-        // Limpar sala quando mudar unidade (exceto se for edição)
-        if (!curso) {
-          setSalaId("");
-          setSalaNome("");
-        }
+        // Limpar sala quando mudar unidade
+        setSalaId("");
+        setSalaNome("");
       }
     }
-  }, [unidadeId, unidades, curso]);
+  }, [unidadeId, unidades]);
 
   // Atualizar salaNome quando salaId mudar (seleção manual do usuário)
   useEffect(() => {
@@ -451,7 +448,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
   const isNewMode = !curso && !cursoParaDuplicar;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id="curso-form" onSubmit={handleSubmit} className="space-y-6">
       {/* Indicador de validação */}
       {!isFormValid && !isLoading && (
         <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
@@ -739,25 +736,13 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, onCancel }: CursoFormP
         </CollapsibleContent>
       </Collapsible>
 
-             <div className="flex gap-4 justify-end">
-         <Button type="button" variant="outline" onClick={onCancel || onSuccess}>
-           Cancelar
-         </Button>
-         <Button type="submit" disabled={mutation.isPending || !isFormValid}>
-           {mutation.isPending ? "Salvando..." : (
-             curso ? "Atualizar" : 
-             cursoParaDuplicar ? "Duplicar" : 
-             "Criar"
-           )}
-         </Button>
-       </div>
         </>
       )}
 
       {/* Modal de Seleção de Insumos */}
       <Dialog open={insumosModalOpen} onOpenChange={setInsumosModalOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
+          <DialogHeader className="flex-shrink-0 pb-4">
             <DialogTitle>Selecionar Insumos</DialogTitle>
           </DialogHeader>
           

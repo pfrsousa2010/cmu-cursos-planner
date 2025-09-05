@@ -399,17 +399,27 @@ const Cursos = () => {
                     Novo Curso
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
+                <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                  <DialogHeader className="flex-shrink-0 pb-4">
                     <DialogTitle>
                       {editingCurso ? "Editar Curso" : duplicatingCurso ? "Duplicar Curso" : "Novo Curso"}
                     </DialogTitle>
                   </DialogHeader>
-                  <CursoForm 
-                    curso={editingCurso}
-                    cursoParaDuplicar={duplicatingCurso}
-                    onSuccess={handleDialogClose}
-                  />
+                  <div className="flex-1 overflow-y-auto min-h-0">
+                    <CursoForm 
+                      curso={editingCurso}
+                      cursoParaDuplicar={duplicatingCurso}
+                      onSuccess={handleDialogClose}
+                    />
+                  </div>
+                  <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">
+                    <Button type="button" variant="outline" onClick={handleDialogClose}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" form="curso-form">
+                      {editingCurso ? "Atualizar" : duplicatingCurso ? "Duplicar" : "Criar"}
+                    </Button>
+                  </div>
                 </DialogContent>
               </Dialog>
             )}
