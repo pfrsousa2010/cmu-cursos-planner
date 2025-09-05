@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -46,11 +47,25 @@ const Cursos = () => {
   const [selectedUnidade, setSelectedUnidade] = useState("todas");
   const [selectedSala, setSelectedSala] = useState("todas");
   const [selectedYear, setSelectedYear] = useState("todos");
+  const [showFinalizados, setShowFinalizados] = useState(false);
 
   
   const { canManageCursos } = useUserRole();
   const queryClient = useQueryClient();
   const { exportToExcel, exportToPDF } = useCursosExport();
+
+  // Função para verificar se o curso está finalizado
+  const isCursoFinalizado = (dataFim: string) => {
+    const hoje = new Date();
+    const fimCurso = new Date(dataFim + 'T00:00:00');
+    
+    // Normalizar as datas para comparar apenas o dia (sem horário)
+    const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
+    
+    // Curso está finalizado apenas se a data fim for anterior ao dia atual
+    return fimCursoNormalizado < hojeNormalizado;
+  };
 
   // Buscar cursos
   const { data: cursos, isLoading } = useQuery<Curso[]>({
@@ -106,7 +121,8 @@ const Cursos = () => {
         if (cursoYear !== selectedYear) return false;
       }
       
-
+      // Filtro por cursos finalizados
+      if (!showFinalizados && isCursoFinalizado(curso.fim)) return false;
       
       return true;
     });
@@ -141,7 +157,7 @@ const Cursos = () => {
     });
 
     return { filteredCursos: filtered, groupedCursos: grouped };
-  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear]);
+  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear, showFinalizados]);
 
   // Obter dados únicos para filtros
   const getUnidades = () => {
@@ -272,6 +288,7 @@ const Cursos = () => {
     setSelectedUnidade("todas");
     setSelectedSala("todas");
     setSelectedYear("todos");
+    setShowFinalizados(false);
   };
 
   // Handlers para exportação
@@ -282,7 +299,8 @@ const Cursos = () => {
       selectedPeriodo,
       selectedUnidade,
       selectedSala,
-      selectedYear
+      selectedYear,
+      showFinalizados
     );
     setRelatorioDialogOpen(false);
   };
@@ -294,7 +312,8 @@ const Cursos = () => {
       selectedPeriodo,
       selectedUnidade,
       selectedSala,
-      selectedYear
+      selectedYear,
+      showFinalizados
     );
     setRelatorioDialogOpen(false);
   };
@@ -521,7 +540,20 @@ const Cursos = () => {
                 </Select>
               </div>
 
-
+              {/* Toggle para mostrar cursos finalizados */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Cursos Finalizados</label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="showFinalizados"
+                    checked={showFinalizados}
+                    onCheckedChange={setShowFinalizados}
+                  />
+                  <label htmlFor="showFinalizados" className="text-sm text-muted-foreground">
+                    Mostrar cursos finalizados
+                  </label>
+                </div>
+              </div>
 
             </div>
 
@@ -569,17 +601,29 @@ const Cursos = () => {
                           </span>
                         </div>
                         <div className="space-y-2">
-                          {cursosSala.map((curso) => (
-                            <div key={curso.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                              <div className="flex-1 space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <h5 className="font-medium">{curso.titulo}</h5>
-                                  <div className="flex items-center gap-1">
-                                    <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
-                                      {formatPeriodo(curso.periodo)}
-                                    </Badge>
+                          {cursosSala.map((curso) => {
+                            const cursoFinalizado = isCursoFinalizado(curso.fim);
+                            return (
+                              <div 
+                                key={curso.id} 
+                                className={`flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors ${
+                                  cursoFinalizado ? 'bg-red-50 border-red-200' : ''
+                                }`}
+                              >
+                                <div className="flex-1 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="font-medium">{curso.titulo}</h5>
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
+                                        {formatPeriodo(curso.periodo)}
+                                      </Badge>
+                                      {cursoFinalizado && (
+                                        <Badge variant="destructive" className="bg-red-500 text-white">
+                                          Finalizado
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
                                   <div>
                                     <span className="font-medium">Professor:</span> {curso.professor}
@@ -632,7 +676,8 @@ const Cursos = () => {
                                 </DropdownMenu>
                               )}
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ))}

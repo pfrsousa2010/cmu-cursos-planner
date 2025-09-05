@@ -29,6 +29,19 @@ export const useCursosExport = () => {
     return periodos[periodo as keyof typeof periodos] || periodo;
   };
 
+  // Função para verificar se o curso está finalizado
+  const isCursoFinalizado = (dataFim: string) => {
+    const hoje = new Date();
+    const fimCurso = new Date(dataFim + 'T00:00:00');
+    
+    // Normalizar as datas para comparar apenas o dia (sem horário)
+    const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
+    
+    // Curso está finalizado apenas se a data fim for anterior ao dia atual
+    return fimCursoNormalizado < hojeNormalizado;
+  };
+
   const sortCursos = (cursos: Curso[]) => {
     return [...cursos].sort((a, b) => {
       // Primeiro por unidade
@@ -59,7 +72,8 @@ export const useCursosExport = () => {
     selectedPeriodo: string = "todos",
     selectedUnidade: string = "todas",
     selectedSala: string = "todas",
-    selectedYear: string = "todos"
+    selectedYear: string = "todos",
+    showFinalizados: boolean = false
   ) => {
     if (!filteredCursos || filteredCursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
@@ -70,16 +84,21 @@ export const useCursosExport = () => {
     const cursosOrdenados = sortCursos(filteredCursos);
 
     // Criar dados para Excel
-    const excelData = cursosOrdenados.map(curso => ({
-      'Título': curso.titulo,
-      'Professor': curso.professor,
-      'Período': formatPeriodo(curso.periodo),
-      'Data Início': format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
-      'Data Fim': format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
-      'Unidade': curso.unidades?.nome || 'Sem Unidade',
-      'Sala': curso.salas?.nome || 'Sem Sala',
-      'Total de Insumos': curso.total_insumos || 0
-    }));
+    const excelData = cursosOrdenados.map(curso => {
+      const cursoFinalizado = isCursoFinalizado(curso.fim);
+      const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+      
+      return {
+        'Título': tituloComStatus,
+        'Professor': curso.professor,
+        'Período': formatPeriodo(curso.periodo),
+        'Data Início': format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+        'Data Fim': format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+        'Unidade': curso.unidades?.nome || 'Sem Unidade',
+        'Sala': curso.salas?.nome || 'Sem Sala',
+        'Total de Insumos': curso.total_insumos || 0
+      };
+    });
 
     // Criar workbook e worksheet
     const wb = XLSX.utils.book_new();
@@ -118,7 +137,8 @@ export const useCursosExport = () => {
     selectedPeriodo: string = "todos",
     selectedUnidade: string = "todas",
     selectedSala: string = "todas",
-    selectedYear: string = "todos"
+    selectedYear: string = "todos",
+    showFinalizados: boolean = false
   ) => {
     if (!filteredCursos || filteredCursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
@@ -156,6 +176,11 @@ export const useCursosExport = () => {
     if (selectedYear !== "todos") {
       filtros.push(`Ano: ${selectedYear}`);
     }
+    if (showFinalizados) {
+      filtros.push(`Mostrar finalizados: Sim`);
+    } else {
+      filtros.push(`Mostrar finalizados: Não`);
+    }
     
     if (filtros.length > 0) {
       doc.text(`Filtros aplicados: ${filtros.join(' | ')}`, 14, infoY);
@@ -182,16 +207,21 @@ export const useCursosExport = () => {
       'Insumos'
     ];
     
-    const tableData = cursosOrdenados.map(curso => [
-      curso.titulo,
-      curso.professor,
-      formatPeriodo(curso.periodo),
-      format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
-      format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
-      curso.unidades?.nome || 'Sem Unidade',
-      curso.salas?.nome || 'Sem Sala',
-      curso.total_insumos?.toString() || '0'
-    ]);
+    const tableData = cursosOrdenados.map(curso => {
+      const cursoFinalizado = isCursoFinalizado(curso.fim);
+      const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+      
+      return [
+        tituloComStatus,
+        curso.professor,
+        formatPeriodo(curso.periodo),
+        format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+        format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+        curso.unidades?.nome || 'Sem Unidade',
+        curso.salas?.nome || 'Sem Sala',
+        curso.total_insumos?.toString() || '0'
+      ];
+    });
     
     // Configuração da tabela
     const columnStyles: any = {
