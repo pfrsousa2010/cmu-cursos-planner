@@ -285,34 +285,36 @@ const Materias = () => {
             </CardContent>
           ) : (
             <CardContent className="p-0">
-              <div className="divide-y">
-                {filteredMaterias.map((materia) => (
-                  <div key={materia.id} className="p-4 flex justify-between items-center hover:bg-muted/50">
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground">{materia.nome}</h3>
-                    </div>
-                  
-                  {!canViewOnly && (
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startEdit(materia)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(materia.id)}
-                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
+              <div className="max-h-[600px] overflow-y-auto">
+                <div className="divide-y">
+                  {filteredMaterias.map((materia) => (
+                    <div key={materia.id} className="p-4 flex justify-between items-center hover:bg-muted/50">
+                      <div>
+                        <h3 className="text-lg font-medium text-foreground">{materia.nome}</h3>
+                      </div>
+                    
+                    {!canViewOnly && (
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(materia)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(materia.id)}
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  ))}
                 </div>
-                ))}
               </div>
             </CardContent>
           )}

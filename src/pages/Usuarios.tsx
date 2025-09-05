@@ -470,58 +470,60 @@ const Usuarios = () => {
             </CardContent>
           ) : (
             <CardContent className="p-0">
-              <div className="divide-y">
-                {filteredUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className={`p-4 flex justify-between items-center hover:bg-muted/50 ${user.id === currentUserId ? "bg-primary/10" : ""}`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className={`text-lg font-medium ${user.id === currentUserId ? "text-primary" : "text-foreground"}`}>
-                          {user.nome}
-                        </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30" : "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30"}`}>
-                          {user.isActive ? "Ativo" : "Inativo"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
-                      <div className="flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                          {getRoleLabel(user.role)}
-                        </span>
-                        {user.id === currentUserId && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-primary bg-primary/10">
-                            Você
+              <div className="max-h-[600px] overflow-y-auto">
+                <div className="divide-y">
+                  {filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className={`p-4 flex justify-between items-center hover:bg-muted/50 ${user.id === currentUserId ? "bg-primary/10" : ""}`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className={`text-lg font-medium ${user.id === currentUserId ? "text-primary" : "text-foreground"}`}>
+                            {user.nome}
+                          </h3>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30" : "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30"}`}>
+                            {user.isActive ? "Ativo" : "Inativo"}
                           </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                        </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                            {getRoleLabel(user.role)}
+                          </span>
+                          {user.id === currentUserId && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-primary bg-primary/10">
+                              Você
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                  {user.id !== currentUserId && (
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startEdit(user)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user)}
-                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    {user.id !== currentUserId && (
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(user)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user)}
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                     </div>
-                  )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </CardContent>
           )}

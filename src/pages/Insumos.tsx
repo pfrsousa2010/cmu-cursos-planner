@@ -314,34 +314,36 @@ const Insumos = () => {
             </CardContent>
           ) : (
             <CardContent className="p-0">
-              <div className="divide-y">
-                {filteredInsumos.map((insumo) => (
-                  <div key={insumo.id} className="p-4 flex justify-between items-center hover:bg-muted/50">
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground">{insumo.nome}</h3>
-                    </div>
-                  
-                  {!canViewOnly && (
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startEdit(insumo)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(insumo.id)}
-                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
+              <div className="max-h-[600px] overflow-y-auto">
+                <div className="divide-y">
+                  {filteredInsumos.map((insumo) => (
+                    <div key={insumo.id} className="p-4 flex justify-between items-center hover:bg-muted/50">
+                      <div>
+                        <h3 className="text-lg font-medium text-foreground">{insumo.nome}</h3>
+                      </div>
+                    
+                    {!canViewOnly && (
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(insumo)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(insumo.id)}
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  ))}
                 </div>
-                ))}
               </div>
             </CardContent>
           )}
