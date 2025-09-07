@@ -32,7 +32,7 @@ const App = () => {
         <TooltipProvider>
           <UserProvider>
             <Toaster />
-            <BrowserRouter>
+            <BrowserRouter basename="/cmu-cursos-planner">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
