@@ -15,9 +15,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
 import * as RechartsPrimitive from "recharts";
 import { useTheme } from "next-themes";
+import { useOrientation } from "@/hooks/useOrientation";
 
 const Dashboard = () => {
   const { theme } = useTheme();
+  const { isPortrait } = useOrientation();
   
   // Estados para controlar colapso das unidades em cada card
   const [collapsedUnidadesSemana, setCollapsedUnidadesSemana] = useState<Set<string>>(new Set());
@@ -485,72 +487,6 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Cards de métricas de ocupação */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sala Mais Utilizada</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <Skeleton className="h-8 w-32 rounded" />
-              ) : salasOrdenadas.length > 0 ? (
-                <div>
-                  <div className="text-lg font-bold">{(salasOrdenadas[0] as any).nome}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {(salasOrdenadas[0] as any).quantidade} cursos
-                  </p>
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">Nenhuma sala utilizada</div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Professor Mais Ativo</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <Skeleton className="h-8 w-32 rounded" />
-              ) : professoresOrdenados.length > 0 ? (
-                <div>
-                  <div className="text-lg font-bold">{(professoresOrdenados[0] as any).nome}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {(professoresOrdenados[0] as any).quantidade} cursos
-                  </p>
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">Nenhum professor ativo</div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Matéria Mais Popular</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <Skeleton className="h-8 w-32 rounded" />
-              ) : materiasOrdenadas.length > 0 ? (
-                <div>
-                  <div className="text-lg font-bold">{(materiasOrdenadas[0] as any).nome}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {(materiasOrdenadas[0] as any).quantidade} cursos
-                  </p>
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">Nenhuma matéria cadastrada</div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
           {/* Cursos começando em breve */}
           <Card>
@@ -893,311 +829,321 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Nova seção: Gráfico de cursos por unidade ao longo do ano */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Cursos por Unidade ao Longo do Ano ({anoAtual})</CardTitle>
-              <CardDescription>
-                Distribuição mensal de cursos por unidade
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCursosAno ? (
-                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-              ) : (
-                <ChartContainer config={chartConfig} className="w-full h-[350px]">
-                  <RechartsPrimitive.BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                    <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                    <RechartsPrimitive.XAxis dataKey="mes" />
-                    <RechartsPrimitive.YAxis allowDecimals={false} label={{ value: 'Quantidade de Cursos', angle: -90, position: 'insideLeft' }} />
-                    <RechartsPrimitive.Tooltip
-                      cursor={{ fill: theme === 'dark' ? '#374151' : '#f3f4f6' }}
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload || !payload.length) return null;
-                        // Mostra apenas barras com valor > 0 ou todas se todas forem zero
-                        const bars = payload.filter(p => Number(p.value) > 0)
-                          .length > 0 ? payload.filter(p => Number(p.value) > 0) : payload;
-                        return (
-                          <div className={`rounded border p-2 shadow text-xs min-w-[180px] ${
-                            theme === 'dark' 
-                              ? 'bg-card border-border text-card-foreground' 
-                              : 'bg-background border-border text-foreground'
-                          }`}>
-                            <div className="font-semibold mb-1">Mês: {label}</div>
-                            {bars.map((item, idx) => (
-                              <div key={item.dataKey} className="mb-1 flex items-center gap-2">
-                                <span style={{ color: item.color, fontWeight: 500 }}>{item.dataKey}:</span>
-                                <span>
-                                  {item.value} Curso{Number(item.value) === 1 ? '' : 's'}
-                                </span>
+        {/* Gráficos - apenas em modo paisagem (não celular) */}
+        {!isPortrait && (
+          <>
+            {/* Nova seção: Gráfico de cursos por unidade ao longo do ano */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Cursos por Unidade ao Longo do Ano ({anoAtual})</CardTitle>
+                  <CardDescription>
+                    Distribuição mensal de cursos por unidade
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCursosAno ? (
+                    <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                  ) : (
+                    <ChartContainer config={chartConfig} className="w-full h-[350px]">
+                      <RechartsPrimitive.BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                        <RechartsPrimitive.XAxis dataKey="mes" />
+                        <RechartsPrimitive.YAxis allowDecimals={false} label={{ value: 'Quantidade de Cursos', angle: -90, position: 'insideLeft' }} />
+                        <RechartsPrimitive.Tooltip
+                          cursor={{ fill: theme === 'dark' ? '#374151' : '#f3f4f6' }}
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload || !payload.length) return null;
+                            // Mostra apenas barras com valor > 0 ou todas se todas forem zero
+                            const bars = payload.filter(p => Number(p.value) > 0)
+                              .length > 0 ? payload.filter(p => Number(p.value) > 0) : payload;
+                            return (
+                              <div className={`rounded border p-2 shadow text-xs min-w-[180px] ${
+                                theme === 'dark' 
+                                  ? 'bg-card border-border text-card-foreground' 
+                                  : 'bg-background border-border text-foreground'
+                              }`}>
+                                <div className="font-semibold mb-1">Mês: {label}</div>
+                                {bars.map((item, idx) => (
+                                  <div key={item.dataKey} className="mb-1 flex items-center gap-2">
+                                    <span style={{ color: item.color, fontWeight: 500 }}>{item.dataKey}:</span>
+                                    <span>
+                                      {item.value} Curso{Number(item.value) === 1 ? '' : 's'}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
-                    <RechartsPrimitive.Legend
-                      verticalAlign="top"
-                      align="center"
-                      iconType="rect"
-                      wrapperStyle={{ 
-                        paddingBottom: 16,
-                        color: theme === 'dark' ? '#e5e7eb' : '#374151'
-                      }}
-                      formatter={(value, entry, idx) => (
-                        <span style={{ 
-                          color: theme === 'dark' ? '#e5e7eb' : '#374151', 
-                          fontWeight: 500 
-                        }}>{value}</span>
-                      )}
-                    />
-                    {unidades.map((unidade, idx) => (
-                      <RechartsPrimitive.Bar
-                        key={unidade}
-                        dataKey={unidade}
-                        fill={unidadeColors[idx % unidadeColors.length]}
-                        name={unidade}
-                        isAnimationActive={false}
-                        barSize={24}
-                      />
-                    ))}
-                  </RechartsPrimitive.BarChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                            );
+                          }}
+                        />
+                        <RechartsPrimitive.Legend
+                          verticalAlign="top"
+                          align="center"
+                          iconType="rect"
+                          wrapperStyle={{ 
+                            paddingBottom: 16,
+                            color: theme === 'dark' ? '#e5e7eb' : '#374151'
+                          }}
+                          formatter={(value, entry, idx) => (
+                            <span style={{ 
+                              color: theme === 'dark' ? '#e5e7eb' : '#374151', 
+                              fontWeight: 500 
+                            }}>{value}</span>
+                          )}
+                        />
+                        {unidades.map((unidade, idx) => (
+                          <RechartsPrimitive.Bar
+                            key={unidade}
+                            dataKey={unidade}
+                            fill={unidadeColors[idx % unidadeColors.length]}
+                            name={unidade}
+                            isAnimationActive={false}
+                            barSize={24}
+                          />
+                        ))}
+                      </RechartsPrimitive.BarChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
 
-        {/* Nova seção: Gráficos de métricas adicionais */}
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
-          {/* Gráfico de distribuição por período */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Distribuição de Cursos por Período</CardTitle>
-              <CardDescription>
-                Proporção de cursos por turno
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-              ) : (
-                <ChartContainer config={{}} className="w-full h-[300px]">
-                  <RechartsPrimitive.PieChart>
-                    <RechartsPrimitive.Pie
-                      data={periodosData}
-                      dataKey="quantidade"
-                      nameKey="periodo"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      label={({ periodo, quantidade, percent }) => `${periodo}: ${quantidade} (${(percent * 100).toFixed(1)}%)`}
-                    >
-                      {periodosData.map((entry, index) => (
-                        <RechartsPrimitive.Cell key={`cell-${index}`} fill={unidadeColors[index % unidadeColors.length]} />
-                      ))}
-                    </RechartsPrimitive.Pie>
-                    <RechartsPrimitive.Tooltip />
-                    <RechartsPrimitive.Legend />
-                  </RechartsPrimitive.PieChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
+        {/* Gráficos - apenas em modo paisagem (não celular) */}
+        {!isPortrait && (
+          <>
+            {/* Nova seção: Gráficos de métricas adicionais */}
+            <div className="mt-8 grid gap-6 md:grid-cols-2">
+              {/* Gráfico de distribuição por período */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Distribuição de Cursos por Período</CardTitle>
+                  <CardDescription>
+                    Proporção de cursos por turno
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCursosCompletos ? (
+                    <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                  ) : (
+                    <ChartContainer config={{}} className="w-full h-[300px]">
+                      <RechartsPrimitive.PieChart>
+                        <RechartsPrimitive.Pie
+                          data={periodosData}
+                          dataKey="quantidade"
+                          nameKey="periodo"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          label={({ periodo, quantidade, percent }) => `${periodo}: ${quantidade} (${(percent * 100).toFixed(1)}%)`}
+                        >
+                          {periodosData.map((entry, index) => (
+                            <RechartsPrimitive.Cell key={`cell-${index}`} fill={unidadeColors[index % unidadeColors.length]} />
+                          ))}
+                        </RechartsPrimitive.Pie>
+                        <RechartsPrimitive.Tooltip />
+                        <RechartsPrimitive.Legend />
+                      </RechartsPrimitive.PieChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
 
-          {/* Gráfico de salas mais utilizadas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Salas Mais Utilizadas</CardTitle>
-              <CardDescription>
-                Top 10 salas com mais cursos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-              ) : salasOrdenadas.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                  <CalendarDays className="h-12 w-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium">Nenhuma sala utilizada</p>
-                  <p className="text-sm">Não há cursos cadastrados com salas</p>
-                </div>
-              ) : (
-                <ChartContainer config={{}} className="w-full h-[400px]">
-                    <RechartsPrimitive.BarChart 
-                      data={salasOrdenadas} 
-                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                      width={600}
-                      height={400}
-                    >
-                      <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                      <RechartsPrimitive.XAxis 
-                        dataKey="nome" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                        tick={{ fontSize: 10 }}
-                        interval={0}
-                      />
-                      <RechartsPrimitive.YAxis 
-                        allowDecimals={false}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <RechartsPrimitive.Tooltip
-                        content={({ active, payload, label }) => {
-                          if (!active || !payload || !payload.length) return null;
-                          const data = payload[0].payload;
-                          return (
-                            <div className={`rounded border p-2 shadow text-xs ${
-                              theme === 'dark' 
-                                ? 'bg-card border-border text-card-foreground' 
-                                : 'bg-background border-border text-foreground'
-                            }`}>
-                              <div className="font-semibold mb-1">{data.nome}</div>
-                              <div>Cursos: {data.quantidade}</div>
-                              <div>Capacidade: {data.capacidade}</div>
-                            </div>
-                          );
-                        }}
-                      />
-                      <RechartsPrimitive.Bar 
-                        dataKey="quantidade" 
-                        fill="#8884d8"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={50}
-                      />
-                    </RechartsPrimitive.BarChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
+              {/* Gráfico de salas mais utilizadas */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Salas Mais Utilizadas</CardTitle>
+                  <CardDescription>
+                    Top 10 salas com mais cursos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCursosCompletos ? (
+                    <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                  ) : salasOrdenadas.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                      <CalendarDays className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-lg font-medium">Nenhuma sala utilizada</p>
+                      <p className="text-sm">Não há cursos cadastrados com salas</p>
+                    </div>
+                  ) : (
+                    <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.BarChart 
+                          data={salasOrdenadas} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                          width={600}
+                          height={400}
+                        >
+                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.XAxis 
+                            dataKey="nome" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                            tick={{ fontSize: 10 }}
+                            interval={0}
+                          />
+                          <RechartsPrimitive.YAxis 
+                            allowDecimals={false}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <RechartsPrimitive.Tooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              return (
+                                <div className={`rounded border p-2 shadow text-xs ${
+                                  theme === 'dark' 
+                                    ? 'bg-card border-border text-card-foreground' 
+                                    : 'bg-background border-border text-foreground'
+                                }`}>
+                                  <div className="font-semibold mb-1">{data.nome}</div>
+                                  <div>Cursos: {data.quantidade}</div>
+                                  <div>Capacidade: {data.capacidade}</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <RechartsPrimitive.Bar 
+                            dataKey="quantidade" 
+                            fill="#8884d8"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={50}
+                          />
+                        </RechartsPrimitive.BarChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
 
-          {/* Gráfico de professores mais ativos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Professores Com Mais Cursos</CardTitle>
-              <CardDescription>
-                Top 10 professores com mais cursos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-              ) : (
-                <ChartContainer config={{}} className="w-full h-[300px]">
-                  <RechartsPrimitive.BarChart data={professoresOrdenados} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                    <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                    <RechartsPrimitive.XAxis dataKey="nome" angle={-45} textAnchor="end" height={80} />
-                    <RechartsPrimitive.YAxis allowDecimals={false} />
-                    <RechartsPrimitive.Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload || !payload.length) return null;
-                        return (
-                          <div className={`rounded border p-2 shadow text-xs ${
-                            theme === 'dark' 
-                              ? 'bg-card border-border text-card-foreground' 
-                              : 'bg-background border-border text-foreground'
-                          }`}>
-                            <div className="font-semibold mb-1">{label}</div>
-                            <div>Cursos: {payload[0].value}</div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <RechartsPrimitive.Bar dataKey="quantidade" fill="#82ca9d" />
-                  </RechartsPrimitive.BarChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
+              {/* Gráfico de professores mais ativos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Professores Com Mais Cursos</CardTitle>
+                  <CardDescription>
+                    Top 10 professores com mais cursos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCursosCompletos ? (
+                    <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                  ) : (
+                    <ChartContainer config={{}} className="w-full h-[300px]">
+                      <RechartsPrimitive.BarChart data={professoresOrdenados} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                        <RechartsPrimitive.XAxis dataKey="nome" angle={-45} textAnchor="end" height={80} />
+                        <RechartsPrimitive.YAxis allowDecimals={false} />
+                        <RechartsPrimitive.Tooltip
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload || !payload.length) return null;
+                            return (
+                              <div className={`rounded border p-2 shadow text-xs ${
+                                theme === 'dark' 
+                                  ? 'bg-card border-border text-card-foreground' 
+                                  : 'bg-background border-border text-foreground'
+                              }`}>
+                                <div className="font-semibold mb-1">{label}</div>
+                                <div>Cursos: {payload[0].value}</div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <RechartsPrimitive.Bar dataKey="quantidade" fill="#82ca9d" />
+                      </RechartsPrimitive.BarChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
 
-          {/* Gráfico de matérias mais populares */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Matérias Mais Populares</CardTitle>
-              <CardDescription>
-                Top 8 matérias com mais cursos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-              ) : (
-                <ChartContainer config={{}} className="w-full h-[300px]">
-                  <RechartsPrimitive.BarChart data={materiasOrdenadas} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                    <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                    <RechartsPrimitive.XAxis dataKey="nome" angle={-45} textAnchor="end" height={80} />
-                    <RechartsPrimitive.YAxis allowDecimals={false} />
-                    <RechartsPrimitive.Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload || !payload.length) return null;
-                        return (
-                          <div className={`rounded border p-2 shadow text-xs ${
-                            theme === 'dark' 
-                              ? 'bg-card border-border text-card-foreground' 
-                              : 'bg-background border-border text-foreground'
-                          }`}>
-                            <div className="font-semibold mb-1">{label}</div>
-                            <div>Cursos: {payload[0].value}</div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <RechartsPrimitive.Bar dataKey="quantidade" fill="#ffc658" />
-                  </RechartsPrimitive.BarChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              {/* Gráfico de matérias mais populares */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Matérias Mais Populares</CardTitle>
+                  <CardDescription>
+                    Top 8 matérias com mais cursos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCursosCompletos ? (
+                    <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                  ) : (
+                    <ChartContainer config={{}} className="w-full h-[300px]">
+                      <RechartsPrimitive.BarChart data={materiasOrdenadas} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                        <RechartsPrimitive.XAxis dataKey="nome" angle={-45} textAnchor="end" height={80} />
+                        <RechartsPrimitive.YAxis allowDecimals={false} />
+                        <RechartsPrimitive.Tooltip
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload || !payload.length) return null;
+                            return (
+                              <div className={`rounded border p-2 shadow text-xs ${
+                                theme === 'dark' 
+                                  ? 'bg-card border-border text-card-foreground' 
+                                  : 'bg-background border-border text-foreground'
+                              }`}>
+                                <div className="font-semibold mb-1">{label}</div>
+                                <div>Cursos: {payload[0].value}</div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <RechartsPrimitive.Bar dataKey="quantidade" fill="#ffc658" />
+                      </RechartsPrimitive.BarChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Gráfico de evolução mensal */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Evolução Mensal de Cursos ({anoAtual})</CardTitle>
-              <CardDescription>
-                Tendência de criação de cursos ao longo do ano
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCursosCompletos ? (
-                <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-              ) : (
-                <ChartContainer config={{}} className="w-full h-[350px]">
-                  <RechartsPrimitive.LineChart data={evolucaoMensal} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                    <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                    <RechartsPrimitive.XAxis dataKey="mes" />
-                    <RechartsPrimitive.YAxis allowDecimals={false} />
-                    <RechartsPrimitive.Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload || !payload.length) return null;
-                        return (
-                          <div className={`rounded border p-2 shadow text-xs ${
-                            theme === 'dark' 
-                              ? 'bg-card border-border text-card-foreground' 
-                              : 'bg-background border-border text-foreground'
-                          }`}>
-                            <div className="font-semibold mb-1">Mês: {label}</div>
-                            <div>Total: {payload[0].payload.cursos}</div>
-                            <div>Ativos: {payload[0].payload.ativos}</div>
-                            <div>Finalizados: {payload[0].payload.finalizados}</div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <RechartsPrimitive.Legend />
-                    <RechartsPrimitive.Line type="monotone" dataKey="cursos" stroke="#8884d8" strokeWidth={2} name="Total de Cursos" />
-                    <RechartsPrimitive.Line type="monotone" dataKey="ativos" stroke="#82ca9d" strokeWidth={2} name="Cursos Ativos" />
-                    <RechartsPrimitive.Line type="monotone" dataKey="finalizados" stroke="#ffc658" strokeWidth={2} name="Cursos Finalizados" />
-                  </RechartsPrimitive.LineChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            {/* Gráfico de evolução mensal */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Evolução Mensal de Cursos ({anoAtual})</CardTitle>
+                  <CardDescription>
+                    Tendência de criação de cursos ao longo do ano
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCursosCompletos ? (
+                    <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                  ) : (
+                    <ChartContainer config={{}} className="w-full h-[350px]">
+                      <RechartsPrimitive.LineChart data={evolucaoMensal} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                        <RechartsPrimitive.XAxis dataKey="mes" />
+                        <RechartsPrimitive.YAxis allowDecimals={false} />
+                        <RechartsPrimitive.Tooltip
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload || !payload.length) return null;
+                            return (
+                              <div className={`rounded border p-2 shadow text-xs ${
+                                theme === 'dark' 
+                                  ? 'bg-card border-border text-card-foreground' 
+                                  : 'bg-background border-border text-foreground'
+                              }`}>
+                                <div className="font-semibold mb-1">Mês: {label}</div>
+                                <div>Total: {payload[0].payload.cursos}</div>
+                                <div>Ativos: {payload[0].payload.ativos}</div>
+                                <div>Finalizados: {payload[0].payload.finalizados}</div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <RechartsPrimitive.Legend />
+                        <RechartsPrimitive.Line type="monotone" dataKey="cursos" stroke="#8884d8" strokeWidth={2} name="Total de Cursos" />
+                        <RechartsPrimitive.Line type="monotone" dataKey="ativos" stroke="#82ca9d" strokeWidth={2} name="Cursos Ativos" />
+                        <RechartsPrimitive.Line type="monotone" dataKey="finalizados" stroke="#ffc658" strokeWidth={2} name="Cursos Finalizados" />
+                      </RechartsPrimitive.LineChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
       </div>
     </Layout>
   );
