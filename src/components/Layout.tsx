@@ -158,7 +158,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-2">
-                <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
+                <img src="/logo-cmu.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
                 <h1 className="hidden md:block text-xl font-bold text-primary">Gestor de Cursos CMU</h1>
               </div>
             </div>

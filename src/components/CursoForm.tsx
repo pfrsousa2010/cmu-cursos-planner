@@ -476,7 +476,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
-            <img src="/Logo%20CMU.png" alt="Logo CMU" className="h-32 w-auto animate-pulse mx-auto" />
+            <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse mx-auto" />
             <p className="text-lg font-medium text-muted-foreground">
               {isDuplicateMode ? "Carregando dados para duplicação..." : "Carregando formulário..."}
             </p>
