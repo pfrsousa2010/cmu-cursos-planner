@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
+import logoCmu from "/logo-cmu.png";
 
 interface Curso {
   id: string;
@@ -476,7 +477,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
-            <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse mx-auto" />
+            <img src={logoCmu} alt="Logo CMU" className="h-32 w-auto animate-pulse mx-auto" />
             <p className="text-lg font-medium text-muted-foreground">
               {isDuplicateMode ? "Carregando dados para duplicação..." : "Carregando formulário..."}
             </p>

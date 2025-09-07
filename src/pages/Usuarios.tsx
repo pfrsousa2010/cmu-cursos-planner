@@ -14,6 +14,7 @@ import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOrientation } from "@/hooks/useOrientation";
 import type { Database } from "@/integrations/supabase/types";
+import logoCmu from "/logo-cmu.png";
 
 type UserRole = Database['public']['Enums']['user_role'];
 
@@ -264,7 +265,7 @@ const Usuarios = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+          <img src={logoCmu} alt="Logo CMU" className="h-32 w-auto animate-pulse" />
         </div>
       </Layout>
     );

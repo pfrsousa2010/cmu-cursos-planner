@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import logoCmu from "/logo-cmu.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+      <img src={logoCmu} alt="Logo CMU" className="h-32 w-auto animate-pulse" />
     </div>
   );
 };

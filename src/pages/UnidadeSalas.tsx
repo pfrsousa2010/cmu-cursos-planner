@@ -12,6 +12,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useUnidadeSalasExport } from "@/hooks/useUnidadeSalasExport";
 import { useOrientation } from "@/hooks/useOrientation";
 import { Plus, Edit, Trash2, Building2, Phone, MapPin, DoorOpen, Users, Download, FileSpreadsheet, FileImage } from "lucide-react";
+import logoCmu from "/logo-cmu.png";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -256,7 +257,7 @@ const UnidadeSalas = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+          <img src={logoCmu} alt="Logo CMU" className="h-32 w-auto animate-pulse" />
         </div>
       </Layout>
     );

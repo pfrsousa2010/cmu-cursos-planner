@@ -12,6 +12,7 @@ import Layout from "@/components/Layout";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useInsumosExport } from "@/hooks/useInsumosExport";
 import { useOrientation } from "@/hooks/useOrientation";
+import logoCmu from "/logo-cmu.png";
 
 
 interface Insumo {
@@ -147,7 +148,7 @@ const Insumos = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+          <img src={logoCmu} alt="Logo CMU" className="h-32 w-auto animate-pulse" />
         </div>
       </Layout>
     );

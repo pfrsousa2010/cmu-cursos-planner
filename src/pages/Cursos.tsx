@@ -12,6 +12,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useCursosExport } from "@/hooks/useCursosExport";
 import { useOrientation } from "@/hooks/useOrientation";
 import { Plus, Edit, Trash2, FileText, Download, Search, Filter, Copy, MoreHorizontal, FileSpreadsheet, FileImage } from "lucide-react";
+import logoCmu from "/logo-cmu.png";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -327,7 +328,7 @@ const Cursos = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <img src="/logo-cmu.png" alt="Logo CMU" className="h-32 w-auto animate-pulse" />
+          <img src={logoCmu} alt="Logo CMU" className="h-32 w-auto animate-pulse" />
         </div>
       </Layout>
     );

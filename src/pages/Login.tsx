@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import logoCmu from "/logo-cmu-menor.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -41,7 +42,7 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src="/logo-cmu-menor.png" alt="Logo CMU" className="mx-auto mb-2 h-20 w-auto" />
+          <img src={logoCmu} alt="Logo CMU" className="mx-auto mb-2 h-20 w-auto" />
           <CardTitle className="text-2xl font-bold text-blue-600">
           Gestor de Cursos CMU
           </CardTitle>

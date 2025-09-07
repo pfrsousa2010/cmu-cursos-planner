@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/contexts/UserContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import logoCmu from "/logo-cmu.png";
 
 interface LayoutProps {
   children: ReactNode;
@@ -158,7 +159,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-2">
-                <img src="/logo-cmu.png" alt="Logo CMU" className="h-8 md:h-12 w-auto" />
+                <img src={logoCmu} alt="Logo CMU" className="h-8 md:h-12 w-auto" />
                 <h1 className="hidden md:block text-xl font-bold text-primary">Gestor de Cursos CMU</h1>
               </div>
             </div>
