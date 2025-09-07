@@ -641,8 +641,8 @@ const Dashboard = () => {
                           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors">
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-primary" />
-                              <span className="font-semibold text-sm">{unidadeNome}</span>
-                              <Badge variant="secondary" className="text-xs">
+                              <span className="font-semibold text-sm flex-1 min-w-0">{unidadeNome}</span>
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">
                                 {Object.values(salas).flat().length} curso{Object.values(salas).flat().length !== 1 ? 's' : ''}
                               </Badge>
                             </div>
@@ -659,8 +659,8 @@ const Dashboard = () => {
                                 <div key={salaNome} className="ml-4 space-y-2">
                                   <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-primary/30 rounded-full"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">{salaNome}</span>
-                                    <Badge variant="outline" className="text-xs">
+                                    <span className="text-sm font-medium text-muted-foreground flex-1 min-w-0">{salaNome}</span>
+                                    <Badge variant="outline" className="text-xs flex-shrink-0">
                                       {cursos.length} curso{cursos.length !== 1 ? 's' : ''}
                                     </Badge>
                                   </div>
@@ -779,8 +779,8 @@ const Dashboard = () => {
                                 <div key={salaNome} className="ml-4 space-y-2">
                                   <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-purple-300 rounded-full"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">{salaNome}</span>
-                                    <Badge variant="outline" className="text-xs">
+                                    <span className="text-sm font-medium text-muted-foreground flex-1 min-w-0">{salaNome}</span>
+                                    <Badge variant="outline" className="text-xs flex-shrink-0">
                                       {cursos.length} curso{cursos.length !== 1 ? 's' : ''}
                                     </Badge>
                                   </div>
