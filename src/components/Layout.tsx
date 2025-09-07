@@ -165,8 +165,8 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Informações do perfil - sempre visível */}
-              <div className="flex items-center space-x-4">
+              {/* Informações do perfil - ocultas em mobile e tablet */}
+              <div className="hidden lg:flex items-center space-x-4">
                 {userLoading || !profile ? (
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-5 w-32 rounded" />
