@@ -168,8 +168,8 @@ const Calendario = () => {
               onClick={handleExport}
               disabled={isLoading || !cursosFiltrados || cursosFiltrados.length === 0}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Baixar Calendário
+              <Download className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Baixar Calendário</span>
             </Button>
             <span className="text-sm font-medium">Visão Semanal</span>
             <Switch

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import Layout from '@/components/Layout';
@@ -12,7 +12,7 @@ import { useUser } from '@/contexts/UserContext';
 import logoCmu from '/logo-cmu.png';
 
 const MeuPerfil = () => {
-  const { profile: userProfile, user } = useUser();
+  const { user } = useUser();
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [nome, setNome] = useState('');
@@ -131,12 +131,12 @@ const MeuPerfil = () => {
                 </div>
                                  <div>
                    <label className="block text-sm font-medium mb-1">Email</label>
-                   <Input value={user?.email || ''} disabled />
+                   <Input value={profile?.email || ''} disabled />
                  </div>
                  <div>
                    <label className="block text-sm font-medium mb-1">Função</label>
-                   <Input value={user?.role === 'admin' ? 'Administrador' : 
-                           user?.role === 'editor' ? 'Editor' : 'Visualizador'} disabled />
+                   <Input value={profile?.role === 'admin' ? 'Administrador' : 
+                           profile?.role === 'editor' ? 'Editor' : 'Visualizador'} disabled />
                  </div>
                                  <div className="flex gap-2">
                    <Button type="submit" disabled={nomeLoading || nome === profile?.nome}>
