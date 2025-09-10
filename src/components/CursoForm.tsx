@@ -48,6 +48,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [insumosModalOpen, setInsumosModalOpen] = useState(false);
   const [tempSelectedInsumos, setTempSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
+  const [insumosSearchTerm, setInsumosSearchTerm] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -75,6 +76,17 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       return data || [];
     }
   });
+
+  // Filtrar insumos baseado no termo de busca
+  const filteredInsumos = useMemo(() => {
+    if (!insumos || !insumosSearchTerm.trim()) {
+      return insumos || [];
+    }
+    
+    return insumos.filter(insumo => 
+      insumo.nome.toLowerCase().includes(insumosSearchTerm.toLowerCase())
+    );
+  }, [insumos, insumosSearchTerm]);
 
   const { data: salas } = useQuery({
     queryKey: ['salas', unidadeId],
@@ -375,12 +387,14 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
 
   const handleOpenInsumosModal = () => {
     setTempSelectedInsumos([...selectedInsumos]);
+    setInsumosSearchTerm("");
     setInsumosModalOpen(true);
   };
 
   const handleCloseInsumosModal = () => {
     setInsumosModalOpen(false);
     setTempSelectedInsumos([]);
+    setInsumosSearchTerm("");
   };
 
   const handleTempInsumoToggle = (insumoId: string) => {
@@ -398,6 +412,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     setSelectedInsumos(tempSelectedInsumos);
     setInsumosModalOpen(false);
     setTempSelectedInsumos([]);
+    setInsumosSearchTerm("");
   };
 
   const handleQuantidadeChange = (insumoId: string, quantidade: number) => {
@@ -626,7 +641,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               <div
                 key={materia.id}
                 className={`p-2 border rounded cursor-pointer transition-colors ${
-                  isSelected ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'
+                  isSelected 
+                    ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600' 
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
                 onClick={() => handleMateriaToggle(materia.id)}
               >
@@ -667,7 +684,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
             </Label>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground font-normal">
-                {insumosExpanded ? "Clique para fechar" : "Clique para ver"}
+                {insumosExpanded ? "Recolher" : "Expandir"}
               </span>
               {insumosExpanded ? (
                 <ChevronDown className="h-4 w-4" />
@@ -742,28 +759,63 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
 
       {/* Modal de Seleção de Insumos */}
       <Dialog open={insumosModalOpen} onOpenChange={setInsumosModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-4xl h-[600px] flex flex-col">
           <DialogHeader className="flex-shrink-0 pb-4">
             <DialogTitle>Selecionar Insumos</DialogTitle>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="grid gap-2 md:grid-cols-3">
-              {insumos?.map(insumo => {
-                const isSelected = tempSelectedInsumos.find(i => i.id === insumo.id);
-                return (
-                  <div
-                    key={insumo.id}
-                    className={`p-2 border rounded cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => handleTempInsumoToggle(insumo.id)}
-                  >
-                    <span className="text-sm">{insumo.nome}</span>
-                  </div>
-                );
-              })}
+          {/* Barra de busca */}
+          <div className="flex-shrink-0 pb-4 flex justify-center">
+            <div className="relative w-80">
+              <Input
+                type="text"
+                placeholder="Buscar insumos por nome..."
+                value={insumosSearchTerm}
+                onChange={(e) => setInsumosSearchTerm(e.target.value)}
+                className="w-full pr-8"
+              />
+              {insumosSearchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setInsumosSearchTerm("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {filteredInsumos && filteredInsumos.length > 0 ? (
+              <div className="grid gap-2 md:grid-cols-3">
+                {filteredInsumos.map(insumo => {
+                  const isSelected = tempSelectedInsumos.find(i => i.id === insumo.id);
+                  return (
+                    <div
+                      key={insumo.id}
+                      className={`p-2 border rounded cursor-pointer transition-colors ${
+                        isSelected 
+                          ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      onClick={() => handleTempInsumoToggle(insumo.id)}
+                    >
+                      <span className="text-sm">{insumo.nome}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground">
+                <span>
+                  {insumosSearchTerm.trim() 
+                    ? `Nenhum insumo encontrado para "${insumosSearchTerm}"`
+                    : "Nenhum insumo disponível"
+                  }
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Save, X } from "lucide-react";
 import { toast } from "sonner";
@@ -232,23 +232,16 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
                 <TableRow key={insumo.id}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>
-                    <Select
+                    <SearchableSelect
                       value={insumo.insumo_id}
                       onValueChange={(value) => handleInsumoChange(index, 'insumo_id', value)}
-                    >
-                      <SelectTrigger
-                        ref={el => selectRefs.current[index] = el}
-                      >
-                        <SelectValue placeholder="Selecionar insumo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableInsumos.map((ins) => (
-                          <SelectItem key={ins.id} value={ins.id}>
-                            {ins.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Selecionar insumo"
+                      options={availableInsumos.map(ins => ({
+                        value: ins.id,
+                        label: ins.nome
+                      }))}
+                      emptyMessage="Nenhum insumo encontrado"
+                    />
                   </TableCell>
                   <TableCell>
                     <Input
