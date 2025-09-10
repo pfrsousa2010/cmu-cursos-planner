@@ -120,11 +120,15 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
       insumo_id: '',
       quantidade: 1
     };
-    setEditedInsumos(prev => [...prev, newInsumo]);
-    setTimeout(() => {
-      const idx = editedInsumos.length;
-      selectRefs.current[idx]?.focus();
-    }, 0);
+    setEditedInsumos(prev => {
+      const newList = [...prev, newInsumo];
+      // Focar no novo item após o estado ser atualizado
+      setTimeout(() => {
+        const newIndex = newList.length - 1;
+        selectRefs.current[newIndex]?.focus();
+      }, 100);
+      return newList;
+    });
   };
 
   const handleRemoveInsumo = (index: number) => {
@@ -238,6 +242,7 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>
                     <SearchableSelect
+                      ref={(el) => (selectRefs.current[index] = el)}
                       value={insumo.insumo_id}
                       onValueChange={(value) => handleInsumoChange(index, 'insumo_id', value)}
                       placeholder="Selecionar insumo"
