@@ -8,6 +8,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Save, X } from "lucide-react";
 import { toast } from "sonner";
+import { useOrientation } from "@/hooks/useOrientation";
 
 interface CursoInsumosEditProps {
   cursoId: string;
@@ -28,6 +29,10 @@ interface InsumoItem {
 const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) => {
   const [editedInsumos, setEditedInsumos] = useState<InsumoItem[]>([]);
   const queryClient = useQueryClient();
+  const { width } = useOrientation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
   const selectRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // Buscar insumos do curso
@@ -206,11 +211,11 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
         <h4 className="font-medium">Editar Lista de Insumos</h4>
         <Button
           variant="outline"
-          size="sm"
+          size={isMobile ? "sm" : "sm"}
           onClick={handleAddInsumo}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Insumo
+          <Plus className={isMobile ? "h-4 w-4" : "h-4 w-4 mr-2"} />
+          {!isMobile && "Adicionar Insumo"}
         </Button>
       </div>
 
@@ -273,14 +278,14 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
         </div>
       )}
 
-      <div className="flex gap-2 pt-4">
-        <Button onClick={handleSave} disabled={saveMutation.isPending}>
-          <Save className="h-4 w-4 mr-2" />
-          {saveMutation.isPending ? "Salvando..." : "Salvar"}
-        </Button>
+      <div className="flex gap-2 pt-4 justify-end">
         <Button variant="outline" onClick={onCancel}>
           <X className="h-4 w-4 mr-2" />
           Cancelar
+        </Button>
+        <Button onClick={handleSave} disabled={saveMutation.isPending}>
+          <Save className="h-4 w-4 mr-2" />
+          {saveMutation.isPending ? "Salvando..." : "Salvar"}
         </Button>
       </div>
     </div>

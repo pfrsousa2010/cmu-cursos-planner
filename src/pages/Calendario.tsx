@@ -247,7 +247,10 @@ const Calendario = () => {
 
         {/* Insumos do Curso (se selecionado) */}
         <Dialog open={insumosDialogOpen} onOpenChange={setInsumosDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Lista de Insumos - {selectedCursoInsumos?.titulo}</DialogTitle>
+            </DialogHeader>
             {selectedCursoInsumos && (
               <CursoInsumosList 
                 cursoId={selectedCursoInsumos.id}

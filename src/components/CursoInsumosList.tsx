@@ -210,15 +210,7 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
         </div>
       </div>
 
-      <div className="flex gap-2 pt-4">
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          onClick={() => setIsEditing(true)}
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Editar Lista
-        </Button>
+      <div className="flex gap-2 pt-4">       
         <Button 
           variant="outline" 
           className="flex-1"
@@ -226,6 +218,14 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
         >
           <Download className="h-4 w-4 mr-2" />
           Baixar PDF
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => setIsEditing(true)}
+        >
+          <Edit className="h-4 w-4 mr-2" />
+          Editar Lista
         </Button>
       </div>
     </div>
