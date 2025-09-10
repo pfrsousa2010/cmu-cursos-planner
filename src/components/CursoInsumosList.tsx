@@ -182,14 +182,14 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
       )}
       <h4 className="font-medium mb-2">Insumos Necessários:</h4>
       <div className="border rounded-lg p-4">
-        <div className="max-h-[400px] overflow-auto bg-white">
+        <div className="max-h-[400px] overflow-auto">
         {insumos && insumos.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16 sticky top-0 z-10 bg-white shadow border-b">Item</TableHead>
-                <TableHead className="sticky top-0 z-10 bg-white shadow border-b">Descrição</TableHead>
-                <TableHead className="text-right w-24 sticky top-0 z-10 bg-white shadow border-b">Quantidade</TableHead>
+                <TableHead className="w-16 sticky top-0 z-10 bg-background shadow border-b">Item</TableHead>
+                <TableHead className="sticky top-0 z-10 bg-background shadow border-b">Descrição</TableHead>
+                <TableHead className="text-right w-24 sticky top-0 z-10 bg-background shadow border-b">Quantidade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
