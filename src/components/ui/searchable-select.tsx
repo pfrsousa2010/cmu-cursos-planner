@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 interface SearchableSelectProps {
   value?: string;
   onValueChange?: (value: string) => void;
+  onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   options: Array<{ value: string; label: string }>;
   emptyMessage?: string;
@@ -15,10 +16,30 @@ interface SearchableSelectProps {
 }
 
 const SearchableSelect = React.forwardRef<HTMLButtonElement, SearchableSelectProps>(
-  ({ value, onValueChange, placeholder = "Selecionar...", options, emptyMessage = "Nenhum item encontrado.", className, disabled }, ref) => {
+  ({ value, onValueChange, onOpenChange, placeholder = "Selecionar...", options, emptyMessage = "Nenhum item encontrado.", className, disabled }, ref) => {
     const [open, setOpen] = React.useState(false);
+    const commandListRef = React.useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find(option => option.value === value);
+
+    // Interceptar eventos de scroll para garantir que funcionem no CommandList
+    React.useEffect(() => {
+      const handleWheel = (e: WheelEvent) => {
+        if (commandListRef.current && commandListRef.current.contains(e.target as Node)) {
+          e.stopPropagation();
+        }
+      };
+
+      if (open) {
+        document.addEventListener('wheel', handleWheel, { passive: false });
+        return () => document.removeEventListener('wheel', handleWheel);
+      }
+    }, [open]);
+
+    // Notificar o componente pai sobre mudanças no estado de abertura
+    React.useEffect(() => {
+      onOpenChange?.(open);
+    }, [open, onOpenChange]);
 
     return (
       <Popover open={open} onOpenChange={setOpen}>
@@ -38,14 +59,17 @@ const SearchableSelect = React.forwardRef<HTMLButtonElement, SearchableSelectPro
           </button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[--radix-popover-trigger-width] p-0" 
+          className="w-[--radix-popover-trigger-width] p-0 z-50" 
           align="start"
           side="bottom"
           avoidCollisions={true}
         >
           <Command>
             <CommandInput placeholder="Buscar..." />
-            <CommandList className="max-h-[250px] overflow-y-auto overscroll-contain scroll-smooth">
+            <CommandList 
+              ref={commandListRef}
+              className="max-h-[200px] overflow-y-auto overscroll-contain scroll-smooth"
+            >
               <CommandEmpty>{emptyMessage}</CommandEmpty>
               <CommandGroup>
                 {options.map((option) => (

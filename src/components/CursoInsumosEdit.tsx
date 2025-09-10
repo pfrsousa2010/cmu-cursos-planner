@@ -28,6 +28,7 @@ interface InsumoItem {
 
 const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) => {
   const [editedInsumos, setEditedInsumos] = useState<InsumoItem[]>([]);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
   const queryClient = useQueryClient();
   const { width } = useOrientation();
   
@@ -224,7 +225,18 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
       </div>
 
       {editedInsumos.length > 0 ? (
-        <div className="max-h-[400px] overflow-auto">
+        <div 
+          className={`max-h-[400px] overscroll-contain transition-all duration-200 ${
+            isSelectOpen ? 'overflow-hidden' : 'overflow-auto'
+          }`}
+          onWheel={(e) => {
+            // Evitar que o scroll da tabela interfira com o SearchableSelect
+            const target = e.target as HTMLElement;
+            if (target.closest('[cmdk-list]')) {
+              e.stopPropagation();
+            }
+          }}
+        >
         <Table>
           <TableHeader>
             <TableRow>
@@ -251,6 +263,7 @@ const CursoInsumosEdit = ({ cursoId, onSave, onCancel }: CursoInsumosEditProps) 
                         label: ins.nome
                       }))}
                       emptyMessage="Nenhum insumo encontrado"
+                      onOpenChange={setIsSelectOpen}
                     />
                   </TableCell>
                   <TableCell>
