@@ -108,7 +108,26 @@ export const getCursosForSalaAndDay = (cursos: Curso[], salaId: string, day: Dat
     
     const cursoStart = parseISO(curso.inicio);
     const cursoEnd = parseISO(curso.fim);
-    return isWithinInterval(day, { start: cursoStart, end: cursoEnd });
+    
+    // Verifica se o dia está dentro do intervalo de datas do curso
+    if (!isWithinInterval(day, { start: cursoStart, end: cursoEnd })) {
+      return false;
+    }
+    
+    // Mapeia os dias da semana para números (0 = domingo, 1 = segunda, etc.)
+    const dayOfWeekMap = {
+      'segunda': 1,
+      'terca': 2,
+      'quarta': 3,
+      'quinta': 4,
+      'sexta': 5
+    };
+    
+    // Verifica se o dia da semana atual está nos dias da semana do curso
+    const currentDayOfWeek = day.getDay();
+    const cursoDaysOfWeek = curso.dia_semana.map(dia => dayOfWeekMap[dia]);
+    
+    return cursoDaysOfWeek.includes(currentDayOfWeek);
   }) || [];
 };
 

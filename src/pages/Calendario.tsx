@@ -7,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Info } from "lucide-react";
 import { toast } from "sonner";
-import OrientationMessage from "@/components/OrientationMessage";
 import { useOrientation } from "@/hooks/useOrientation";
 
 // Hooks personalizados
@@ -61,7 +60,6 @@ const Calendario = () => {
     salasFiltradas,
     professoresFiltrados,
     cursosFiltrados,
-    setSelectedUnidade,
     setSelectedProfessor,
     setSelectedSala,
     handleUnidadeChange,
@@ -148,7 +146,7 @@ const Calendario = () => {
                     <Info className="h-5 w-5 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>O calendário semanal mostra apenas de segunda a sábado.<br />Os domingos não são exibidos.</p>
+                    <p>O calendário semanal mostra apenas de segunda a sexta.<br />Fins de semana não são exibidos.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

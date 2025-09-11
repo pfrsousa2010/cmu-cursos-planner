@@ -35,7 +35,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
     end: endOfWeek(currentWeek, { weekStartsOn: 1 })
-  }).filter(day => day.getDay() !== 0); // Remove domingos (0 = domingo)
+  }).filter(day => day.getDay() !== 0 && day.getDay() !== 6); // Remove domingos (0) e sábados (6)
 
   if (loadingSalas) {
     return (
