@@ -39,6 +39,19 @@ const cursoApareceNoDia = (curso: Curso, dia: Date): boolean => {
   return cursoDaysOfWeek.includes(currentDayOfWeek);
 };
 
+// Função para verificar se o curso está finalizado
+const isCursoFinalizado = (dataFim: string) => {
+  const hoje = new Date();
+  const fimCurso = new Date(dataFim + 'T00:00:00');
+  
+  // Normalizar as datas para comparar apenas o dia (sem horário)
+  const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
+  
+  // Curso está finalizado apenas se a data fim for anterior ao dia atual
+  return fimCursoNormalizado < hojeNormalizado;
+};
+
 interface CalendarioMensalProps {
   currentWeek: Date;
   salasToShow: Sala[];
@@ -86,28 +99,34 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
           cells.push(
             <TableCell key={`cursos-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
               <div className="space-y-0.5">
-                {cursosDoDia.map((curso) => (
-                  <TooltipProvider key={curso.id} delayDuration={100}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`p-1 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')} flex items-center justify-center min-h-[20px]`}
-                          onClick={() => onCursoClick(curso)}
-                        >
-                          <span className="font-bold text-sm">
-                            {curso.titulo.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="text-center">
-                          <div className="font-medium">{curso.titulo}</div>
-                          <div className="text-sm text-muted-foreground">{curso.professor}</div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
+                {cursosDoDia.map((curso) => {
+                  const cursoFinalizado = isCursoFinalizado(curso.fim);
+                  return (
+                    <TooltipProvider key={curso.id} delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`p-1 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')} flex items-center justify-center min-h-[20px] ${cursoFinalizado ? 'border-red-300 dark:border-red-600' : ''}`}
+                            onClick={() => onCursoClick(curso)}
+                          >
+                            <span className="font-bold text-sm">
+                              {curso.titulo.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="text-center">
+                            <div className="font-medium">{curso.titulo}</div>
+                            <div className="text-sm text-muted-foreground">{curso.professor}</div>
+                            {cursoFinalizado && (
+                              <div className="text-xs text-red-500 font-medium mt-1">Finalizado</div>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })}
               </div>
             </TableCell>
           );
@@ -128,7 +147,7 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
             cells.push(
               <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
                 <div 
-                  className="flex items-center justify-center p-1 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600 h-full"
+                  className="flex items-center justify-center p-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-500 hover:text-blue-600 h-full min-h-[20px]"
                   onClick={() => onAddCurso(sala.id, diaAtual, turno)}
                   title="Adicionar novo curso"
                 >

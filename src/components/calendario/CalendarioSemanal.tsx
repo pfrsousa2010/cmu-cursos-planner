@@ -14,6 +14,19 @@ import {
   formatPeriodo 
 } from "@/utils/calendarioUtils";
 
+// Função para verificar se o curso está finalizado
+const isCursoFinalizado = (dataFim: string) => {
+  const hoje = new Date();
+  const fimCurso = new Date(dataFim + 'T00:00:00');
+  
+  // Normalizar as datas para comparar apenas o dia (sem horário)
+  const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
+  
+  // Curso está finalizado apenas se a data fim for anterior ao dia atual
+  return fimCursoNormalizado < hojeNormalizado;
+};
+
 interface CalendarioSemanalProps {
   currentWeek: Date;
   salasToShow: Sala[];
@@ -163,18 +176,21 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                             {loadingCursos ? (
                               <Skeleton className="h-16 w-full" />
                             ) : (
-                              cursosTurno.map((curso) => (
-                                <div
-                                  key={curso.id}
-                                  className={`p-2 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')}`}
-                                  onClick={() => onCursoClick(curso)}
-                                >
-                                  <div className="space-y-1">
-                                    <div className="font-medium leading-tight">{curso.titulo}</div>
-                                    <div className="text-muted-foreground">{curso.professor}</div>
+                              cursosTurno.map((curso) => {
+                                const cursoFinalizado = isCursoFinalizado(curso.fim);
+                                return (
+                                  <div
+                                    key={curso.id}
+                                    className={`p-2 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')} ${cursoFinalizado ? 'border-red-300 dark:border-red-600' : ''}`}
+                                    onClick={() => onCursoClick(curso)}
+                                  >
+                                    <div className="space-y-1">
+                                      <div className="font-medium leading-tight">{curso.titulo}</div>
+                                      <div className="text-muted-foreground">{curso.professor}</div>
+                                    </div>
                                   </div>
-                                </div>
-                              ))
+                                );
+                              })
                             )}
                             {!loadingCursos && cursosTurno.length === 0 && (
                               (() => {
