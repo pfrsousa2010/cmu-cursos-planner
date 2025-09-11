@@ -303,10 +303,11 @@ const Calendario = () => {
             </DialogHeader>
             <div className="flex-1 overflow-y-auto min-h-0">
               {cursoToEdit && (
-                <CursoForm 
-                  curso={cursoToEdit}
-                  onSuccess={handleEditSuccess}
-                />
+              <CursoForm 
+                curso={cursoToEdit}
+                onSuccess={handleEditSuccess}
+                cursosExistentes={cursosFiltrados}
+              />
               )}
             </div>
             <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">
@@ -329,6 +330,7 @@ const Calendario = () => {
             <div className="flex-1 overflow-y-auto min-h-0">
               <CursoForm 
                 onSuccess={handleNovoCursoSuccess}
+                cursosExistentes={cursosFiltrados}
                 cursoParaDuplicar={novoCursoData ? (() => {
                   const salaSelecionada = salasToShow.find(s => s.id === novoCursoData.salaId);
                   return {

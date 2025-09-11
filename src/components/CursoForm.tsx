@@ -19,9 +19,10 @@ interface CursoFormProps {
   curso?: Curso;
   cursoParaDuplicar?: Curso;
   onSuccess: () => void;
+  cursosExistentes?: Curso[];
 }
 
-const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
+const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] }: CursoFormProps) => {
   const [titulo, setTitulo] = useState("");
   const [professor, setProfessor] = useState("");
   const [inicio, setInicio] = useState("");
@@ -575,6 +576,62 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     return null;
   };
 
+  // Função para detectar conflitos entre cursos
+  const detectarConflitos = useMemo(() => {
+    if (!inicio || !fim || !salaId || !periodo || diasSemana.length === 0) {
+      return [];
+    }
+
+    const dataInicio = new Date(inicio);
+    const dataFim = new Date(fim);
+    
+    // Mapeia os dias da semana para números
+    const dayOfWeekMap = {
+      'segunda': 1,
+      'terca': 2,
+      'quarta': 3,
+      'quinta': 4,
+      'sexta': 5
+    };
+
+    const conflitos = cursosExistentes.filter(cursoExistente => {
+      // Ignora o próprio curso se estivermos editando
+      if (curso && cursoExistente.id === curso.id) {
+        return false;
+      }
+
+      // Verifica se é na mesma sala e período
+      if (cursoExistente.sala_id !== salaId || cursoExistente.periodo !== periodo) {
+        return false;
+      }
+
+      // Verifica se o curso existente está ativo (não finalizado)
+      if (cursoExistente.status === 'finalizado') {
+        return false;
+      }
+
+      const cursoInicio = new Date(cursoExistente.inicio);
+      const cursoFim = new Date(cursoExistente.fim);
+
+      // Verifica se há sobreposição de datas
+      const temSobreposicaoDatas = !(dataFim < cursoInicio || dataInicio > cursoFim);
+      
+      if (!temSobreposicaoDatas) {
+        return false;
+      }
+
+      // Verifica se há sobreposição de dias da semana
+      const diasCursoExistente = cursoExistente.dia_semana.map(dia => dayOfWeekMap[dia]);
+      const diasNovoCurso = diasSemana.map(dia => dayOfWeekMap[dia]);
+      
+      const temSobreposicaoDias = diasCursoExistente.some(dia => diasNovoCurso.includes(dia));
+      
+      return temSobreposicaoDias;
+    });
+
+    return conflitos;
+  }, [inicio, fim, salaId, periodo, diasSemana, cursosExistentes, curso]);
+
   // Validação dos campos obrigatórios
   const isFormValid = useMemo(() => {
     // Validação básica dos campos obrigatórios
@@ -599,6 +656,11 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       }
     }
 
+    // Validação de conflitos
+    if (detectarConflitos.length > 0) {
+      return false;
+    }
+
     return basicValidation;
   }, [
     titulo,
@@ -609,7 +671,8 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     diasSemana,
     unidadeId,
     salaId,
-    selectedMaterias
+    selectedMaterias,
+    detectarConflitos
   ]);
 
   // Determinar o modo do formulário
@@ -639,6 +702,29 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
             {!periodo && <li>Período</li>}
             {diasSemana.length === 0 && <li>Pelo menos um dia da semana</li>}
             {selectedMaterias.length === 0 && <li>Pelo menos uma matéria</li>}
+            {detectarConflitos.length > 0 && (
+              <li className="text-red-600 font-medium">
+                Conflito com cursos existentes:
+                <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                  {detectarConflitos.map((cursoConflitante) => (
+                    <li key={cursoConflitante.id} className="text-sm">
+                      <span className="font-medium">{cursoConflitante.titulo}</span> - {cursoConflitante.professor}
+                      <br />
+                      <span className="text-xs text-gray-600">
+                        {new Date(cursoConflitante.inicio).toLocaleDateString('pt-BR')} a {new Date(cursoConflitante.fim).toLocaleDateString('pt-BR')} | 
+                        {cursoConflitante.periodo === 'manha' ? ' Manhã' : cursoConflitante.periodo === 'tarde' ? ' Tarde' : ' Noite'} | 
+                        {cursoConflitante.dia_semana.map(dia => 
+                          dia === 'segunda' ? ' Seg' :
+                          dia === 'terca' ? ' Ter' :
+                          dia === 'quarta' ? ' Qua' :
+                          dia === 'quinta' ? ' Qui' : ' Sex'
+                        ).join(', ')}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            )}
           </ul>
         </div>
       )}
