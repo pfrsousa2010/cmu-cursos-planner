@@ -5,6 +5,8 @@ interface OrientationState {
   isLandscape: boolean;
   width: number;
   height: number;
+  isMobile: boolean;
+  isTablet: boolean;
 }
 
 export const useOrientation = (): OrientationState => {
@@ -13,21 +15,30 @@ export const useOrientation = (): OrientationState => {
     isLandscape: false,
     width: 0,
     height: 0,
+    isMobile: false,
+    isTablet: false,
   });
 
   useEffect(() => {
     const updateOrientation = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      // Forçar orientação paisagem - sempre considerar como landscape
-      const isPortrait = false;
-      const isLandscape = true;
+      
+      // Detectar orientação baseada na proporção da tela
+      const isPortrait = height > width;
+      const isLandscape = width > height;
+
+      // Detectar tipo de dispositivo baseado na largura da tela
+      const isMobile = width <= 768; // Mobile: até 768px
+      const isTablet = width > 768 && width <= 1024; // Tablet: 768px a 1024px
 
       setOrientation({
         isPortrait,
         isLandscape,
         width,
         height,
+        isMobile,
+        isTablet,
       });
     };
 

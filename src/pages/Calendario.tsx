@@ -28,6 +28,7 @@ import {
 import CursoDetails from "@/components/CursoDetails";
 import CursoForm from "@/components/CursoForm";
 import CursoInsumosList from "@/components/CursoInsumosList";
+import OrientationMessage from "@/components/OrientationMessage";
 
 // Tipos
 import { Curso, ViewMode } from "@/types/calendario";
@@ -51,12 +52,36 @@ const Calendario = () => {
   } | null>(null);
 
   const queryClient = useQueryClient();
-  const { isPortrait } = useOrientation();
+  const { isPortrait, isLandscape, isMobile, isTablet } = useOrientation();
+
+  // Lógica de visão baseada no dispositivo e orientação
+  const shouldShowViewToggle = () => {
+    // Celular na vertical: esconder toggle
+    if (isMobile && isPortrait) return false;
+    // Celular na horizontal: esconder toggle (só mostra semanal)
+    if (isMobile && isLandscape) return false;
+    // Tablet na horizontal: mostrar toggle
+    if (isTablet && isLandscape) return true;
+    // Desktop: mostrar toggle
+    if (!isMobile && !isTablet) return true;
+    // Tablet na vertical: esconder toggle
+    return false;
+  };
+
+  const getEffectiveViewMode = () => {
+    // Celular na horizontal: forçar visão semanal
+    if (isMobile && isLandscape) return 'semana';
+    // Outros casos: usar o viewMode selecionado
+    return viewMode;
+  };
+
+  const effectiveViewMode = getEffectiveViewMode();
+  const showViewToggle = shouldShowViewToggle();
 
   // Hooks personalizados
   const { currentWeek, isChangingWeek, navigateByViewMode } = useCalendarioNavegacao();
   const { canViewOnly } = useUserRole();
-  const { data: cursos, isLoading: loadingCursos } = useCalendarioCursos(currentWeek, viewMode);
+  const { data: cursos, isLoading: loadingCursos } = useCalendarioCursos(currentWeek, effectiveViewMode);
   const {
     selectedUnidade,
     selectedProfessor,
@@ -152,7 +177,7 @@ const Calendario = () => {
 
   const handleExport = () => {
     handleExportPDF(
-      viewMode,
+      effectiveViewMode,
       currentWeek,
       cursosFiltrados,
       salasToShow,
@@ -165,14 +190,21 @@ const Calendario = () => {
   };
 
   const handlePrevious = () => {
-    navigateByViewMode(viewMode, 'previous');
+    navigateByViewMode(effectiveViewMode, 'previous');
   };
 
   const handleNext = () => {
-    navigateByViewMode(viewMode, 'next');
+    navigateByViewMode(effectiveViewMode, 'next');
   };
 
-  // Layout sempre em paisagem - remover verificação de orientação retrato
+  // Mostrar mensagem de orientação em dispositivos móveis/tablets em retrato
+  if ((isMobile || isTablet) && isPortrait) {
+    return (
+      <Layout>
+        <OrientationMessage />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -180,7 +212,7 @@ const Calendario = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight">Calendário de Cursos</h1>
-            {viewMode === 'semana' && (
+            {effectiveViewMode === 'semana' && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -203,13 +235,17 @@ const Calendario = () => {
               <Download className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Baixar Calendário</span>
             </Button>
-            <span className="text-sm font-medium">Visão Semanal</span>
-            <Switch
-              checked={viewMode === 'mes'}
-              onCheckedChange={(checked) => setViewMode(checked ? 'mes' : 'semana')}
-              disabled={isLoading}
-            />
-            <span className="text-sm font-medium">Visão Mensal</span>
+            {showViewToggle && (
+              <>
+                <span className="text-sm font-medium">Visão Semanal</span>
+                <Switch
+                  checked={viewMode === 'mes'}
+                  onCheckedChange={(checked) => setViewMode(checked ? 'mes' : 'semana')}
+                  disabled={isLoading}
+                />
+                <span className="text-sm font-medium">Visão Mensal</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -233,14 +269,14 @@ const Calendario = () => {
         {/* Navegação da semana/mês */}
         <CalendarioNavegacao
           currentWeek={currentWeek}
-          viewMode={viewMode}
+          viewMode={effectiveViewMode}
           isChangingWeek={isChangingWeek}
           onPrevious={handlePrevious}
           onNext={handleNext}
         />
 
         {/* Tabela de cursos por sala - visão semanal ou mensal */}
-        {viewMode === 'semana' ? (
+        {effectiveViewMode === 'semana' ? (
           <CalendarioSemanal
             currentWeek={currentWeek}
             salasToShow={salasToShow}
