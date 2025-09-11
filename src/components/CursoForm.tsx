@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 import logoCmu from "/logo-cmu.png";
 import { Curso } from "@/types/calendario";
@@ -437,6 +438,19 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     );
   };
 
+  const handleToggleAllDays = () => {
+    const allDays = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
+    const allSelected = allDays.every(dia => diasSemana.includes(dia));
+    
+    if (allSelected) {
+      // Se todos estão selecionados, desmarca todos
+      setDiasSemana([]);
+    } else {
+      // Se nem todos estão selecionados, marca todos
+      setDiasSemana(allDays);
+    }
+  };
+
   // Validação dos campos obrigatórios
   const isFormValid = useMemo(() => {
     // Validação básica dos campos obrigatórios
@@ -646,9 +660,21 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label className={diasSemana.length === 0 ? "text-red-600" : ""}>
-            Dias da Semana *
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className={diasSemana.length === 0 ? "text-red-600" : ""}>
+              Dias da Semana *
+            </Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="toggle-all-days"
+                checked={['segunda', 'terca', 'quarta', 'quinta', 'sexta'].every(dia => diasSemana.includes(dia))}
+                onCheckedChange={handleToggleAllDays}
+              />
+              <Label htmlFor="toggle-all-days" className="text-sm text-muted-foreground cursor-pointer">
+                Todos os dias
+              </Label>
+            </div>
+          </div>
           <div className="grid gap-2 md:grid-cols-5">
             {[
               { value: 'segunda', label: 'Segunda' },
