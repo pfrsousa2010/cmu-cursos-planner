@@ -451,6 +451,21 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     }
   };
 
+  // Função para obter a capacidade da sala selecionada
+  const getSalaCapacidade = () => {
+    if (!salaId) return null;
+    
+    // Procurar na lista de salas da unidade
+    const sala = salas?.find(s => s.id === salaId);
+    if (sala) return sala.capacidade;
+    
+    // Procurar nas salas do curso (para edição/duplicação)
+    const salaCurso = salasCurso?.find(s => s.id === salaId);
+    if (salaCurso) return salaCurso.capacidade;
+    
+    return null;
+  };
+
   // Validação dos campos obrigatórios
   const isFormValid = useMemo(() => {
     // Validação básica dos campos obrigatórios
@@ -494,7 +509,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
   const isNewMode = !curso && !cursoParaDuplicar;
 
   return (
-    <form id="curso-form" onSubmit={handleSubmit} className="space-y-6">
+    <form id="curso-form" onSubmit={handleSubmit} className="space-y-6 pr-4">
       {/* Indicador de validação */}
       {!isFormValid && !isLoading && (
         <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
@@ -694,34 +709,11 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
                   }`}
                   onClick={() => handleDiaSemanaToggle(dia.value)}
                 >
-                  <span className="text-sm">{dia.label}</span>
+                  <span className="text-xs">{dia.label}</span>
                 </div>
               );
             })}
           </div>
-          
-          {diasSemana.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {diasSemana.map(dia => {
-                const diaLabel = {
-                  'segunda': 'Segunda',
-                  'terca': 'Terça',
-                  'quarta': 'Quarta',
-                  'quinta': 'Quinta',
-                  'sexta': 'Sexta'
-                }[dia];
-                return (
-                  <Badge key={dia} variant="secondary">
-                    {diaLabel}
-                    <X 
-                      className="ml-1 h-3 w-3 cursor-pointer" 
-                      onClick={() => handleDiaSemanaToggle(dia)}
-                    />
-                  </Badge>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         <div className="space-y-2">
@@ -740,30 +732,52 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="vaga_inicio">
-            Vagas no Início
+            Vagas Início {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
           <Input
             id="vaga_inicio"
             type="number"
             min="0"
+            max={getSalaCapacidade() || undefined}
             value={vagaInicio}
-            onChange={(e) => setVagaInicio(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              const capacidade = getSalaCapacidade();
+              if (!value || !capacidade || parseInt(value) <= capacidade) {
+                setVagaInicio(value);
+              }
+            }}
             placeholder="Ex: 25"
+            className={getSalaCapacidade() && vagaInicio && parseInt(vagaInicio) > getSalaCapacidade()! ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
+          {getSalaCapacidade() && vagaInicio && parseInt(vagaInicio) > getSalaCapacidade()! && (
+            <p className="text-sm text-red-600">Vagas não podem exceder a capacidade da sala ({getSalaCapacidade()})</p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="vaga_fim">
-            Vagas no Fim
+            Vagas Fim {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
           <Input
             id="vaga_fim"
             type="number"
             min="0"
+            max={getSalaCapacidade() || undefined}
             value={vagaFim}
-            onChange={(e) => setVagaFim(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              const capacidade = getSalaCapacidade();
+              if (!value || !capacidade || parseInt(value) <= capacidade) {
+                setVagaFim(value);
+              }
+            }}
             placeholder="Ex: 20"
+            className={getSalaCapacidade() && vagaFim && parseInt(vagaFim) > getSalaCapacidade()! ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
+          {getSalaCapacidade() && vagaFim && parseInt(vagaFim) > getSalaCapacidade()! && (
+            <p className="text-sm text-red-600">Vagas não podem exceder a capacidade da sala ({getSalaCapacidade()})</p>
+          )}
         </div>
       </div>
 
