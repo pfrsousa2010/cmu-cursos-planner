@@ -16,6 +16,32 @@ export const useCursosExport = () => {
     return periodos[periodo as keyof typeof periodos] || periodo;
   };
 
+  const formatDiasSemana = (diasSemana: string[]) => {
+    if (!diasSemana || diasSemana.length === 0) return 'Não definido';
+    
+    // Se todos os dias da semana estão presentes, mostrar "segunda à sexta"
+    const todosDias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
+    const temTodosDias = todosDias.every(dia => diasSemana.includes(dia));
+    
+    if (temTodosDias) {
+      return 'Segunda à sexta';
+    }
+    
+    // Caso contrário, mostrar os dias separados por vírgula
+    const diasFormatados = diasSemana.map(dia => {
+      const diasMap = {
+        'segunda': 'Segunda',
+        'terca': 'Terça',
+        'quarta': 'Quarta',
+        'quinta': 'Quinta',
+        'sexta': 'Sexta'
+      };
+      return diasMap[dia as keyof typeof diasMap] || dia;
+    });
+    
+    return diasFormatados.join(', ');
+  };
+
   // Função para verificar se o curso está finalizado
   const isCursoFinalizado = (dataFim: string) => {
     const hoje = new Date();
@@ -79,11 +105,16 @@ export const useCursosExport = () => {
         'Título': tituloComStatus,
         'Professor': curso.professor,
         'Período': formatPeriodo(curso.periodo),
+        'Dias da Semana': formatDiasSemana(curso.dia_semana),
+        'Carga Horária': curso.carga_horaria || 0,
+        'Vagas Preenchidas Início': curso.vaga_inicio || 0,
+        'Vagas Preenchidas Fim': curso.vaga_fim || 0,
         'Data Início': format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         'Data Fim': format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         'Unidade': curso.unidades?.nome || 'Sem Unidade',
         'Sala': curso.salas?.nome || 'Sem Sala',
-        'Total de Insumos': curso.total_insumos || 0
+        'Total de Insumos': curso.total_insumos || 0,
+        'Total de Matérias': curso.total_materias || 0
       };
     });
 
@@ -93,14 +124,19 @@ export const useCursosExport = () => {
 
     // Configurar largura das colunas
     const colWidths = [
-      { wch: 30 }, // Título
+      { wch: 35 }, // Título
       { wch: 25 }, // Professor
       { wch: 12 }, // Período
+      { wch: 20 }, // Dias da Semana
+      { wch: 15 }, // Carga Horária
+      { wch: 20 }, // Vagas Preenchidas Início
+      { wch: 20 }, // Vagas Preenchidas Fim
       { wch: 12 }, // Data Início
       { wch: 12 }, // Data Fim
       { wch: 20 }, // Unidade
       { wch: 15 }, // Sala
-      { wch: 15 }  // Total de Insumos
+      { wch: 18 }, // Total de Insumos
+      { wch: 18 }  // Total de Matérias
     ];
     ws['!cols'] = colWidths;
 
@@ -135,7 +171,7 @@ export const useCursosExport = () => {
     // Ordenar cursos por unidade, período e sala
     const cursosOrdenados = sortCursos(filteredCursos);
 
-    const doc = new jsPDF('portrait', 'mm', 'a4');
+    const doc = new jsPDF('landscape', 'mm', 'a4');
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     
     // Título principal
@@ -187,11 +223,16 @@ export const useCursosExport = () => {
       'Título',
       'Professor', 
       'Período',
+      'Dias da Semana',
+      'Carga Horária',
+      'Vagas Início',
+      'Vagas Fim',
       'Data Início',
       'Data Fim',
       'Unidade',
       'Sala',
-      'Insumos'
+      'Insumos',
+      'Matérias'
     ];
     
     const tableData = cursosOrdenados.map(curso => {
@@ -202,24 +243,34 @@ export const useCursosExport = () => {
         tituloComStatus,
         curso.professor,
         formatPeriodo(curso.periodo),
+        formatDiasSemana(curso.dia_semana),
+        curso.carga_horaria?.toString() || '0',
+        curso.vaga_inicio?.toString() || '0',
+        curso.vaga_fim?.toString() || '0',
         format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         curso.unidades?.nome || 'Sem Unidade',
         curso.salas?.nome || 'Sem Sala',
-        curso.total_insumos?.toString() || '0'
+        curso.total_insumos?.toString() || '0',
+        curso.total_materias?.toString() || '0'
       ];
     });
     
-    // Configuração da tabela
+    // Configuração da tabela para orientação paisagem
     const columnStyles: any = {
-      0: { cellWidth: 35, halign: 'center' as const }, // Título
-      1: { cellWidth: 25, halign: 'center' as const }, // Professor
-      2: { cellWidth: 15, halign: 'center' as const }, // Período
-      3: { cellWidth: 20, halign: 'center' as const }, // Data Início
-      4: { cellWidth: 20, halign: 'center' as const }, // Data Fim
-      5: { cellWidth: 25, halign: 'center' as const }, // Unidade
-      6: { cellWidth: 20, halign: 'center' as const }, // Sala
-      7: { cellWidth: 15, halign: 'center' as const } // Insumos
+      0: { cellWidth: 40, halign: 'center' as const }, // Título
+      1: { cellWidth: 30, halign: 'center' as const }, // Professor
+      2: { cellWidth: 14, halign: 'center' as const }, // Período
+      3: { cellWidth: 30, halign: 'center' as const }, // Dias da Semana
+      4: { cellWidth: 16, halign: 'center' as const }, // Carga Horária
+      5: { cellWidth: 16, halign: 'center' as const }, // Vagas Início
+      6: { cellWidth: 16, halign: 'center' as const }, // Vagas Fim
+      7: { cellWidth: 18, halign: 'center' as const }, // Data Início
+      8: { cellWidth: 18, halign: 'center' as const }, // Data Fim
+      9: { cellWidth: 22, halign: 'center' as const }, // Unidade
+      10: { cellWidth: 20, halign: 'center' as const }, // Sala
+      11: { cellWidth: 15, halign: 'center' as const }, // Insumos
+      12: { cellWidth: 15, halign: 'center' as const } // Matérias
     };
     
     autoTable(doc, {
@@ -289,7 +340,7 @@ export const useCursosExport = () => {
       doc.setFontSize(8);
       doc.setTextColor(100);
       doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
-      doc.text(`Página ${pageNum} de ${finalTotalPages}`, 180, pageHeight - 10, { align: 'right' });
+      doc.text(`Página ${pageNum} de ${finalTotalPages}`, 270, pageHeight - 10, { align: 'right' });
     }
   };
 

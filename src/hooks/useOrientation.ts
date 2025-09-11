@@ -19,8 +19,9 @@ export const useOrientation = (): OrientationState => {
     const updateOrientation = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const isPortrait = height > width;
-      const isLandscape = width > height;
+      // Forçar orientação paisagem - sempre considerar como landscape
+      const isPortrait = false;
+      const isLandscape = true;
 
       setOrientation({
         isPortrait,

@@ -133,14 +133,7 @@ const Calendario = () => {
     navigateByViewMode(viewMode, 'next');
   };
 
-  // Se estiver em orientação vertical (retrato), mostrar mensagem
-  if (isPortrait) {
-    return (
-      <Layout>
-        <OrientationMessage />
-      </Layout>
-    );
-  }
+  // Layout sempre em paisagem - remover verificação de orientação retrato
 
   return (
     <Layout>
@@ -235,7 +228,7 @@ const Calendario = () => {
                 curso={{
                   ...selectedCurso,
                   status: 'ativo' as const,
-                  unidades: selectedCurso.unidades ? { nome: selectedCurso.unidades.nome } : null
+                  unidades: selectedCurso.unidades ? { nome: selectedCurso.unidades.nome, id: selectedCurso.unidades.id } : null
                 }} 
                 onEdit={(curso) => handleEditCurso(selectedCurso)} 
                 onViewInsumos={(curso) => handleViewInsumos(selectedCurso)}
