@@ -510,7 +510,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
   const isNewMode = !curso && !cursoParaDuplicar;
 
   return (
-    <form id="curso-form" onSubmit={handleSubmit} className="space-y-6 pr-4">
+    <form id="curso-form" onSubmit={handleSubmit} className="space-y-6 pl-2 pr-4">
       {/* Indicador de validação */}
       {!isFormValid && !isLoading && (
         <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
@@ -718,22 +718,8 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="carga_horaria">
-            Carga Horária (horas)
-          </Label>
-          <Input
-            id="carga_horaria"
-            type="number"
-            min="0"
-            value={cargaHoraria}
-            onChange={(e) => setCargaHoraria(e.target.value)}
-            placeholder="Ex: 40"
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="vaga_inicio">
-            Vagas Início {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
+            Vagas Preenchidas Início {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
           <div className="space-y-2">
             <Slider
@@ -754,7 +740,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="vaga_fim">
-            Vagas Fim {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
+            Vagas Preenchidas Fim {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
           <div className="space-y-2">
             <Slider
@@ -771,6 +757,20 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               <span>{getSalaCapacidade() || 50}</span>
             </div>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="carga_horaria">
+            Carga Horária (horas)
+          </Label>
+          <Input
+            id="carga_horaria"
+            type="number"
+            min="0"
+            value={cargaHoraria}
+            onChange={(e) => setCargaHoraria(e.target.value)}
+            placeholder="Ex: 40"
+          />
         </div>
       </div>
 
