@@ -112,18 +112,31 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
             </TableCell>
           );
         } else {
-          // Se não há cursos neste dia, mostrar card para adicionar curso
-          cells.push(
-            <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
-              <div 
-                className="flex items-center justify-center p-1 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600 h-full"
-                onClick={() => onAddCurso(sala.id, diaAtual, turno)}
-                title="Adicionar novo curso"
-              >
-                <span className="text-lg font-bold">+</span>
-              </div>
-            </TableCell>
-          );
+          // Se não há cursos neste dia, verificar se é fim de semana
+          const diaSemana = diaAtual.getDay();
+          const isFimDeSemana = diaSemana === 0 || diaSemana === 6; // Domingo ou Sábado
+          
+          if (isFimDeSemana) {
+            // Fins de semana: célula vazia sem interação
+            cells.push(
+              <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
+                <div className="h-full bg-gray-50 dark:bg-gray-800 rounded opacity-50"></div>
+              </TableCell>
+            );
+          } else {
+            // Dias úteis: mostrar card para adicionar curso
+            cells.push(
+              <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
+                <div 
+                  className="flex items-center justify-center p-1 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600 h-full"
+                  onClick={() => onAddCurso(sala.id, diaAtual, turno)}
+                  title="Adicionar novo curso"
+                >
+                  <span className="text-lg font-bold">+</span>
+                </div>
+              </TableCell>
+            );
+          }
         }
       }
       
@@ -165,11 +178,24 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
                 <TableRow>
                   <TableHead className="w-32 font-semibold">Sala/Unidade</TableHead>
                   <TableHead className="w-16 font-semibold">Turno</TableHead>
-                  {diasDoMes.map((_, i) => (
-                    <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
-                      {String(i + 1).padStart(2, '0')}
-                    </TableHead>
-                  ))}
+                  {diasDoMes.map((dia, i) => {
+                    const diaSemana = dia.getDay();
+                    const isSabado = diaSemana === 6;
+                    const isDomingo = diaSemana === 0;
+                    
+                    return (
+                      <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
+                        <div className="flex flex-col">
+                          {(isSabado || isDomingo) && (
+                            <span className="text-xs text-muted-foreground mb-1">
+                              {isSabado ? 'SAB' : 'DOM'}
+                            </span>
+                          )}
+                          <span>{String(i + 1).padStart(2, '0')}</span>
+                        </div>
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -220,11 +246,24 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
               <TableRow>
                 <TableHead className="w-32 font-semibold">Sala/Unidade</TableHead>
                 <TableHead className="w-16 font-semibold">Turno</TableHead>
-                {diasDoMes.map((_, i) => (
-                  <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </TableHead>
-                ))}
+                {diasDoMes.map((dia, i) => {
+                  const diaSemana = dia.getDay();
+                  const isSabado = diaSemana === 6;
+                  const isDomingo = diaSemana === 0;
+                  
+                  return (
+                    <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
+                      <div className="flex flex-col">
+                        {(isSabado || isDomingo) && (
+                          <span className="text-xs text-muted-foreground mb-1">
+                            {isSabado ? 'SAB' : 'DOM'}
+                          </span>
+                        )}
+                        <span>{String(i + 1).padStart(2, '0')}</span>
+                      </div>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>

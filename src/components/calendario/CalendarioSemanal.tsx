@@ -177,13 +177,30 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                               ))
                             )}
                             {!loadingCursos && cursosTurno.length === 0 && (
-                              <div 
-                                className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600"
-                                onClick={() => onAddCurso(sala.id, day, turno)}
-                                title="Adicionar novo curso"
-                              >
-                                <span className="text-lg font-bold">+</span>
-                              </div>
+                              (() => {
+                                const diaSemana = day.getDay();
+                                const isFimDeSemana = diaSemana === 0 || diaSemana === 6; // Domingo ou Sábado
+                                
+                                if (isFimDeSemana) {
+                                  // Fins de semana: célula vazia sem interação
+                                  return (
+                                    <div className="flex items-center justify-center p-2 bg-gray-50 dark:bg-gray-800 rounded opacity-50">
+                                      <span className="text-sm text-muted-foreground">-</span>
+                                    </div>
+                                  );
+                                } else {
+                                  // Dias úteis: mostrar card para adicionar curso
+                                  return (
+                                    <div 
+                                      className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600"
+                                      onClick={() => onAddCurso(sala.id, day, turno)}
+                                      title="Adicionar novo curso"
+                                    >
+                                      <span className="text-lg font-bold">+</span>
+                                    </div>
+                                  );
+                                }
+                              })()
                             )}
                           </div>
                         </TableCell>
