@@ -85,43 +85,52 @@ export type Database = {
       }
       cursos: {
         Row: {
+          carga_horaria: number | null
           created_at: string | null
+          dia_semana: Database["public"]["Enums"]["dia_semana_enum"][]
           fim: string
           id: string
           inicio: string
           periodo: Database["public"]["Enums"]["periodo_enum"]
           professor: string
           sala_id: string | null
-
           titulo: string
           unidade_id: string
           updated_at: string | null
+          vaga_fim: number | null
+          vaga_inicio: number | null
         }
         Insert: {
+          carga_horaria?: number | null
           created_at?: string | null
+          dia_semana: Database["public"]["Enums"]["dia_semana_enum"][]
           fim: string
           id?: string
           inicio: string
           periodo: Database["public"]["Enums"]["periodo_enum"]
           professor: string
           sala_id?: string | null
-
           titulo: string
           unidade_id: string
           updated_at?: string | null
+          vaga_fim?: number | null
+          vaga_inicio?: number | null
         }
         Update: {
+          carga_horaria?: number | null
           created_at?: string | null
+          dia_semana?: Database["public"]["Enums"]["dia_semana_enum"][]
           fim?: string
           id?: string
           inicio?: string
           periodo?: Database["public"]["Enums"]["periodo_enum"]
           professor?: string
           sala_id?: string | null
-
           titulo?: string
           unidade_id?: string
           updated_at?: string | null
+          vaga_fim?: number | null
+          vaga_inicio?: number | null
         }
         Relationships: [
           {
@@ -282,6 +291,7 @@ export type Database = {
       }
     }
     Enums: {
+      dia_semana_enum: "segunda" | "terca" | "quarta" | "quinta" | "sexta"
       periodo_enum: "manha" | "tarde" | "noite"
 
       user_role: "admin" | "editor" | "visualizador"
@@ -412,6 +422,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      dia_semana_enum: ["segunda", "terca", "quarta", "quinta", "sexta"],
       periodo_enum: ["manha", "tarde", "noite"],
 
       user_role: ["admin", "editor", "visualizador"],

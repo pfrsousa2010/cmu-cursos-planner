@@ -20,20 +20,7 @@ import CursoForm from "@/components/CursoForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CursoInsumosList from "@/components/CursoInsumosList";
-
-interface Curso {
-  id: string;
-  titulo: string;
-  professor: string;
-  periodo: 'manha' | 'tarde' | 'noite';
-  inicio: string;
-  fim: string;
-  sala_id: string | null;
-  unidade_id: string;
-  unidades: { nome: string, id: string } | null;
-  salas: { nome: string; id: string } | null;
-  total_insumos?: number;
-}
+import { Curso } from "@/types/calendario";
 
 const Cursos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

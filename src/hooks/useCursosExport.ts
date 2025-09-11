@@ -4,20 +4,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from "xlsx";
-
-interface Curso {
-  id: string;
-  titulo: string;
-  professor: string;
-  periodo: 'manha' | 'tarde' | 'noite';
-  inicio: string;
-  fim: string;
-  sala_id: string | null;
-  unidade_id: string;
-  unidades: { nome: string, id: string } | null;
-  salas: { nome: string; id: string } | null;
-  total_insumos?: number;
-}
+import { Curso } from "@/types/calendario";
 
 export const useCursosExport = () => {
   const formatPeriodo = (periodo: string) => {

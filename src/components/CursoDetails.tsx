@@ -3,20 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
-
-interface Curso {
-  id: string;
-  titulo: string;
-  professor: string;
-  periodo: 'manha' | 'tarde' | 'noite';
-  inicio: string;
-  fim: string;
-  sala_id: string;
-  unidade_id: string;
-  status: 'ativo' | 'finalizado';
-  unidades: { nome: string } | null;
-  salas: { nome: string; id: string } | null;
-}
+import { Curso } from "@/types/calendario";
 
 interface CursoDetailsProps {
   curso: Curso;

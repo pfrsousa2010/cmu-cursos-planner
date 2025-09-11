@@ -11,19 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 import logoCmu from "/logo-cmu.png";
-
-interface Curso {
-  id: string;
-  titulo: string;
-  professor: string;
-  periodo: 'manha' | 'tarde' | 'noite';
-  inicio: string;
-  fim: string;
-  sala_id: string | null;
-  unidade_id: string;
-  unidades: { nome: string, id: string } | null;
-  salas: { nome: string; id: string } | null;
-}
+import { Curso } from "@/types/calendario";
 
 interface CursoFormProps {
   curso?: Curso;
@@ -41,6 +29,10 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
   const [unidadeNome, setUnidadeNome] = useState("");
   const [salaId, setSalaId] = useState("");
   const [salaNome, setSalaNome] = useState("");
+  const [cargaHoraria, setCargaHoraria] = useState("");
+  const [vagaInicio, setVagaInicio] = useState("");
+  const [vagaFim, setVagaFim] = useState("");
+  const [diasSemana, setDiasSemana] = useState<string[]>([]);
 
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [selectedInsumos, setSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
@@ -139,6 +131,10 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       setUnidadeNome(curso.unidades?.nome || "");
       setSalaId(curso.salas?.id || "");
       setSalaNome(curso.salas?.nome || "");
+      setCargaHoraria(curso.carga_horaria?.toString() || "");
+      setVagaInicio(curso.vaga_inicio?.toString() || "");
+      setVagaFim(curso.vaga_fim?.toString() || "");
+      setDiasSemana(curso.dia_semana || []);
 
 
       // Carregar matérias e insumos do curso
@@ -176,6 +172,10 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       setUnidadeNome(cursoParaDuplicar.unidades?.nome || "");
       setSalaId(cursoParaDuplicar.salas?.id || "");
       setSalaNome(cursoParaDuplicar.salas?.nome || "");
+      setCargaHoraria(cursoParaDuplicar.carga_horaria?.toString() || "");
+      setVagaInicio(cursoParaDuplicar.vaga_inicio?.toString() || "");
+      setVagaFim(cursoParaDuplicar.vaga_fim?.toString() || "");
+      setDiasSemana(cursoParaDuplicar.dia_semana || []);
 
 
       // Carregar matérias e insumos do curso para duplicação
@@ -213,6 +213,10 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       setUnidadeNome("");
       setSalaId("");
       setSalaNome("");
+      setCargaHoraria("");
+      setVagaInicio("");
+      setVagaFim("");
+      setDiasSemana([]);
 
       setSelectedMaterias([]);
       setSelectedInsumos([]);
@@ -359,7 +363,11 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       fim,
       periodo,
       unidade_id: unidadeId,
-      sala_id: salaId || null
+      sala_id: salaId || null,
+      carga_horaria: cargaHoraria ? parseInt(cargaHoraria) : null,
+      vaga_inicio: vagaInicio ? parseInt(vagaInicio) : null,
+      vaga_fim: vagaFim ? parseInt(vagaFim) : null,
+      dia_semana: diasSemana
     };
 
     mutation.mutate(data);
@@ -421,6 +429,14 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     );
   };
 
+  const handleDiaSemanaToggle = (dia: string) => {
+    setDiasSemana(prev => 
+      prev.includes(dia) 
+        ? prev.filter(d => d !== dia)
+        : [...prev, dia]
+    );
+  };
+
   // Validação dos campos obrigatórios
   const isFormValid = useMemo(() => {
     // Validação básica dos campos obrigatórios
@@ -430,7 +446,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       inicio !== "" &&
       fim !== "" &&
       periodo !== "" &&
-
+      diasSemana.length > 0 &&
       unidadeId !== "" &&
       salaId !== "" &&
       selectedMaterias.length > 0
@@ -452,7 +468,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     inicio,
     fim,
     periodo,
-
+    diasSemana,
     unidadeId,
     salaId,
     selectedMaterias
@@ -483,6 +499,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
             {!unidadeId && <li>Unidade</li>}
             {!salaId && <li>Sala</li>}
             {!periodo && <li>Período</li>}
+            {diasSemana.length === 0 && <li>Pelo menos um dia da semana</li>}
             {selectedMaterias.length === 0 && <li>Pelo menos uma matéria</li>}
           </ul>
         </div>
@@ -626,6 +643,101 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               </SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className={diasSemana.length === 0 ? "text-red-600" : ""}>
+            Dias da Semana *
+          </Label>
+          <div className="grid gap-2 md:grid-cols-5">
+            {[
+              { value: 'segunda', label: 'Segunda' },
+              { value: 'terca', label: 'Terça' },
+              { value: 'quarta', label: 'Quarta' },
+              { value: 'quinta', label: 'Quinta' },
+              { value: 'sexta', label: 'Sexta' }
+            ].map(dia => {
+              const isSelected = diasSemana.includes(dia.value);
+              return (
+                <div
+                  key={dia.value}
+                  className={`p-2 border rounded cursor-pointer transition-colors text-center ${
+                    isSelected 
+                      ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600' 
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                  onClick={() => handleDiaSemanaToggle(dia.value)}
+                >
+                  <span className="text-sm">{dia.label}</span>
+                </div>
+              );
+            })}
+          </div>
+          
+          {diasSemana.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {diasSemana.map(dia => {
+                const diaLabel = {
+                  'segunda': 'Segunda',
+                  'terca': 'Terça',
+                  'quarta': 'Quarta',
+                  'quinta': 'Quinta',
+                  'sexta': 'Sexta'
+                }[dia];
+                return (
+                  <Badge key={dia} variant="secondary">
+                    {diaLabel}
+                    <X 
+                      className="ml-1 h-3 w-3 cursor-pointer" 
+                      onClick={() => handleDiaSemanaToggle(dia)}
+                    />
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="carga_horaria">
+            Carga Horária (horas)
+          </Label>
+          <Input
+            id="carga_horaria"
+            type="number"
+            min="0"
+            value={cargaHoraria}
+            onChange={(e) => setCargaHoraria(e.target.value)}
+            placeholder="Ex: 40"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="vaga_inicio">
+            Vagas no Início
+          </Label>
+          <Input
+            id="vaga_inicio"
+            type="number"
+            min="0"
+            value={vagaInicio}
+            onChange={(e) => setVagaInicio(e.target.value)}
+            placeholder="Ex: 25"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="vaga_fim">
+            Vagas no Fim
+          </Label>
+          <Input
+            id="vaga_fim"
+            type="number"
+            min="0"
+            value={vagaFim}
+            onChange={(e) => setVagaFim(e.target.value)}
+            placeholder="Ex: 20"
+          />
         </div>
       </div>
 
