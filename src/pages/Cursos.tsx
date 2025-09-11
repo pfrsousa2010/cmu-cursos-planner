@@ -694,7 +694,7 @@ const Cursos = () => {
                                     <span className="font-medium">Fim:</span> {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                   </div>
                                   <div>
-                                    <span className="font-medium">Vagas:</span> {curso.vaga_inicio || 0} → {curso.vaga_fim || 0}
+                                    <span className="font-medium">Vagas:</span> {(curso.vaga_inicio || 0) === 0 && (curso.vaga_fim || 0) === 0 ? 'Não definido' : <><span className="text-green-600 font-medium">{curso.vaga_inicio || 0}</span> → <span className="text-red-500 font-medium">{curso.vaga_fim || 0}</span></>}
                                   </div>
                                   <div>
                                     <span className="font-medium">Carga Horária:</span> {curso.carga_horaria ? `${curso.carga_horaria}h` : 'Não definida'}

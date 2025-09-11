@@ -826,7 +826,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="vaga_inicio">
+          <Label htmlFor="vaga_inicio" className="text-green-600 font-medium">
             Vagas Preenchidas Início {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
           <div className="space-y-2">
@@ -836,18 +836,18 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               max={getSalaCapacidade() || 50}
               min={0}
               step={1}
-              className="w-full"
+              className="w-full [&_.slider-track]:bg-green-200 [&_.slider-range]:bg-green-500 [&_.slider-thumb]:bg-green-600"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>0</span>
-              <span className="font-medium">{vagaInicio || 0}</span>
+              <span className="font-medium text-green-600">{vagaInicio || 0}</span>
               <span>{getSalaCapacidade() || 50}</span>
             </div>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="vaga_fim">
+          <Label htmlFor="vaga_fim" className="text-red-500 font-medium">
             Vagas Preenchidas Fim {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
           <div className="space-y-2">
@@ -857,11 +857,11 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               max={getSalaCapacidade() || 50}
               min={0}
               step={1}
-              className="w-full"
+              className="w-full [&_.slider-track]:bg-red-200 [&_.slider-range]:bg-red-400 [&_.slider-thumb]:bg-red-500"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>0</span>
-              <span className="font-medium">{vagaFim || 0}</span>
+              <span className="font-medium text-red-500">{vagaFim || 0}</span>
               <span>{getSalaCapacidade() || 50}</span>
             </div>
           </div>
