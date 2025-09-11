@@ -13,6 +13,7 @@ import {
   getUnidadeBorder,
   formatPeriodo 
 } from "@/utils/calendarioUtils";
+import { useOrientation } from "@/hooks/useOrientation";
 
 // Função para verificar se o curso está finalizado
 const isCursoFinalizado = (dataFim: string) => {
@@ -46,6 +47,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   onCursoClick,
   onAddCurso
 }) => {
+  const { isMobile, isTablet } = useOrientation();
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
     end: endOfWeek(currentWeek, { weekStartsOn: 1 })
@@ -204,8 +206,15 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                                       <span className="text-sm text-muted-foreground">-</span>
                                     </div>
                                   );
+                                } else if (isMobile || isTablet) {
+                                  // Em dispositivos móveis: célula vazia sem interação
+                                  return (
+                                    <div className="flex items-center justify-center p-2 bg-gray-50 dark:bg-gray-800 rounded opacity-50">
+                                      <span className="text-sm text-muted-foreground">-</span>
+                                    </div>
+                                  );
                                 } else {
-                                  // Dias úteis: mostrar card para adicionar curso
+                                  // Dias úteis em desktop: mostrar card para adicionar curso
                                   return (
                                     <div 
                                       className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600"
