@@ -594,7 +594,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     if (inicio && fim) {
       const dataInicio = new Date(inicio);
       const dataFim = new Date(fim);
-      if (dataFim <= dataInicio) {
+      if (dataFim < dataInicio) {
         return false;
       }
     }
@@ -631,8 +631,8 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
             {!professor.trim() && <li>Professor</li>}
             {!inicio && <li>Data de início</li>}
             {!fim && <li>Data de fim</li>}
-            {inicio && fim && new Date(fim) <= new Date(inicio) && (
-              <li>Data de fim deve ser posterior à data de início</li>
+            {inicio && fim && new Date(fim) < new Date(inicio) && (
+              <li>Data de fim deve ser posterior ou igual à data de início</li>
             )}
             {!unidadeId && <li>Unidade</li>}
             {!salaId && <li>Sala</li>}
@@ -700,7 +700,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="fim" className={!fim || (inicio && fim && new Date(fim) <= new Date(inicio)) ? "text-red-600" : ""}>
+          <Label htmlFor="fim" className={!fim || (inicio && fim && new Date(fim) < new Date(inicio)) ? "text-red-600" : ""}>
             Data de Fim *
           </Label>
           <Input
@@ -709,7 +709,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
             value={fim}
             onChange={(e) => setFim(e.target.value)}
             required
-            className={!fim || (inicio && fim && new Date(fim) <= new Date(inicio)) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+            className={!fim || (inicio && fim && new Date(fim) < new Date(inicio)) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
           />
         </div>
 
