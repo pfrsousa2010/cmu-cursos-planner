@@ -16,7 +16,9 @@ export const useCalendarioCursos = (currentWeek: Date, viewMode: ViewMode) => {
         .select(`
           *,
           unidades (id, nome),
-          salas (id, nome)
+          salas (id, nome),
+          curso_insumos (id),
+          curso_materias (id)
         `)
         .eq('status', 'ativo');
 
@@ -35,7 +37,15 @@ export const useCalendarioCursos = (currentWeek: Date, viewMode: ViewMode) => {
       }
 
       const { data } = await query.order('inicio');
-      return data || [];
+      
+      // Processar os dados para incluir contagem de insumos e matérias
+      const cursosComContagens = data?.map(curso => ({
+        ...curso,
+        total_insumos: curso.curso_insumos?.length || 0,
+        total_materias: curso.curso_materias?.length || 0
+      })) || [];
+      
+      return cursosComContagens;
     }
   });
 };
