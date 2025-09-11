@@ -43,6 +43,12 @@ const Calendario = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCursoInsumos, setSelectedCursoInsumos] = useState<Curso | null>(null);
   const [cursoToEdit, setCursoToEdit] = useState<Curso | null>(null);
+  const [novoCursoDialogOpen, setNovoCursoDialogOpen] = useState(false);
+  const [novoCursoData, setNovoCursoData] = useState<{
+    salaId: string;
+    dia: Date;
+    periodo: string;
+  } | null>(null);
 
   const queryClient = useQueryClient();
   const { isPortrait } = useOrientation();
@@ -107,6 +113,41 @@ const Calendario = () => {
   const handleEditCancel = () => {
     setEditDialogOpen(false);
     setCursoToEdit(null);
+  };
+
+  const handleAddCurso = (salaId: string, dia: Date, periodo: string) => {
+    setNovoCursoData({ salaId, dia, periodo });
+    setNovoCursoDialogOpen(true);
+  };
+
+  // Função para mapear o dia da semana
+  const getDiaSemanaFromDate = (date: Date): 'segunda' | 'terca' | 'quarta' | 'quinta' | 'sexta' => {
+    const dayMap = {
+      1: 'segunda' as const,
+      2: 'terca' as const, 
+      3: 'quarta' as const,
+      4: 'quinta' as const,
+      5: 'sexta' as const
+    };
+    return dayMap[date.getDay() as keyof typeof dayMap] || 'segunda';
+  };
+
+  // Função para formatar data para input date
+  const formatDateForInput = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleNovoCursoSuccess = () => {
+    setNovoCursoDialogOpen(false);
+    setNovoCursoData(null);
+    queryClient.invalidateQueries({ queryKey: ['cursos-semana'] });
+    queryClient.invalidateQueries({ queryKey: ['cursos-mes'] });
+    toast.success("Curso criado com sucesso!");
+  };
+
+  const handleNovoCursoCancel = () => {
+    setNovoCursoDialogOpen(false);
+    setNovoCursoData(null);
   };
 
   const handleExport = () => {
@@ -207,6 +248,7 @@ const Calendario = () => {
             loadingSalas={loadingSalas}
             loadingCursos={loadingCursos}
             onCursoClick={handleCursoClick}
+            onAddCurso={handleAddCurso}
           />
         ) : (
           <CalendarioMensal
@@ -272,6 +314,47 @@ const Calendario = () => {
               </Button>
               <Button type="submit" form="curso-form">
                 Atualizar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Formulário de Novo Curso */}
+        <Dialog open={novoCursoDialogOpen} onOpenChange={setNovoCursoDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 pb-4">
+              <DialogTitle>Novo Curso</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <CursoForm 
+                onSuccess={handleNovoCursoSuccess}
+                cursoParaDuplicar={novoCursoData ? (() => {
+                  const salaSelecionada = salasToShow.find(s => s.id === novoCursoData.salaId);
+                  return {
+                    id: '',
+                    titulo: '',
+                    professor: '',
+                    periodo: novoCursoData.periodo as 'manha' | 'tarde' | 'noite',
+                    inicio: formatDateForInput(novoCursoData.dia),
+                    fim: '',
+                    sala_id: novoCursoData.salaId,
+                    unidade_id: salaSelecionada?.unidade_id || '',
+                    unidades: salaSelecionada?.unidades ? { 
+                      id: salaSelecionada.unidade_id, 
+                      nome: salaSelecionada.unidades.nome 
+                    } : null,
+                    salas: salaSelecionada || null,
+                    dia_semana: [getDiaSemanaFromDate(novoCursoData.dia)]
+                  };
+                })() : undefined}
+              />
+            </div>
+            <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={handleNovoCursoCancel}>
+                Cancelar
+              </Button>
+              <Button type="submit" form="curso-form">
+                Criar Curso
               </Button>
             </div>
           </DialogContent>

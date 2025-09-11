@@ -11,7 +11,6 @@ import {
   getUnidadeColor, 
   getUnidadeTextColor, 
   getUnidadeBorder,
-  getPeriodoColor, 
   formatPeriodo 
 } from "@/utils/calendarioUtils";
 
@@ -22,6 +21,7 @@ interface CalendarioSemanalProps {
   loadingSalas: boolean;
   loadingCursos: boolean;
   onCursoClick: (curso: Curso) => void;
+  onAddCurso: (salaId: string, dia: Date, periodo: string) => void;
 }
 
 const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
@@ -30,7 +30,8 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   cursosFiltrados,
   loadingSalas,
   loadingCursos,
-  onCursoClick
+  onCursoClick,
+  onAddCurso
 }) => {
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
@@ -176,8 +177,12 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                               ))
                             )}
                             {!loadingCursos && cursosTurno.length === 0 && (
-                              <div className="text-center text-muted-foreground text-xs py-2">
-                                -
+                              <div 
+                                className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600"
+                                onClick={() => onAddCurso(sala.id, day, turno)}
+                                title="Adicionar novo curso"
+                              >
+                                <span className="text-lg font-bold">+</span>
                               </div>
                             )}
                           </div>
