@@ -676,9 +676,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
   ]);
 
   // Determinar o modo do formulário
-  const isEditMode = !!curso;
+  const isEditMode = !!curso && curso.id !== '';
   const isDuplicateMode = !!cursoParaDuplicar;
-  const isNewMode = !curso && !cursoParaDuplicar;
+  const isNewMode = !curso || curso.id === '';
 
   return (
     <form id="curso-form" onSubmit={handleSubmit} className="space-y-6 pl-2 pr-4">
