@@ -688,7 +688,7 @@ const Dashboard = () => {
                                                 {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                                               </Badge>
                                               {fimJaPassou && (
-                                                <div className="text-xs text-red-600 font-semibold mt-1">Terminado</div>
+                                                <div className="text-xs text-red-600 font-semibold mt-1">Finalizado</div>
                                               )}
                                             </div>
                                           </div>
@@ -808,7 +808,7 @@ const Dashboard = () => {
                                                 {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                                               </Badge>
                                               {fimJaPassou && (
-                                                <div className="text-xs text-red-600 font-semibold mt-1">Terminado</div>
+                                                <div className="text-xs text-red-600 font-semibold mt-1">Finalizado</div>
                                               )}
                                             </div>
                                           </div>
