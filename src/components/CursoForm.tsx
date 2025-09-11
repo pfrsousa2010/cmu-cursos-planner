@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 import logoCmu from "/logo-cmu.png";
 import { Curso } from "@/types/calendario";
@@ -734,50 +735,42 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
           <Label htmlFor="vaga_inicio">
             Vagas Início {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
-          <Input
-            id="vaga_inicio"
-            type="number"
-            min="0"
-            max={getSalaCapacidade() || undefined}
-            value={vagaInicio}
-            onChange={(e) => {
-              const value = e.target.value;
-              const capacidade = getSalaCapacidade();
-              if (!value || !capacidade || parseInt(value) <= capacidade) {
-                setVagaInicio(value);
-              }
-            }}
-            placeholder="Ex: 25"
-            className={getSalaCapacidade() && vagaInicio && parseInt(vagaInicio) > getSalaCapacidade()! ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
-          />
-          {getSalaCapacidade() && vagaInicio && parseInt(vagaInicio) > getSalaCapacidade()! && (
-            <p className="text-sm text-red-600">Vagas não podem exceder a capacidade da sala ({getSalaCapacidade()})</p>
-          )}
+          <div className="space-y-2">
+            <Slider
+              value={[parseInt(vagaInicio) || 0]}
+              onValueChange={(value) => setVagaInicio(value[0].toString())}
+              max={getSalaCapacidade() || 50}
+              min={0}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>0</span>
+              <span className="font-medium">{vagaInicio || 0}</span>
+              <span>{getSalaCapacidade() || 50}</span>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="vaga_fim">
             Vagas Fim {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
           </Label>
-          <Input
-            id="vaga_fim"
-            type="number"
-            min="0"
-            max={getSalaCapacidade() || undefined}
-            value={vagaFim}
-            onChange={(e) => {
-              const value = e.target.value;
-              const capacidade = getSalaCapacidade();
-              if (!value || !capacidade || parseInt(value) <= capacidade) {
-                setVagaFim(value);
-              }
-            }}
-            placeholder="Ex: 20"
-            className={getSalaCapacidade() && vagaFim && parseInt(vagaFim) > getSalaCapacidade()! ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
-          />
-          {getSalaCapacidade() && vagaFim && parseInt(vagaFim) > getSalaCapacidade()! && (
-            <p className="text-sm text-red-600">Vagas não podem exceder a capacidade da sala ({getSalaCapacidade()})</p>
-          )}
+          <div className="space-y-2">
+            <Slider
+              value={[parseInt(vagaFim) || 0]}
+              onValueChange={(value) => setVagaFim(value[0].toString())}
+              max={getSalaCapacidade() || 50}
+              min={0}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>0</span>
+              <span className="font-medium">{vagaFim || 0}</span>
+              <span>{getSalaCapacidade() || 50}</span>
+            </div>
+          </div>
         </div>
       </div>
 
