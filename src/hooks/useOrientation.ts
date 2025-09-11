@@ -29,8 +29,8 @@ export const useOrientation = (): OrientationState => {
       const isLandscape = width > height;
 
       // Detectar tipo de dispositivo baseado na largura da tela
-      const isMobile = width <= 768; // Mobile: até 768px
-      const isTablet = width > 768 && width <= 1024; // Tablet: 768px a 1024px
+      const isMobile = width <= 800; // Mobile: até 768px
+      const isTablet = width > 800 && width <= 1024; // Tablet: 768px a 1024px
 
       setOrientation({
         isPortrait,
