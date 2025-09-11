@@ -257,6 +257,7 @@ const Calendario = () => {
             cursosFiltrados={cursosFiltrados}
             loadingSalas={loadingSalas}
             onCursoClick={handleCursoClick}
+            onAddCurso={handleAddCurso}
           />
           )}
 

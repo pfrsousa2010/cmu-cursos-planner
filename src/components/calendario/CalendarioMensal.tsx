@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, startOfMonth, endOfMonth, getDate, parseISO } from "date-fns";
 import { Curso, Sala } from "@/types/calendario";
 import { 
@@ -12,12 +13,39 @@ import {
   formatPeriodo 
 } from "@/utils/calendarioUtils";
 
+// Função para verificar se um curso deve aparecer em um dia específico
+const cursoApareceNoDia = (curso: Curso, dia: Date): boolean => {
+  const cursoStart = parseISO(curso.inicio);
+  const cursoEnd = parseISO(curso.fim);
+  
+  // Verifica se o dia está dentro do intervalo de datas do curso
+  if (dia < cursoStart || dia > cursoEnd) {
+    return false;
+  }
+  
+  // Mapeia os dias da semana para números (0 = domingo, 1 = segunda, etc.)
+  const dayOfWeekMap = {
+    'segunda': 1,
+    'terca': 2,
+    'quarta': 3,
+    'quinta': 4,
+    'sexta': 5
+  };
+  
+  // Verifica se o dia da semana atual está nos dias da semana do curso
+  const currentDayOfWeek = dia.getDay();
+  const cursoDaysOfWeek = curso.dia_semana.map(dia => dayOfWeekMap[dia]);
+  
+  return cursoDaysOfWeek.includes(currentDayOfWeek);
+};
+
 interface CalendarioMensalProps {
   currentWeek: Date;
   salasToShow: Sala[];
   cursosFiltrados: Curso[];
   loadingSalas: boolean;
   onCursoClick: (curso: Curso) => void;
+  onAddCurso: (salaId: string, dia: Date, periodo: string) => void;
 }
 
 const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
@@ -25,7 +53,8 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
   salasToShow,
   cursosFiltrados,
   loadingSalas,
-  onCursoClick
+  onCursoClick,
+  onAddCurso
 }) => {
   const ano = currentWeek.getFullYear();
   const mes = currentWeek.getMonth();
@@ -46,49 +75,60 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
       ).sort((a, b) => parseISO(a.inicio).getTime() - parseISO(b.inicio).getTime());
       
       const cells = [];
-      let currentDay = 0;
       
-      if (cursosTurno.length > 0) {
-        for (const curso of cursosTurno) {
-          const inicio = parseISO(curso.inicio);
-          const fim = parseISO(curso.fim);
-          const startIdx = Math.max(0, inicio.getMonth() === mes ? inicio.getDate() - 1 : 0);
-          const endIdx = Math.min(totalDiasNoMes - 1, fim.getMonth() === mes ? fim.getDate() - 1 : totalDiasNoMes - 1);
-          
-          if (startIdx > currentDay) {
-            for (let i = currentDay; i < startIdx; i++) {
-              cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
-            }
-          }
-          
+      // Para cada dia do mês, verificar se há cursos
+      for (let i = 0; i < totalDiasNoMes; i++) {
+        const diaAtual = diasDoMes[i];
+        const cursosDoDia = cursosTurno.filter(curso => cursoApareceNoDia(curso, diaAtual));
+        
+        if (cursosDoDia.length > 0) {
+          // Se há cursos neste dia, mostrar como cards
           cells.push(
-            <TableCell
-              key={`curso-${curso.id}`}
-              colSpan={endIdx - startIdx + 1}
-              className={`align-middle p-0 text-center font-medium whitespace-nowrap ${getCursoColor(curso.id, cursosFiltrados)} border cursor-pointer`}
-              style={{ minWidth: (endIdx - startIdx + 1) * 20 }}
-              onClick={() => onCursoClick(curso)}
-            >
-              <div className="flex items-center justify-center h-full w-full" style={{ minHeight: 24 }}>
-                <span className="block w-full truncate" style={{ fontSize: '0.8rem' }}>
-                  {curso.titulo} - {curso.professor} <br />
-                  <span className="text-xs">{format(parseISO(curso.inicio), 'dd/MM')} - {format(parseISO(curso.fim), 'dd/MM')}</span>
-                </span>
+            <TableCell key={`cursos-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
+              <div className="space-y-0.5">
+                {cursosDoDia.map((curso) => (
+                  <TooltipProvider key={curso.id} delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`p-1 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')} flex items-center justify-center min-h-[20px]`}
+                          onClick={() => onCursoClick(curso)}
+                        >
+                          <span className="font-bold text-sm">
+                            {curso.titulo.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-center">
+                          <div className="font-medium">{curso.titulo}</div>
+                          <div className="text-sm text-muted-foreground">{curso.professor}</div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
               </div>
             </TableCell>
           );
-          currentDay = endIdx + 1;
-        }
-      }
-      
-      if (currentDay < totalDiasNoMes) {
-        for (let i = currentDay; i < totalDiasNoMes; i++) {
-          cells.push(<TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-top p-1 h-[56px]"></TableCell>);
+        } else {
+          // Se não há cursos neste dia, mostrar card para adicionar curso
+          cells.push(
+            <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
+              <div 
+                className="flex items-center justify-center p-1 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600 h-full"
+                onClick={() => onAddCurso(sala.id, diaAtual, turno)}
+                title="Adicionar novo curso"
+              >
+                <span className="text-lg font-bold">+</span>
+              </div>
+            </TableCell>
+          );
         }
       }
       
       return (
-        <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '') + ' h-[56px]'}>
+        <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '') + ' h-[40px]'}>
           {turnoIdx === 0 ? (
             <TableCell 
               rowSpan={3} 
@@ -103,7 +143,7 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
               </div>
             </TableCell>
           ) : null}
-          <TableCell className="font-medium align-middle w-16 text-right pr-2 h-[56px]">
+          <TableCell className="font-medium align-middle w-16 text-right pr-2 h-[40px]">
             {formatPeriodo(turno)}
           </TableCell>
           {cells}
