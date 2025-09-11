@@ -70,17 +70,19 @@ const Cursos = () => {
           *,
           unidades (id, nome),
           salas (id, nome),
-          curso_insumos (id)
+          curso_insumos (id),
+          curso_materias (id)
         `)
         .order('created_at', { ascending: false });
       
-      // Processar os dados para incluir contagem de insumos
-      const cursosComInsumos = data?.map(curso => ({
+      // Processar os dados para incluir contagem de insumos e matérias
+      const cursosComContagens = data?.map(curso => ({
         ...curso,
-        total_insumos: curso.curso_insumos?.length || 0
+        total_insumos: curso.curso_insumos?.length || 0,
+        total_materias: curso.curso_materias?.length || 0
       })) || [];
       
-      return cursosComInsumos;
+      return cursosComContagens;
     }
   });
 
@@ -634,12 +636,46 @@ const Cursos = () => {
                                 }`}
                               >
                                 <div className="flex-1 space-y-1">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-2">
                                     <h5 className="font-medium">{curso.titulo}</h5>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 flex-wrap">
                                       <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
                                         {formatPeriodo(curso.periodo)}
                                       </Badge>
+                                      {(() => {
+                                        if (!curso.dia_semana || curso.dia_semana.length === 0) {
+                                          return (
+                                            <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                                              Sem dias
+                                            </Badge>
+                                          );
+                                        }
+                                        
+                                        const todosOsDias: ('segunda' | 'terca' | 'quarta' | 'quinta' | 'sexta')[] = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
+                                        const temTodosOsDias = todosOsDias.every(dia => curso.dia_semana?.includes(dia));
+                                        
+                                        if (temTodosOsDias) {
+                                          return (
+                                            <Badge variant="outline" className="bg-blue-100 text-blue-700">
+                                              Todos os dias
+                                            </Badge>
+                                          );
+                                        }
+                                        
+                                        const diaLabels = {
+                                          'segunda': 'Seg',
+                                          'terca': 'Ter',
+                                          'quarta': 'Qua',
+                                          'quinta': 'Qui',
+                                          'sexta': 'Sex'
+                                        };
+                                        
+                                        return curso.dia_semana.map(dia => (
+                                          <Badge key={dia} variant="outline" className="bg-green-100 text-green-700">
+                                            {diaLabels[dia as keyof typeof diaLabels] || dia}
+                                          </Badge>
+                                        ));
+                                      })()}
                                       {cursoFinalizado && (
                                         <Badge variant="destructive">
                                           Finalizado
@@ -647,7 +683,7 @@ const Cursos = () => {
                                       )}
                                     </div>
                                   </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-muted-foreground">
                                   <div>
                                     <span className="font-medium">Professor:</span> {curso.professor}
                                   </div>
@@ -658,7 +694,16 @@ const Cursos = () => {
                                     <span className="font-medium">Fim:</span> {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                   </div>
                                   <div>
-                                    <span className="font-medium">Total de Insumos:</span> {curso.total_insumos || 0}
+                                    <span className="font-medium">Vagas:</span> {curso.vaga_inicio || 0} → {curso.vaga_fim || 0}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Carga Horária:</span> {curso.carga_horaria ? `${curso.carga_horaria}h` : 'Não definida'}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Matérias:</span> {curso.total_materias || 0}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Insumos:</span> {curso.total_insumos || 0}
                                   </div>
                                 </div>
                               </div>

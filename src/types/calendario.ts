@@ -11,6 +11,7 @@ export interface Curso {
   salas: { nome: string; id: string } | null;
   status?: 'ativo' | 'finalizado';
   total_insumos?: number;
+  total_materias?: number;
   carga_horaria?: number | null;
   vaga_inicio?: number | null;
   vaga_fim?: number | null;
