@@ -8,10 +8,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { X, ChevronDown, ChevronRight } from "lucide-react";
+import { X, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import logoCmu from "/logo-cmu.png";
 import { Curso } from "@/types/calendario";
 
@@ -39,10 +39,18 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [selectedInsumos, setSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
   const [insumosExpanded, setInsumosExpanded] = useState(true);
+  const [materiasExpanded, setMateriasExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [insumosModalOpen, setInsumosModalOpen] = useState(false);
   const [tempSelectedInsumos, setTempSelectedInsumos] = useState<{id: string, quantidade: number}[]>([]);
   const [insumosSearchTerm, setInsumosSearchTerm] = useState("");
+  const [novaMateriaModalOpen, setNovaMateriaModalOpen] = useState(false);
+  const [novaMateriaNome, setNovaMateriaNome] = useState("");
+  const [materiasModalOpen, setMateriasModalOpen] = useState(false);
+  const [tempSelectedMaterias, setTempSelectedMaterias] = useState<string[]>([]);
+  const [materiasSearchTerm, setMateriasSearchTerm] = useState("");
+  const [novoInsumoModalOpen, setNovoInsumoModalOpen] = useState(false);
+  const [novoInsumoNome, setNovoInsumoNome] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -81,6 +89,17 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       insumo.nome.toLowerCase().includes(insumosSearchTerm.toLowerCase())
     );
   }, [insumos, insumosSearchTerm]);
+
+  // Filtrar matérias baseado no termo de busca
+  const filteredMaterias = useMemo(() => {
+    if (!materias || !materiasSearchTerm.trim()) {
+      return materias || [];
+    }
+    
+    return materias.filter(materia => 
+      materia.nome.toLowerCase().includes(materiasSearchTerm.toLowerCase())
+    );
+  }, [materias, materiasSearchTerm]);
 
   const { data: salas } = useQuery({
     queryKey: ['salas', unidadeId],
@@ -401,6 +420,12 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     setInsumosModalOpen(true);
   };
 
+  const handleOpenMateriasModal = () => {
+    setTempSelectedMaterias([...selectedMaterias]);
+    setMateriasSearchTerm("");
+    setMateriasModalOpen(true);
+  };
+
   const handleCloseInsumosModal = () => {
     setInsumosModalOpen(false);
     setTempSelectedInsumos([]);
@@ -423,6 +448,89 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
     setInsumosModalOpen(false);
     setTempSelectedInsumos([]);
     setInsumosSearchTerm("");
+  };
+
+  const handleConfirmMaterias = () => {
+    setSelectedMaterias(tempSelectedMaterias);
+    setMateriasModalOpen(false);
+    setTempSelectedMaterias([]);
+    setMateriasSearchTerm("");
+  };
+
+  const handleMateriaToggleInModal = (materiaId: string) => {
+    setTempSelectedMaterias(prev => 
+      prev.includes(materiaId) 
+        ? prev.filter(id => id !== materiaId)
+        : [...prev, materiaId]
+    );
+  };
+
+  const handleCreateMateria = async () => {
+    if (!novaMateriaNome.trim()) {
+      toast.error("Nome da matéria é obrigatório");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('materias')
+        .insert([{ nome: novaMateriaNome.trim() }])
+        .select()
+        .single();
+
+      if (error) {
+        toast.error("Erro ao criar matéria");
+        console.error(error);
+        return;
+      }
+
+      toast.success("Matéria criada com sucesso!");
+      setNovaMateriaNome("");
+      setNovaMateriaModalOpen(false);
+      
+      // Recarregar a lista de matérias
+      queryClient.invalidateQueries({ queryKey: ['materias'] });
+      
+      // Selecionar automaticamente a nova matéria na seleção temporária
+      setTempSelectedMaterias(prev => [...prev, data.id]);
+    } catch (error) {
+      toast.error("Erro ao criar matéria");
+      console.error(error);
+    }
+  };
+
+  const handleCreateInsumo = async () => {
+    if (!novoInsumoNome.trim()) {
+      toast.error("Nome do insumo é obrigatório");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('insumos')
+        .insert([{ nome: novoInsumoNome.trim() }])
+        .select()
+        .single();
+
+      if (error) {
+        toast.error("Erro ao criar insumo");
+        console.error(error);
+        return;
+      }
+
+      toast.success("Insumo criado com sucesso!");
+      setNovoInsumoNome("");
+      setNovoInsumoModalOpen(false);
+      
+      // Recarregar a lista de insumos
+      queryClient.invalidateQueries({ queryKey: ['insumos'] });
+      
+      // Selecionar automaticamente o novo insumo na seleção temporária
+      setTempSelectedInsumos(prev => [{ id: data.id, quantidade: 1 }, ...prev]);
+    } catch (error) {
+      toast.error("Erro ao criar insumo");
+      console.error(error);
+    }
   };
 
   const handleQuantidadeChange = (insumoId: string, quantidade: number) => {
@@ -775,46 +883,59 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
       </div>
 
       {/* Matérias */}
-      <div className="space-y-4">
-        <Label className={selectedMaterias.length === 0 ? "text-red-600" : ""}>
-          Matérias do Curso *
-        </Label>
-        <div className="grid gap-2 md:grid-cols-3">
-          {materias?.map(materia => {
-            const isSelected = selectedMaterias.includes(materia.id);
-            return (
-              <div
-                key={materia.id}
-                className={`p-2 border rounded cursor-pointer transition-colors ${
-                  isSelected 
-                    ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600' 
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-                onClick={() => handleMateriaToggle(materia.id)}
-              >
-                <span className="text-sm">{materia.nome}</span>
-              </div>
-            );
-          })}
-        </div>
+      <Collapsible open={materiasExpanded} onOpenChange={setMateriasExpanded} className="space-y-4">
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="secondary"
+            className="flex items-center justify-between w-full p-3 h-auto font-medium text-left"
+            type="button"
+          >
+            <Label className={`cursor-pointer ${selectedMaterias.length === 0 ? "text-red-600" : ""}`}>
+              Matérias do Curso * {selectedMaterias.length > 0 && `(${selectedMaterias.length})`}
+            </Label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-normal">
+                {materiasExpanded ? "Recolher" : "Expandir"}
+              </span>
+              {materiasExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </div>
+          </Button>
+        </CollapsibleTrigger>
         
-        {selectedMaterias.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {selectedMaterias.map(materiaId => {
-              const materia = materias?.find(m => m.id === materiaId);
-              return (
-                <Badge key={materiaId} variant="secondary">
-                  {materia?.nome}
-                  <X 
-                    className="ml-1 h-3 w-3 cursor-pointer" 
-                    onClick={() => handleMateriaToggle(materiaId)}
-                  />
-                </Badge>
-              );
-            })}
+        <CollapsibleContent className="space-y-4">
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleOpenMateriasModal}
+              className="w-fit"
+            >
+              Selecionar Matérias
+            </Button>
           </div>
-        )}
-      </div>
+          
+          {selectedMaterias.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedMaterias.map(materiaId => {
+                const materia = materias?.find(m => m.id === materiaId);
+                return (
+                  <Badge key={materiaId} variant="secondary">
+                    {materia?.nome}
+                    <X 
+                      className="ml-1 h-3 w-3 cursor-pointer" 
+                      onClick={() => handleMateriaToggle(materiaId)}
+                    />
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Insumos */}
       <Collapsible open={insumosExpanded} onOpenChange={setInsumosExpanded} className="space-y-4">
@@ -848,7 +969,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               onClick={handleOpenInsumosModal}
               className="w-fit"
             >
-              Adicionar Insumos
+              Selecionar Insumos
             </Button>
           </div>
           
@@ -909,15 +1030,15 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
             <DialogTitle>Selecionar Insumos</DialogTitle>
           </DialogHeader>
           
-          {/* Barra de busca */}
-          <div className="flex-shrink-0 pb-4 flex justify-center">
-            <div className="relative w-80">
+          {/* Barra de busca e botão de novo insumo */}
+          <div className="flex-shrink-0 pb-4 flex gap-2">
+            <div className="relative flex-1">
               <Input
                 type="text"
                 placeholder="Buscar insumos por nome..."
                 value={insumosSearchTerm}
                 onChange={(e) => setInsumosSearchTerm(e.target.value)}
-                className="w-full pr-8"
+                className="pr-8"
               />
               {insumosSearchTerm && (
                 <button
@@ -929,6 +1050,15 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
                 </button>
               )}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setNovoInsumoModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden md:inline">Novo Insumo</span>
+            </Button>
           </div>
           
           <div className="flex-1 overflow-y-auto min-h-0">
@@ -975,8 +1105,179 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess }: CursoFormProps) => {
               type="button"
               onClick={handleConfirmInsumos}
             >
-              Adicionar
+              Confirmar ({tempSelectedInsumos.length})
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Seleção de Matérias */}
+      <Dialog open={materiasModalOpen} onOpenChange={setMateriasModalOpen}>
+        <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+          <DialogHeader className="flex-shrink-0 pb-4">
+            <DialogTitle>Selecionar Matérias</DialogTitle>
+            <DialogDescription>
+              Escolha as matérias que serão incluídas neste curso
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Barra de busca e botão de nova matéria */}
+          <div className="flex-shrink-0 pb-4 flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Buscar matérias..."
+                value={materiasSearchTerm}
+                onChange={(e) => setMateriasSearchTerm(e.target.value)}
+                className="pr-8"
+              />
+              {materiasSearchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setMateriasSearchTerm("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setNovaMateriaModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden md:inline">Nova Matéria</span>
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {filteredMaterias && filteredMaterias.length > 0 ? (
+              <div className="grid gap-2 md:grid-cols-3">
+                {filteredMaterias.map(materia => {
+                  const isSelected = tempSelectedMaterias.includes(materia.id);
+                  return (
+                    <div
+                      key={materia.id}
+                      className={`p-2 border rounded cursor-pointer transition-colors ${
+                        isSelected 
+                          ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      onClick={() => handleMateriaToggleInModal(materia.id)}
+                    >
+                      <span className="text-sm">{materia.nome}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                {materiasSearchTerm ? "Nenhuma matéria encontrada" : "Nenhuma matéria disponível"}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-shrink-0 pt-4 border-t flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setMateriasModalOpen(false);
+                setTempSelectedMaterias([]);
+                setMateriasSearchTerm("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmMaterias}
+            >
+              Confirmar ({tempSelectedMaterias.length})
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Nova Matéria */}
+      <Dialog open={novaMateriaModalOpen} onOpenChange={setNovaMateriaModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Matéria</DialogTitle>
+            <DialogDescription>
+              Adicione uma nova matéria ao sistema
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="nova-materia-nome">Nome da Matéria</Label>
+              <Input
+                id="nova-materia-nome"
+                value={novaMateriaNome}
+                onChange={(e) => setNovaMateriaNome(e.target.value)}
+                placeholder="Ex: Português, Matemática, Informática..."
+                className="mt-1"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setNovaMateriaModalOpen(false);
+                  setNovaMateriaNome("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateMateria}>
+                Criar Matéria
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Novo Insumo */}
+      <Dialog open={novoInsumoModalOpen} onOpenChange={setNovoInsumoModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Insumo</DialogTitle>
+            <DialogDescription>
+              Adicione um novo insumo ao sistema
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="novo-insumo-nome">Nome do Insumo</Label>
+              <Input
+                id="novo-insumo-nome"
+                value={novoInsumoNome}
+                onChange={(e) => setNovoInsumoNome(e.target.value)}
+                placeholder="Ex: Papel A4, Canetas, Tesouras..."
+                className="mt-1"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setNovoInsumoModalOpen(false);
+                  setNovoInsumoNome("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateInsumo}>
+                Criar Insumo
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
