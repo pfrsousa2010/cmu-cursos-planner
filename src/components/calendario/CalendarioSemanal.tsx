@@ -65,18 +65,25 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-32 font-semibold">SALAS</TableHead>
-                  {weekDays.map((day) => (
-                    <TableHead key={day.toISOString()} className="text-center min-w-[200px] font-semibold">
-                      <div className="flex flex-col">
-                        <span className="capitalize text-sm">
-                          {format(day, 'EEEE', { locale: ptBR })}
-                        </span>
-                        <span className="text-lg font-bold">
-                          {format(day, 'dd/MM')}
-                        </span>
-                      </div>
-                    </TableHead>
-                  ))}
+                  {weekDays.map((day) => {
+                    const hoje = new Date();
+                    const isHoje = day.getDate() === hoje.getDate() && 
+                                  day.getMonth() === hoje.getMonth() && 
+                                  day.getFullYear() === hoje.getFullYear();
+                    
+                    return (
+                      <TableHead key={day.toISOString()} className="text-center min-w-[220px] font-semibold">
+                        <div className="flex flex-col">
+                          <span className="capitalize text-sm">
+                            {format(day, 'EEEE', { locale: ptBR })}
+                          </span>
+                          <span className={`text-lg font-bold ${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-full w-10 h-10 flex items-center justify-center mx-auto' : ''}`}>
+                            {format(day, 'dd/MM')}
+                          </span>
+                        </div>
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -133,18 +140,25 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
               <TableRow>
                 <TableHead className="w-32 font-semibold">Sala/Unidade</TableHead>
                 <TableHead className="w-16 font-semibold">Turno</TableHead>
-                {weekDays.map((day) => (
-                  <TableHead key={day.toISOString()} className="text-center min-w-[200px] font-semibold">
-                    <div className="flex flex-col">
-                      <span className="capitalize text-sm">
-                        {format(day, 'EEEE', { locale: ptBR })}
-                      </span>
-                      <span className="text-lg font-bold">
-                        {format(day, 'dd/MM')}
-                      </span>
-                    </div>
-                  </TableHead>
-                ))}
+                {weekDays.map((day) => {
+                  const hoje = new Date();
+                  const isHoje = day.getDate() === hoje.getDate() && 
+                                day.getMonth() === hoje.getMonth() && 
+                                day.getFullYear() === hoje.getFullYear();
+                  
+                  return (
+                    <TableHead key={day.toISOString()} className="text-center min-w-[220px] font-semibold">
+                      <div className="flex flex-col">
+                        <span className="capitalize text-sm">
+                          {format(day, 'EEEE', { locale: ptBR })}
+                        </span>
+                        <span className={`text-lg font-bold ${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-full w-20 h-8 flex items-center justify-center mx-auto' : ''}`}>
+                          {format(day, 'dd/MM')}
+                        </span>
+                      </div>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>

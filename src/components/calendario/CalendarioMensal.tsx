@@ -210,6 +210,10 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
                     const diaSemana = dia.getDay();
                     const isSabado = diaSemana === 6;
                     const isDomingo = diaSemana === 0;
+                    const hoje = new Date();
+                    const isHoje = dia.getDate() === hoje.getDate() && 
+                                  dia.getMonth() === hoje.getMonth() && 
+                                  dia.getFullYear() === hoje.getFullYear();
                     
                     return (
                       <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
@@ -219,7 +223,9 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
                               {isSabado ? 'SAB' : 'DOM'}
                             </span>
                           )}
-                          <span>{String(i + 1).padStart(2, '0')}</span>
+                          <span className={`${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto' : ''}`}>
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
                         </div>
                       </TableHead>
                     );
@@ -278,6 +284,10 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
                   const diaSemana = dia.getDay();
                   const isSabado = diaSemana === 6;
                   const isDomingo = diaSemana === 0;
+                  const hoje = new Date();
+                  const isHoje = dia.getDate() === hoje.getDate() && 
+                                dia.getMonth() === hoje.getMonth() && 
+                                dia.getFullYear() === hoje.getFullYear();
                   
                   return (
                     <TableHead key={i} className="text-center font-semibold" style={{ minWidth: 30, fontSize: '0.8rem', padding: 0 }}>
@@ -287,7 +297,9 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
                             {isSabado ? 'SAB' : 'DOM'}
                           </span>
                         )}
-                        <span>{String(i + 1).padStart(2, '0')}</span>
+                        <span className={`${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto' : ''}`}>
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
                       </div>
                     </TableHead>
                   );
