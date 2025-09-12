@@ -186,7 +186,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                                     className={`p-2 rounded border bg-card hover:shadow-md transition-shadow cursor-pointer text-xs ${getUnidadeColor(curso.unidades?.nome || '')} ${cursoFinalizado ? 'border-red-300 dark:border-red-600' : ''}`}
                                     onClick={() => onCursoClick(curso)}
                                   >
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 text-center">
                                       <div className="font-medium leading-tight">{curso.titulo}</div>
                                       <div className="text-muted-foreground">{curso.professor}</div>
                                     </div>
@@ -217,7 +217,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                                   // Dias úteis em desktop: mostrar card para adicionar curso
                                   return (
                                     <div 
-                                      className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500 hover:text-blue-600"
+                                      className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-500 hover:text-blue-600 h-full min-h-[60px]"
                                       onClick={() => onAddCurso(sala.id, day, turno)}
                                       title="Adicionar novo curso"
                                     >
