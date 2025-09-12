@@ -83,7 +83,12 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos, showActions = true }: Curs
                 'sexta': 'Sex'
               };
               
-              return curso.dia_semana.map(dia => (
+              const ordemDias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
+              const diasOrdenados = curso.dia_semana.sort((a, b) => 
+                ordemDias.indexOf(a) - ordemDias.indexOf(b)
+              );
+              
+              return diasOrdenados.map(dia => (
                 <Badge key={dia} variant="outline" className="bg-green-100 text-green-700">
                   {diaLabels[dia as keyof typeof diaLabels] || dia}
                 </Badge>
