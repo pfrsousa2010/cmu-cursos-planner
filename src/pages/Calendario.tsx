@@ -300,6 +300,9 @@ const Calendario = () => {
         {/* Detalhes do Curso (se selecionado) */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Detalhes do Curso</DialogTitle>
+            </DialogHeader>
             {selectedCurso && (
               <CursoDetails 
                 curso={{
