@@ -592,6 +592,23 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
     return null;
   };
 
+  // Função para lidar com mudança de sala e definir valor padrão das vagas
+  const handleSalaChange = (novaSalaId: string) => {
+    setSalaId(novaSalaId);
+    
+    // Definir o nome da sala
+    const salaSelecionada = salas?.find(s => s.id === novaSalaId);
+    if (salaSelecionada) {
+      setSalaNome(salaSelecionada.nome);
+      
+      // Definir o valor padrão das vagas como a capacidade da sala
+      // Apenas se não houver vagas já definidas (para não sobrescrever dados existentes)
+      if (!vagas || vagas === "0") {
+        setVagas(salaSelecionada.capacidade.toString());
+      }
+    }
+  };
+
   // Função para detectar conflitos entre cursos
   const detectarConflitos = useMemo(() => {
     if (!inicio || !fim || !salaId || !periodo || diasSemana.length === 0) {
@@ -837,7 +854,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
           <Label htmlFor="sala" className={!salaId ? "text-red-600" : ""}>
             Sala *
           </Label>
-          <Select value={salaId} onValueChange={setSalaId} required disabled={!unidadeId}>
+          <Select value={salaId} onValueChange={handleSalaChange} required disabled={!unidadeId}>
             <SelectTrigger className={!salaId ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
               <SelectValue placeholder={!unidadeId ? "Selecione a unidade para carregar as salas" : "Selecione a sala"} />
             </SelectTrigger>

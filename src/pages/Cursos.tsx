@@ -69,7 +69,7 @@ const Cursos = () => {
         .select(`
           *,
           unidades (id, nome),
-          salas (id, nome),
+          salas (id, nome, capacidade),
           curso_insumos (id),
           curso_materias (id)
         `)
@@ -694,9 +694,9 @@ const Cursos = () => {
                                   <div>
                                     <span className="font-medium">Fim:</span> {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                   </div>
-                                  <div>
-                                    <span className="font-medium">Vagas:</span> {curso.vagas ? `${curso.vagas} vagas` : 'Não definido'}
-                                  </div>
+                                   <div>
+                                     <span className="font-medium">Vagas:</span> {curso.vagas ? `${curso.vagas} vagas` : 'Não definido'}
+                                   </div>
                                   <div>
                                     <span className="font-medium">Alunos:</span> {(curso.qtd_alunos_iniciaram || 0) === 0 && (curso.qtd_alunos_concluiram || 0) === 0 ? 'Não definido' : <><span className="text-green-600 font-medium">{curso.qtd_alunos_iniciaram || 0}</span> → <span className="text-red-500 font-medium">{curso.qtd_alunos_concluiram || 0}</span></>}
                                   </div>
