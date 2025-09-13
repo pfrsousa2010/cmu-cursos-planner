@@ -419,7 +419,8 @@ const Dashboard = () => {
   });
 
   const cursosComVagas = cursosFinalizados.filter(curso => 
-    curso.qtd_alunos_iniciaram !== null && curso.qtd_alunos_concluiram !== null
+    (curso.qtd_alunos_iniciaram !== null && curso.qtd_alunos_iniciaram > 0) || 
+    (curso.qtd_alunos_concluiram !== null && curso.qtd_alunos_concluiram > 0)
   );
 
   // Gráfico de evolução de alunos (início vs fim)
@@ -541,12 +542,20 @@ const Dashboard = () => {
   }, {});
 
   const eficienciaSalasArray = Object.values(eficienciaSalas)
-    .map((item: any) => ({
-      ...item,
-      ocupacaoInicio: item.capacidade > 0 ? (item.totalAlunosInicio / item.capacidade * 100) : 0,
-      ocupacaoFim: item.capacidade > 0 ? (item.totalAlunosFim / item.capacidade * 100) : 0,
-      eficiencia: item.totalAlunosInicio > 0 ? (item.totalAlunosFim / item.totalAlunosInicio * 100) : 0
-    }))
+    .map((item: any) => {
+      // Calcular ocupação média por curso (não total)
+      const ocupacaoMediaInicio = item.capacidade > 0 && item.cursosComAlunos > 0 ? 
+        (item.totalAlunosInicio / item.cursosComAlunos / item.capacidade * 100) : 0;
+      const ocupacaoMediaFim = item.capacidade > 0 && item.cursosComAlunos > 0 ? 
+        (item.totalAlunosFim / item.cursosComAlunos / item.capacidade * 100) : 0;
+      
+      return {
+        ...item,
+        ocupacaoInicio: Math.min(ocupacaoMediaInicio, 100), // Limitar a 100%
+        ocupacaoFim: Math.min(ocupacaoMediaFim, 100), // Limitar a 100%
+        eficiencia: item.totalAlunosInicio > 0 ? (item.totalAlunosFim / item.totalAlunosInicio * 100) : 0
+      };
+    })
     .filter((item: any) => item.cursosComAlunos > 0 && item.capacidade > 0)
     .sort((a: any, b: any) => b.eficiencia - a.eficiencia)
     .slice(0, 10); // Top 10 salas
@@ -1333,12 +1342,14 @@ const Dashboard = () => {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
-                {/* Gráfico de evolução de vagas (início vs fim) */}
+                {/* Gráfico de evolução de alunos (início vs fim) */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold">Evolução de Vagas por Curso</CardTitle>
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      Evolução de Alunos por Curso
+                    </CardTitle>
                     <CardDescription>
-                      Comparação entre vagas no início e no fim dos cursos finalizados (Top 15 com maior taxa de evasão)
+                      Comparação entre alunos no início e no fim dos cursos finalizados (Top 15 com maior taxa de evasão)
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1347,50 +1358,110 @@ const Dashboard = () => {
                     ) : evolucaoAlunos.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
                         <Users className="h-12 w-12 mb-4 opacity-50" />
-                        <p className="text-lg font-medium">Nenhum dado de vagas</p>
-                        <p className="text-sm">Não há cursos com informações de vagas</p>
+                        <p className="text-lg font-medium">Nenhum dado de alunos</p>
+                        <p className="text-sm">Não há cursos com informações de quantidade de alunos</p>
                       </div>
                     ) : (
-                      <ChartContainer config={{}} className="w-full h-[400px]">
+                      <ChartContainer config={{}} className="w-full h-[450px]">
                         <RechartsPrimitive.BarChart 
                           data={evolucaoAlunos} 
-                          margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+                          margin={{ top: 30, right: 40, left: 20, bottom: 120 }}
                         >
-                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.CartesianGrid 
+                            strokeDasharray="3 3" 
+                            stroke={theme === 'dark' ? '#374151' : '#e5e7eb'}
+                          />
                           <RechartsPrimitive.XAxis 
                             dataKey="titulo" 
                             angle={-45}
                             textAnchor="end"
-                            height={100}
+                            height={120}
                             tick={{ fontSize: 10 }}
                             interval={0}
+                            axisLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                            tickLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
                           />
                           <RechartsPrimitive.YAxis 
                             allowDecimals={false}
                             tick={{ fontSize: 12 }}
+                            axisLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                            tickLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                            label={{ 
+                              value: 'Quantidade de Alunos', 
+                              angle: -90, 
+                              position: 'insideLeft',
+                              style: { textAnchor: 'middle', fontSize: '12px' }
+                            }}
                           />
                           <RechartsPrimitive.Tooltip
                             content={({ active, payload, label }) => {
                               if (!active || !payload || !payload.length) return null;
                               const data = payload[0].payload;
                               return (
-                                <div className={`rounded border p-2 shadow text-xs ${
+                                <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[280px] ${
                                   theme === 'dark' 
                                     ? 'bg-card border-border text-card-foreground' 
                                     : 'bg-background border-border text-foreground'
                                 }`}>
-                                  <div className="font-semibold mb-1">{data.titulo}</div>
-                                  <div>Unidade: {data.unidade}</div>
-                                  <div>Vagas Início: {data.vagaInicio}</div>
-                                  <div>Vagas Fim: {data.vagaFim}</div>
-                                  <div>Evasão: {data.evasao} ({data.taxaEvasao.toFixed(1)}%)</div>
+                                  <div className="font-bold text-sm mb-3 text-center border-b pb-2">
+                                    {data.titulo}
+                                  </div>
+                                  <div className="space-y-2 text-xs">
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">Unidade:</span>
+                                      <span>{data.unidade}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-green-600">Alunos Início:</span>
+                                      <span className="font-bold text-green-600">{data.alunosInicio}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-blue-600">Alunos Fim:</span>
+                                      <span className="font-bold text-blue-600">{data.alunosFim}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-red-500">Evasão:</span>
+                                      <span className="font-bold text-red-500">{data.evasao} alunos</span>
+                                    </div>
+                                    <div className="flex justify-between border-t pt-2">
+                                      <span className="font-medium text-orange-500">Taxa Evasão:</span>
+                                      <span className="font-bold text-orange-500">{data.taxaEvasao.toFixed(1)}%</span>
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             }}
                           />
-                          <RechartsPrimitive.Legend />
-                          <RechartsPrimitive.Bar dataKey="vagaInicio" fill="#8884d8" name="Vagas Início" />
-                          <RechartsPrimitive.Bar dataKey="vagaFim" fill="#82ca9d" name="Vagas Fim" />
+                          <RechartsPrimitive.Legend 
+                            verticalAlign="top"
+                            align="center"
+                            iconType="rect"
+                            wrapperStyle={{ 
+                              paddingBottom: 20,
+                              color: theme === 'dark' ? '#e5e7eb' : '#374151'
+                            }}
+                            formatter={(value, entry, idx) => (
+                              <span style={{ 
+                                color: theme === 'dark' ? '#e5e7eb' : '#374151', 
+                                fontWeight: 500,
+                                fontSize: '12px'
+                              }}>{value}</span>
+                            )}
+                          />
+                          <RechartsPrimitive.Bar 
+                            dataKey="alunosInicio" 
+                            fill="#10b981" 
+                            name="Alunos Início"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={50}
+                          />
+                          <RechartsPrimitive.Bar 
+                            dataKey="alunosFim" 
+                            fill="#3b82f6" 
+                            name="Alunos Fim"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={50}
+                          />
                         </RechartsPrimitive.BarChart>
                       </ChartContainer>
                     )}
@@ -1568,12 +1639,20 @@ const Dashboard = () => {
 
               {/* Segunda linha de gráficos */}
               <div className="grid gap-6 md:grid-cols-2 mt-6">
-                {/* Gráfico de eficiência de ocupação de salas */}
+                {/* Gráfico de retenção de alunos por sala */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold">Eficiência de Ocupação das Salas</CardTitle>
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5 text-green-500" />
+                      Taxa de Retenção por Sala
+                    </CardTitle>
                     <CardDescription>
-                      Top 10 salas com melhor eficiência de retenção de alunos (apenas cursos finalizados)
+                      <div className="space-y-1">
+                        <p>Top 10 salas com melhor retenção de alunos (apenas cursos finalizados)</p>
+                        <p className="text-xs text-muted-foreground">
+                          <strong>Retenção:</strong> % de alunos que permaneceram do início ao fim do curso
+                        </p>
+                      </div>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1589,36 +1668,80 @@ const Dashboard = () => {
                       <ChartContainer config={{}} className="w-full h-[400px]">
                         <RechartsPrimitive.BarChart 
                           data={eficienciaSalasArray} 
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
                         >
-                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.CartesianGrid 
+                            strokeDasharray="3 3" 
+                            stroke={theme === 'dark' ? '#374151' : '#e5e7eb'}
+                          />
                           <RechartsPrimitive.XAxis 
                             dataKey="sala" 
                             angle={-45}
                             textAnchor="end"
                             height={80}
                             tick={{ fontSize: 10 }}
+                            interval={0}
+                            axisLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                            tickLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
                           />
                           <RechartsPrimitive.YAxis 
                             tick={{ fontSize: 12 }}
-                            label={{ value: 'Eficiência (%)', angle: -90, position: 'insideLeft' }}
+                            axisLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                            tickLine={{ stroke: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                            label={{ 
+                              value: 'Taxa de Retenção (%)', 
+                              angle: -90, 
+                              position: 'insideLeft',
+                              style: { textAnchor: 'middle', fontSize: '12px' }
+                            }}
                           />
                           <RechartsPrimitive.Tooltip
                             content={({ active, payload, label }) => {
                               if (!active || !payload || !payload.length) return null;
                               const data = payload[0].payload;
+                              const alunosEvadidos = data.totalAlunosInicio - data.totalAlunosFim;
+                              const taxaEvasao = data.totalAlunosInicio > 0 ? 
+                                ((data.totalAlunosInicio - data.totalAlunosFim) / data.totalAlunosInicio * 100) : 0;
+                              
                               return (
-                                <div className={`rounded border p-2 shadow text-xs ${
+                                <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[280px] ${
                                   theme === 'dark' 
                                     ? 'bg-card border-border text-card-foreground' 
                                     : 'bg-background border-border text-foreground'
                                 }`}>
-                                  <div className="font-semibold mb-1">{data.sala}</div>
-                                  <div>Eficiência: {data.eficiencia.toFixed(1)}%</div>
-                                  <div>Capacidade: {data.capacidade}</div>
-                                  <div>Ocupação Início: {data.ocupacaoInicio.toFixed(1)}%</div>
-                                  <div>Ocupação Fim: {data.ocupacaoFim.toFixed(1)}%</div>
-                                  <div>Cursos: {data.cursosComAlunos}</div>
+                                  <div className="font-bold text-sm mb-3 text-center border-b pb-2">
+                                    {data.sala}
+                                  </div>
+                                  <div className="space-y-2 text-xs">
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">Capacidade da Sala:</span>
+                                      <span className="font-bold">{data.capacidade} alunos</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-green-600">Alunos Início:</span>
+                                      <span className="font-bold text-green-600">{data.totalAlunosInicio}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-blue-600">Alunos Fim:</span>
+                                      <span className="font-bold text-blue-600">{data.totalAlunosFim}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-red-500">Alunos Evadidos:</span>
+                                      <span className="font-bold text-red-500">{alunosEvadidos}</span>
+                                    </div>
+                                    <div className="flex justify-between border-t pt-2">
+                                      <span className="font-medium text-green-500">Taxa de Retenção:</span>
+                                      <span className="font-bold text-green-500">{data.eficiencia.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium text-orange-500">Taxa de Evasão:</span>
+                                      <span className="font-bold text-orange-500">{taxaEvasao.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">Total de Cursos:</span>
+                                      <span className="font-bold">{data.cursosComAlunos}</span>
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             }}
@@ -1627,6 +1750,7 @@ const Dashboard = () => {
                             dataKey="eficiencia" 
                             fill="#10b981"
                             radius={[4, 4, 0, 0]}
+                            maxBarSize={60}
                           />
                         </RechartsPrimitive.BarChart>
                       </ChartContainer>
