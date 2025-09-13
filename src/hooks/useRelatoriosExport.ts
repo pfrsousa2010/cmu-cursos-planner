@@ -161,7 +161,8 @@ export const useRelatoriosExport = () => {
     cursos: Curso[],
     periodoRelatorio: PeriodoRelatorio,
     periodoLabel: string,
-    estatisticas: any
+    estatisticas: any,
+    filtros: { unidade: string; periodo: string; sala: string } = { unidade: 'todas', periodo: 'todos', sala: 'todas' }
   ) => {
     if (!cursos || cursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
@@ -182,29 +183,31 @@ export const useRelatoriosExport = () => {
 
     // Data de emissão
     doc.setFontSize(10);
-    doc.text(`Data de emissão: ${dataAtual}`, 14, 40);
+    let infoY = 40;
+    doc.text(`Data de emissão: ${dataAtual}`, 14, infoY);
+    infoY += 6;
 
-    // Estatísticas resumidas
-    if (estatisticas) {
-      let infoY = 50;
-      doc.setFontSize(12);
-      doc.text('Resumo Estatístico', 14, infoY);
-      infoY += 8;
-
-      doc.setFontSize(10);
-      doc.text(`Total de cursos: ${estatisticas.totalCursos}`, 14, infoY);
-      infoY += 5;
-      doc.text(`Total de vagas: ${estatisticas.totalVagas}`, 14, infoY);
-      infoY += 5;
-      doc.text(`Alunos iniciaram: ${estatisticas.totalAlunosIniciaram}`, 14, infoY);
-      infoY += 5;
-      doc.text(`Alunos concluíram: ${estatisticas.totalAlunosConcluiram}`, 14, infoY);
-      infoY += 5;
-      doc.text(`Taxa de conclusão: ${estatisticas.taxaConclusao.toFixed(2)}%`, 14, infoY);
-      infoY += 5;
-      doc.text(`Carga horária total: ${estatisticas.totalCargaHoraria}h`, 14, infoY);
-      infoY += 10;
+    // Filtros aplicados
+    const filtrosAplicados = [];
+    if (filtros.unidade !== 'todas') {
+      filtrosAplicados.push(`Unidade: ${filtros.unidade}`);
     }
+    if (filtros.periodo !== 'todos') {
+      filtrosAplicados.push(`Período: ${formatPeriodo(filtros.periodo)}`);
+    }
+    if (filtros.sala !== 'todas') {
+      filtrosAplicados.push(`Sala: ${filtros.sala}`);
+    }
+
+    if (filtrosAplicados.length > 0) {
+      doc.text(`Filtros aplicados: ${filtrosAplicados.join(' | ')}`, 14, infoY);
+      infoY += 6;
+    }
+
+    // Total de cursos
+    doc.text(`Total de cursos: ${cursosOrdenados.length}`, 14, infoY);
+    infoY += 5;
+
 
     // Preparar dados da tabela
     const headers = [
@@ -267,7 +270,7 @@ export const useRelatoriosExport = () => {
     autoTable(doc, {
       head: [headers],
       body: tableData,
-      startY: estatisticas ? 120 : 50,
+      startY: infoY + 3,
       margin: { left: 14, right: 14 },
       theme: 'grid',
       headStyles: {
@@ -311,6 +314,11 @@ export const useRelatoriosExport = () => {
       }
     });
 
+    // Adicionar página de resumo estatístico no final
+    if (estatisticas) {
+      addEstatisticasPage(doc, estatisticas, periodoLabel);
+    }
+
     addPageNumbers(doc);
 
     // Nome do arquivo
@@ -322,6 +330,43 @@ export const useRelatoriosExport = () => {
     doc.save(fileName);
 
     toast.success("Relatório PDF gerado com sucesso!");
+  };
+
+  const addEstatisticasPage = (doc: jsPDF, estatisticas: any, periodoLabel: string) => {
+    doc.addPage();
+    
+    // Título da página
+    doc.setFontSize(18);
+    doc.text('Resumo Estatístico', 14, 20);
+    
+    // Período do relatório
+    doc.setFontSize(14);
+    doc.text(`Período: ${periodoLabel}`, 14, 30);
+    
+    // Data de emissão
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    doc.setFontSize(10);
+    doc.text(`Data de emissão: ${dataAtual}`, 14, 40);
+    
+    // Estatísticas principais
+    let infoY = 60;
+    doc.setFontSize(12);
+    doc.text('Estatísticas Gerais', 14, infoY);
+    infoY += 12;
+
+    doc.setFontSize(11);
+    doc.text(`Total de cursos: ${estatisticas.totalCursos}`, 14, infoY);
+    infoY += 8;
+    doc.text(`Total de vagas: ${estatisticas.totalVagas}`, 14, infoY);
+    infoY += 8;
+    doc.text(`Alunos iniciaram: ${estatisticas.totalAlunosIniciaram}`, 14, infoY);
+    infoY += 8;
+    doc.text(`Alunos concluíram: ${estatisticas.totalAlunosConcluiram}`, 14, infoY);
+    infoY += 8;
+    doc.text(`Taxa de conclusão: ${estatisticas.taxaConclusao.toFixed(2)}%`, 14, infoY);
+    infoY += 8;
+    doc.text(`Carga horária total: ${estatisticas.totalCargaHoraria}h`, 14, infoY);
+    infoY += 20;    
   };
 
   const addPageNumbers = (doc: jsPDF) => {

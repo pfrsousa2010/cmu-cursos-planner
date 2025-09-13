@@ -64,7 +64,7 @@ const Relatorios = () => {
   };
 
   const handleExportPDF = () => {
-    exportToPDF(cursosFiltrados, periodoSelecionado, periodoCalculado.label, estatisticas);
+    exportToPDF(cursosFiltrados, periodoSelecionado, periodoCalculado.label, estatisticas, filtros);
   };
 
   if (isLoading) {
