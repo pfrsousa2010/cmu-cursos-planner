@@ -12,7 +12,8 @@ import {
   X,
   LogOut,
   Package,
-  User
+  User,
+  BarChart3
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/contexts/UserContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useOrientation } from "@/hooks/useOrientation";
 import logoCmu from "/logo-cmu.png";
 
 interface LayoutProps {
@@ -48,8 +50,12 @@ const UserRoleColor: Record<string, string> = {
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile, loading: userLoading, canManageUnidades, canManageCursos, signOut } = useUser();
+  const { width } = useOrientation();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
+  const isMobile = width < 768;
 
   const handleLogout = async () => {
     try {
@@ -65,6 +71,7 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Calendar, label: "Calendário", path: "/calendario" },
     { icon: BookOpen, label: "Cursos", path: "/cursos" },
+    { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
     { icon: Building2, label: "Unidades / Salas", path: "/unidades-salas", editorAccess: true },
     { icon: FileText, label: "Matérias", path: "/materias", editorAccess: true },
     { icon: Package, label: "Insumos", path: "/insumos", editorAccess: true },
@@ -76,6 +83,8 @@ const Layout = ({ children }: LayoutProps) => {
   const filteredMenuItems = menuItems.filter(item => {
     if (item.adminOnly && profile?.role !== 'admin') return false;
     if (item.editorAccess && profile?.role === 'visualizador') return false;
+    // Ocultar relatórios em dispositivos móveis e tablets
+    if (item.path === '/relatorios' && isMobile) return false;
     return true;
   });
 
