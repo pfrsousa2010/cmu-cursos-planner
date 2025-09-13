@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRelatoriosCursos, PeriodoRelatorio } from "@/hooks/useRelatoriosCursos";
 import { useRelatoriosExport } from "@/hooks/useRelatoriosExport";
 import { useOrientation } from "@/hooks/useOrientation";
@@ -16,11 +15,7 @@ import {
   FileImage, 
   Calendar,
   BarChart3,
-  Users,
-  Clock,
-  BookOpen,
-  Building2,
-  TrendingUp
+  BookOpen
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
