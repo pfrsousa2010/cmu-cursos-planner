@@ -1647,13 +1647,11 @@ const Dashboard = () => {
                       Taxa de Retenção por Sala
                     </CardTitle>
                     <CardDescription>
-                      <div className="space-y-1">
-                        <p>Top 10 salas com melhor retenção de alunos (apenas cursos finalizados)</p>
-                        <p className="text-xs text-muted-foreground">
-                          <strong>Retenção:</strong> % de alunos que permaneceram do início ao fim do curso
-                        </p>
-                      </div>
+                      Top 10 salas com melhor retenção de alunos (apenas cursos finalizados)
                     </CardDescription>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      <strong>Retenção:</strong> % de alunos que permaneceram do início ao fim do curso
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {loadingCursosCompletos ? (
