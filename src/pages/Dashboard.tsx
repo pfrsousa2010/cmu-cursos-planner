@@ -410,6 +410,156 @@ const Dashboard = () => {
     };
   });
 
+  // Processar dados para gráficos analíticos dos novos atributos
+  // Filtrar apenas cursos finalizados para cálculos de evasão
+  const hoje = new Date();
+  const cursosFinalizados = (cursosCompletos || []).filter(curso => {
+    const fimCurso = new Date(curso.fim + 'T23:59:59-03:00');
+    return fimCurso < hoje;
+  });
+
+  const cursosComVagas = cursosFinalizados.filter(curso => 
+    curso.vaga_inicio !== null && curso.vaga_fim !== null
+  );
+
+  // Gráfico de evolução de vagas (início vs fim)
+  const evolucaoVagas = cursosComVagas.map(curso => ({
+    titulo: curso.titulo.length > 30 ? curso.titulo.substring(0, 30) + '...' : curso.titulo,
+    vagaInicio: curso.vaga_inicio || 0,
+    vagaFim: curso.vaga_fim || 0,
+    unidade: curso.unidades?.nome || 'Sem unidade',
+    evasao: ((curso.vaga_inicio || 0) - (curso.vaga_fim || 0)),
+    taxaEvasao: curso.vaga_inicio ? (((curso.vaga_inicio || 0) - (curso.vaga_fim || 0)) / curso.vaga_inicio * 100) : 0
+  })).sort((a, b) => b.taxaEvasao - a.taxaEvasao).slice(0, 15); // Top 15 com maior taxa de evasão
+
+  // Gráfico de distribuição de carga horária
+  const distribuicaoCargaHoraria = (cursosCompletos || []).reduce((acc: any, curso) => {
+    if (curso.carga_horaria) {
+      const faixa = curso.carga_horaria <= 20 ? 'Até 20h' :
+                   curso.carga_horaria <= 40 ? '21-40h' :
+                   curso.carga_horaria <= 60 ? '41-60h' :
+                   curso.carga_horaria <= 80 ? '61-80h' : 'Mais de 80h';
+      
+      if (!acc[faixa]) {
+        acc[faixa] = { faixa, quantidade: 0, cargaTotal: 0 };
+      }
+      acc[faixa].quantidade += 1;
+      acc[faixa].cargaTotal += curso.carga_horaria;
+    }
+    return acc;
+  }, {});
+
+  const distribuicaoCargaHorariaArray = Object.values(distribuicaoCargaHoraria)
+    .sort((a: any, b: any) => {
+      const ordem = ['Até 20h', '21-40h', '41-60h', '61-80h', 'Mais de 80h'];
+      return ordem.indexOf(a.faixa) - ordem.indexOf(b.faixa);
+    });
+
+  // Gráfico de dias da semana mais utilizados
+  const diasSemanaData = (cursosCompletos || []).reduce((acc: any, curso) => {
+    if (curso.dia_semana && Array.isArray(curso.dia_semana)) {
+      curso.dia_semana.forEach(dia => {
+        const diaFormatado = {
+          'segunda': 'Segunda',
+          'terca': 'Terça',
+          'quarta': 'Quarta',
+          'quinta': 'Quinta',
+          'sexta': 'Sexta'
+        }[dia] || dia;
+        
+        if (!acc[diaFormatado]) {
+          acc[diaFormatado] = { dia: diaFormatado, quantidade: 0 };
+        }
+        acc[diaFormatado].quantidade += 1;
+      });
+    }
+    return acc;
+  }, {});
+
+  const diasSemanaArray = Object.values(diasSemanaData)
+    .sort((a: any, b: any) => b.quantidade - a.quantidade);
+
+  // Gráfico de taxa de evasão por unidade (apenas cursos finalizados)
+  const evasaoPorUnidade = cursosFinalizados.reduce((acc: any, curso) => {
+    const unidadeNome = curso.unidades?.nome || 'Sem unidade';
+    if (!acc[unidadeNome]) {
+      acc[unidadeNome] = {
+        unidade: unidadeNome,
+        totalCursos: 0,
+        totalVagasInicio: 0,
+        totalVagasFim: 0,
+        cursosComVagas: 0
+      };
+    }
+    
+    acc[unidadeNome].totalCursos += 1;
+    
+    if (curso.vaga_inicio !== null && curso.vaga_fim !== null) {
+      acc[unidadeNome].totalVagasInicio += curso.vaga_inicio || 0;
+      acc[unidadeNome].totalVagasFim += curso.vaga_fim || 0;
+      acc[unidadeNome].cursosComVagas += 1;
+    }
+    
+    return acc;
+  }, {});
+
+  const evasaoPorUnidadeArray = Object.values(evasaoPorUnidade)
+    .map((item: any) => ({
+      ...item,
+      taxaEvasao: item.totalVagasInicio > 0 ? 
+        ((item.totalVagasInicio - item.totalVagasFim) / item.totalVagasInicio * 100) : 0,
+      evasaoAbsoluta: item.totalVagasInicio - item.totalVagasFim
+    }))
+    .filter((item: any) => item.cursosComVagas > 0)
+    .sort((a: any, b: any) => b.taxaEvasao - a.taxaEvasao);
+
+  // Gráfico de eficiência de ocupação de salas (apenas cursos finalizados)
+  const eficienciaSalas = cursosFinalizados.reduce((acc: any, curso) => {
+    const salaNome = curso.salas?.nome || 'Sem sala';
+    const capacidade = curso.salas?.capacidade || 0;
+    
+    if (!acc[salaNome]) {
+      acc[salaNome] = {
+        sala: salaNome,
+        capacidade: capacidade,
+        totalCursos: 0,
+        totalVagasInicio: 0,
+        totalVagasFim: 0,
+        cursosComVagas: 0
+      };
+    }
+    
+    acc[salaNome].totalCursos += 1;
+    
+    if (curso.vaga_inicio !== null && curso.vaga_fim !== null) {
+      acc[salaNome].totalVagasInicio += curso.vaga_inicio || 0;
+      acc[salaNome].totalVagasFim += curso.vaga_fim || 0;
+      acc[salaNome].cursosComVagas += 1;
+    }
+    
+    return acc;
+  }, {});
+
+  const eficienciaSalasArray = Object.values(eficienciaSalas)
+    .map((item: any) => ({
+      ...item,
+      ocupacaoInicio: item.capacidade > 0 ? (item.totalVagasInicio / item.capacidade * 100) : 0,
+      ocupacaoFim: item.capacidade > 0 ? (item.totalVagasFim / item.capacidade * 100) : 0,
+      eficiencia: item.totalVagasInicio > 0 ? (item.totalVagasFim / item.totalVagasInicio * 100) : 0
+    }))
+    .filter((item: any) => item.cursosComVagas > 0 && item.capacidade > 0)
+    .sort((a: any, b: any) => b.eficiencia - a.eficiencia)
+    .slice(0, 10); // Top 10 salas
+
+  // Gráfico de correlação entre carga horária e evasão
+  const correlacaoCargaEvasao = cursosComVagas.map(curso => ({
+    cargaHoraria: curso.carga_horaria || 0,
+    taxaEvasao: curso.vaga_inicio ? 
+      ((curso.vaga_inicio - (curso.vaga_fim || 0)) / curso.vaga_inicio * 100) : 0,
+    titulo: curso.titulo.length > 20 ? curso.titulo.substring(0, 20) + '...' : curso.titulo,
+    unidade: curso.unidades?.nome || 'Sem unidade'
+  })).filter(item => item.cargaHoraria > 0);
+
   const formatPeriodo = (periodo: string) => {
     const periodos = {
       'manha': 'Manhã',
@@ -829,18 +979,28 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Gráficos - apenas em modo paisagem (não celular) */}
-        {!isPortrait && (
-          <>
-            {/* Nova seção: Gráfico de cursos por unidade ao longo do ano */}
-            <div className="mt-8">
+         {/* Gráficos - apenas em modo paisagem (não celular) */}
+         {!isPortrait && (
+           <>
+             {/* Seção: Visão Geral e Tendências */}
+             <div className="mt-8">
+               <div className="mb-6">
+                 <h2 className="text-2xl font-bold tracking-tight">Visão Geral e Tendências</h2>
+                 <p className="text-muted-foreground">
+                   Análise de distribuição, utilização de recursos e padrões de crescimento
+                 </p>
+               </div>
+             </div>
+
+             {/* Nova seção: Gráfico de cursos por unidade ao longo do ano */}
+             <div className="mt-8">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">Cursos por Unidade ao Longo do Ano ({anoAtual})</CardTitle>
-                  <CardDescription>
-                    Distribuição mensal de cursos por unidade
-                  </CardDescription>
-                </CardHeader>
+                 <CardHeader>
+                   <CardTitle className="text-lg font-bold">Cursos por Unidade ao Longo do Ano ({anoAtual})</CardTitle>
+                   <CardDescription>
+                     Distribuição mensal de cursos por unidade
+                   </CardDescription>
+                 </CardHeader>
                 <CardContent>
                   {loadingCursosAno ? (
                     <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
@@ -913,16 +1073,26 @@ const Dashboard = () => {
         {/* Gráficos - apenas em modo paisagem (não celular) */}
         {!isPortrait && (
           <>
-            {/* Nova seção: Gráficos de métricas adicionais */}
-            <div className="mt-8 grid gap-6 md:grid-cols-2">
+             {/* Seção: Utilização de Recursos */}
+             <div className="mt-8">
+               <div className="mb-6">
+                 <h2 className="text-2xl font-bold tracking-tight">Utilização de Recursos</h2>
+                 <p className="text-muted-foreground">
+                   Análise de professores, salas, matérias e distribuição por períodos
+                 </p>
+               </div>
+             </div>
+
+             {/* Nova seção: Gráficos de métricas adicionais */}
+             <div className="mt-8 grid gap-6 md:grid-cols-2">
               {/* Gráfico de distribuição por período */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">Distribuição de Cursos por Período</CardTitle>
-                  <CardDescription>
-                    Proporção de cursos por turno
-                  </CardDescription>
-                </CardHeader>
+                 <CardHeader>
+                   <CardTitle className="text-lg font-bold">Distribuição de Cursos por Período</CardTitle>
+                   <CardDescription>
+                     Proporção de cursos por turno
+                   </CardDescription>
+                 </CardHeader>
                 <CardContent>
                   {loadingCursosCompletos ? (
                     <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
@@ -953,12 +1123,12 @@ const Dashboard = () => {
 
               {/* Gráfico de salas mais utilizadas */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">Salas Mais Utilizadas</CardTitle>
-                  <CardDescription>
-                    Top 10 salas com mais cursos
-                  </CardDescription>
-                </CardHeader>
+                 <CardHeader>
+                   <CardTitle className="text-lg font-bold">Salas Mais Utilizadas</CardTitle>
+                   <CardDescription>
+                     Top 10 salas com mais cursos
+                   </CardDescription>
+                 </CardHeader>
                 <CardContent>
                   {loadingCursosCompletos ? (
                     <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
@@ -1020,12 +1190,12 @@ const Dashboard = () => {
 
               {/* Gráfico de professores mais ativos */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">Professores Com Mais Cursos</CardTitle>
-                  <CardDescription>
-                    Top 10 professores com mais cursos
-                  </CardDescription>
-                </CardHeader>
+                 <CardHeader>
+                   <CardTitle className="text-lg font-bold">Professores Com Mais Cursos</CardTitle>
+                   <CardDescription>
+                     Top 10 professores com mais cursos
+                   </CardDescription>
+                 </CardHeader>
                 <CardContent>
                   {loadingCursosCompletos ? (
                     <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
@@ -1059,12 +1229,12 @@ const Dashboard = () => {
 
               {/* Gráfico de matérias mais populares */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">Matérias Mais Populares</CardTitle>
-                  <CardDescription>
-                    Top 8 matérias com mais cursos
-                  </CardDescription>
-                </CardHeader>
+                 <CardHeader>
+                   <CardTitle className="text-lg font-bold">Matérias Mais Populares</CardTitle>
+                   <CardDescription>
+                     Top 8 matérias com mais cursos
+                   </CardDescription>
+                 </CardHeader>
                 <CardContent>
                   {loadingCursosCompletos ? (
                     <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
@@ -1097,15 +1267,25 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Gráfico de evolução mensal */}
-            <div className="mt-8">
+             {/* Seção: Evolução Temporal */}
+             <div className="mt-8">
+               <div className="mb-6">
+                 <h2 className="text-2xl font-bold tracking-tight">Evolução Temporal</h2>
+                 <p className="text-muted-foreground">
+                   Acompanhamento do crescimento e tendências ao longo do tempo
+                 </p>
+               </div>
+             </div>
+
+             {/* Gráfico de evolução mensal */}
+             <div className="mt-8">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">Evolução Mensal de Cursos ({anoAtual})</CardTitle>
-                  <CardDescription>
-                    Tendência de criação de cursos ao longo do ano
-                  </CardDescription>
-                </CardHeader>
+                 <CardHeader>
+                   <CardTitle className="text-lg font-bold">Evolução Mensal de Cursos ({anoAtual})</CardTitle>
+                   <CardDescription>
+                     Tendência de criação de cursos ao longo do ano
+                   </CardDescription>
+                 </CardHeader>
                 <CardContent>
                   {loadingCursosCompletos ? (
                     <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
@@ -1141,6 +1321,386 @@ const Dashboard = () => {
                   )}
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Nova seção: Gráficos Analíticos dos Novos Atributos */}
+            <div className="mt-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">Análise Detalhada dos Cursos</h2>
+                <p className="text-muted-foreground">
+                  Insights baseados nas vagas, carga horária e dias da semana
+                </p>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Gráfico de evolução de vagas (início vs fim) */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">Evolução de Vagas por Curso</CardTitle>
+                    <CardDescription>
+                      Comparação entre vagas no início e no fim dos cursos finalizados (Top 15 com maior taxa de evasão)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCursosCompletos ? (
+                      <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                    ) : evolucaoVagas.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <Users className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium">Nenhum dado de vagas</p>
+                        <p className="text-sm">Não há cursos com informações de vagas</p>
+                      </div>
+                    ) : (
+                      <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.BarChart 
+                          data={evolucaoVagas} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+                        >
+                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.XAxis 
+                            dataKey="titulo" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={100}
+                            tick={{ fontSize: 10 }}
+                            interval={0}
+                          />
+                          <RechartsPrimitive.YAxis 
+                            allowDecimals={false}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <RechartsPrimitive.Tooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              return (
+                                <div className={`rounded border p-2 shadow text-xs ${
+                                  theme === 'dark' 
+                                    ? 'bg-card border-border text-card-foreground' 
+                                    : 'bg-background border-border text-foreground'
+                                }`}>
+                                  <div className="font-semibold mb-1">{data.titulo}</div>
+                                  <div>Unidade: {data.unidade}</div>
+                                  <div>Vagas Início: {data.vagaInicio}</div>
+                                  <div>Vagas Fim: {data.vagaFim}</div>
+                                  <div>Evasão: {data.evasao} ({data.taxaEvasao.toFixed(1)}%)</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <RechartsPrimitive.Legend />
+                          <RechartsPrimitive.Bar dataKey="vagaInicio" fill="#8884d8" name="Vagas Início" />
+                          <RechartsPrimitive.Bar dataKey="vagaFim" fill="#82ca9d" name="Vagas Fim" />
+                        </RechartsPrimitive.BarChart>
+                      </ChartContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Gráfico de distribuição de carga horária */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">Distribuição de Carga Horária</CardTitle>
+                    <CardDescription>
+                      Quantidade de cursos por faixa de carga horária
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCursosCompletos ? (
+                      <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                    ) : distribuicaoCargaHorariaArray.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <BookOpen className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium">Nenhum dado de carga horária</p>
+                        <p className="text-sm">Não há cursos com carga horária definida</p>
+                      </div>
+                    ) : (
+                      <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.BarChart 
+                          data={distribuicaoCargaHorariaArray} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.XAxis 
+                            dataKey="faixa" 
+                            tick={{ fontSize: 12 }}
+                          />
+                          <RechartsPrimitive.YAxis 
+                            allowDecimals={false}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <RechartsPrimitive.Tooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              return (
+                                <div className={`rounded border p-2 shadow text-xs ${
+                                  theme === 'dark' 
+                                    ? 'bg-card border-border text-card-foreground' 
+                                    : 'bg-background border-border text-foreground'
+                                }`}>
+                                  <div className="font-semibold mb-1">{data.faixa}</div>
+                                  <div>Cursos: {data.quantidade}</div>
+                                  <div>Carga Total: {data.cargaTotal}h</div>
+                                  <div>Média: {(data.cargaTotal / data.quantidade).toFixed(1)}h</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <RechartsPrimitive.Bar 
+                            dataKey="quantidade" 
+                            fill="#8884d8"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </RechartsPrimitive.BarChart>
+                      </ChartContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Gráfico de dias da semana mais utilizados */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">Dias da Semana Mais Utilizados</CardTitle>
+                    <CardDescription>
+                      Frequência de uso de cada dia da semana nos cursos
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCursosCompletos ? (
+                      <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                    ) : diasSemanaArray.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <CalendarDays className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium">Nenhum dado de dias</p>
+                        <p className="text-sm">Não há cursos com dias da semana definidos</p>
+                      </div>
+                    ) : (
+                      <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.PieChart>
+                          <RechartsPrimitive.Pie
+                            data={diasSemanaArray}
+                            dataKey="quantidade"
+                            nameKey="dia"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            fill="#8884d8"
+                            label={({ dia, quantidade, percent }) => `${dia}: ${quantidade} (${(percent * 100).toFixed(1)}%)`}
+                          >
+                            {diasSemanaArray.map((entry, index) => (
+                              <RechartsPrimitive.Cell key={`cell-${index}`} fill={unidadeColors[index % unidadeColors.length]} />
+                            ))}
+                          </RechartsPrimitive.Pie>
+                          <RechartsPrimitive.Tooltip />
+                          <RechartsPrimitive.Legend />
+                        </RechartsPrimitive.PieChart>
+                      </ChartContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Gráfico de taxa de evasão por unidade */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">Taxa de Evasão por Unidade</CardTitle>
+                    <CardDescription>
+                      Percentual de evasão de alunos por unidade (apenas cursos finalizados)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCursosCompletos ? (
+                      <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                    ) : evasaoPorUnidadeArray.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <Building2 className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium">Nenhum dado de evasão</p>
+                        <p className="text-sm">Não há dados suficientes para calcular evasão</p>
+                      </div>
+                    ) : (
+                      <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.BarChart 
+                          data={evasaoPorUnidadeArray} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.XAxis 
+                            dataKey="unidade" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                            tick={{ fontSize: 10 }}
+                          />
+                          <RechartsPrimitive.YAxis 
+                            tick={{ fontSize: 12 }}
+                            label={{ value: 'Taxa de Evasão (%)', angle: -90, position: 'insideLeft' }}
+                          />
+                          <RechartsPrimitive.Tooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              return (
+                                <div className={`rounded border p-2 shadow text-xs ${
+                                  theme === 'dark' 
+                                    ? 'bg-card border-border text-card-foreground' 
+                                    : 'bg-background border-border text-foreground'
+                                }`}>
+                                  <div className="font-semibold mb-1">{data.unidade}</div>
+                                  <div>Taxa de Evasão: {data.taxaEvasao.toFixed(1)}%</div>
+                                  <div>Evasão Absoluta: {data.evasaoAbsoluta}</div>
+                                  <div>Cursos com Vagas: {data.cursosComVagas}</div>
+                                  <div>Total de Cursos: {data.totalCursos}</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <RechartsPrimitive.Bar 
+                            dataKey="taxaEvasao" 
+                            fill="#ef4444"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </RechartsPrimitive.BarChart>
+                      </ChartContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Segunda linha de gráficos */}
+              <div className="grid gap-6 md:grid-cols-2 mt-6">
+                {/* Gráfico de eficiência de ocupação de salas */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">Eficiência de Ocupação das Salas</CardTitle>
+                    <CardDescription>
+                      Top 10 salas com melhor eficiência de retenção de alunos (apenas cursos finalizados)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCursosCompletos ? (
+                      <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                    ) : eficienciaSalasArray.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <CalendarDays className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium">Nenhum dado de salas</p>
+                        <p className="text-sm">Não há dados suficientes para análise de salas</p>
+                      </div>
+                    ) : (
+                      <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.BarChart 
+                          data={eficienciaSalasArray} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.XAxis 
+                            dataKey="sala" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                            tick={{ fontSize: 10 }}
+                          />
+                          <RechartsPrimitive.YAxis 
+                            tick={{ fontSize: 12 }}
+                            label={{ value: 'Eficiência (%)', angle: -90, position: 'insideLeft' }}
+                          />
+                          <RechartsPrimitive.Tooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              return (
+                                <div className={`rounded border p-2 shadow text-xs ${
+                                  theme === 'dark' 
+                                    ? 'bg-card border-border text-card-foreground' 
+                                    : 'bg-background border-border text-foreground'
+                                }`}>
+                                  <div className="font-semibold mb-1">{data.sala}</div>
+                                  <div>Eficiência: {data.eficiencia.toFixed(1)}%</div>
+                                  <div>Capacidade: {data.capacidade}</div>
+                                  <div>Ocupação Início: {data.ocupacaoInicio.toFixed(1)}%</div>
+                                  <div>Ocupação Fim: {data.ocupacaoFim.toFixed(1)}%</div>
+                                  <div>Cursos: {data.cursosComVagas}</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <RechartsPrimitive.Bar 
+                            dataKey="eficiencia" 
+                            fill="#10b981"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </RechartsPrimitive.BarChart>
+                      </ChartContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Gráfico de correlação entre carga horária e evasão */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">Correlação: Carga Horária vs Evasão</CardTitle>
+                    <CardDescription>
+                      Relação entre duração do curso e taxa de evasão (apenas cursos finalizados)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCursosCompletos ? (
+                      <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
+                    ) : correlacaoCargaEvasao.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <BookOpen className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium">Nenhum dado de correlação</p>
+                        <p className="text-sm">Não há dados suficientes para análise de correlação</p>
+                      </div>
+                    ) : (
+                      <ChartContainer config={{}} className="w-full h-[400px]">
+                        <RechartsPrimitive.ScatterChart 
+                          data={correlacaoCargaEvasao} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+                          <RechartsPrimitive.XAxis 
+                            dataKey="cargaHoraria" 
+                            name="Carga Horária"
+                            unit="h"
+                            tick={{ fontSize: 12 }}
+                            label={{ value: 'Carga Horária (h)', position: 'insideBottom', offset: -5 }}
+                          />
+                          <RechartsPrimitive.YAxis 
+                            dataKey="taxaEvasao"
+                            name="Taxa de Evasão"
+                            unit="%"
+                            tick={{ fontSize: 12 }}
+                            label={{ value: 'Taxa de Evasão (%)', angle: -90, position: 'insideLeft' }}
+                          />
+                          <RechartsPrimitive.Tooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              return (
+                                <div className={`rounded border p-2 shadow text-xs ${
+                                  theme === 'dark' 
+                                    ? 'bg-card border-border text-card-foreground' 
+                                    : 'bg-background border-border text-foreground'
+                                }`}>
+                                  <div className="font-semibold mb-1">{data.titulo}</div>
+                                  <div>Unidade: {data.unidade}</div>
+                                  <div>Carga Horária: {data.cargaHoraria}h</div>
+                                  <div>Taxa de Evasão: {data.taxaEvasao.toFixed(1)}%</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <RechartsPrimitive.Scatter 
+                            dataKey="taxaEvasao" 
+                            fill="#8884d8"
+                            r={6}
+                          />
+                        </RechartsPrimitive.ScatterChart>
+                      </ChartContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </>
         )}
