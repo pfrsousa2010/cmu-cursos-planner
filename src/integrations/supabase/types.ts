@@ -97,8 +97,9 @@ export type Database = {
           titulo: string
           unidade_id: string
           updated_at: string | null
-          vaga_fim: number | null
-          vaga_inicio: number | null
+          qtd_alunos_concluiram: number | null
+          qtd_alunos_iniciaram: number | null
+          vagas: number | null
         }
         Insert: {
           carga_horaria?: number | null
@@ -113,8 +114,9 @@ export type Database = {
           titulo: string
           unidade_id: string
           updated_at?: string | null
-          vaga_fim?: number | null
-          vaga_inicio?: number | null
+          qtd_alunos_concluiram?: number | null
+          qtd_alunos_iniciaram?: number | null
+          vagas?: number | null
         }
         Update: {
           carga_horaria?: number | null
@@ -129,8 +131,9 @@ export type Database = {
           titulo?: string
           unidade_id?: string
           updated_at?: string | null
-          vaga_fim?: number | null
-          vaga_inicio?: number | null
+          qtd_alunos_concluiram?: number | null
+          qtd_alunos_iniciaram?: number | null
+          vagas?: number | null
         }
         Relationships: [
           {

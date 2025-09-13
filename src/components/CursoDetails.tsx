@@ -132,14 +132,19 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos, showActions = true }: Curs
         
         <div>
           <span className="font-medium">Vagas:</span>
+          <p>{curso.vagas ? `${curso.vagas} vagas` : 'Não definido'}</p>
+        </div>
+        
+        <div>
+          <span className="font-medium">Alunos:</span>
           <p>
-            {(curso.vaga_inicio || 0) === 0 && (curso.vaga_fim || 0) === 0 
+            {(curso.qtd_alunos_iniciaram || 0) === 0 && (curso.qtd_alunos_concluiram || 0) === 0 
               ? 'Não definido' 
               : (
                   <>
-                    <span className="text-green-600 font-medium">{curso.vaga_inicio || 0}</span>
+                    <span className="text-green-600 font-medium">{curso.qtd_alunos_iniciaram || 0}</span>
                     {' → '}
-                    <span className="text-red-500 font-medium">{curso.vaga_fim || 0}</span>
+                    <span className="text-red-500 font-medium">{curso.qtd_alunos_concluiram || 0}</span>
                   </>
                 )
             }

@@ -33,8 +33,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
   const [salaId, setSalaId] = useState("");
   const [salaNome, setSalaNome] = useState("");
   const [cargaHoraria, setCargaHoraria] = useState("");
-  const [vagaInicio, setVagaInicio] = useState("");
-  const [vagaFim, setVagaFim] = useState("");
+  const [qtdAlunosIniciaram, setQtdAlunosIniciaram] = useState("");
+  const [qtdAlunosConcluiram, setQtdAlunosConcluiram] = useState("");
+  const [vagas, setVagas] = useState("");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
 
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
@@ -154,8 +155,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setSalaId(curso.salas?.id || "");
       setSalaNome(curso.salas?.nome || "");
       setCargaHoraria(curso.carga_horaria?.toString() || "");
-      setVagaInicio(curso.vaga_inicio?.toString() || "");
-      setVagaFim(curso.vaga_fim?.toString() || "");
+      setQtdAlunosIniciaram(curso.qtd_alunos_iniciaram?.toString() || "");
+      setQtdAlunosConcluiram(curso.qtd_alunos_concluiram?.toString() || "");
+      setVagas(curso.vagas?.toString() || "");
       setDiasSemana(curso.dia_semana || []);
 
       // Carregar matérias e insumos do curso
@@ -194,8 +196,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setSalaId(cursoParaDuplicar.salas?.id || "");
       setSalaNome(cursoParaDuplicar.salas?.nome || "");
       setCargaHoraria(cursoParaDuplicar.carga_horaria?.toString() || "");
-      setVagaInicio(cursoParaDuplicar.vaga_inicio?.toString() || "");
-      setVagaFim(cursoParaDuplicar.vaga_fim?.toString() || "");
+      setQtdAlunosIniciaram(cursoParaDuplicar.qtd_alunos_iniciaram?.toString() || "");
+      setQtdAlunosConcluiram(cursoParaDuplicar.qtd_alunos_concluiram?.toString() || "");
+      setVagas(cursoParaDuplicar.vagas?.toString() || "");
       setDiasSemana(cursoParaDuplicar.dia_semana || []);
 
 
@@ -236,8 +239,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setSalaId(cursoParaDuplicar.salas?.id || "");
       setSalaNome(cursoParaDuplicar.salas?.nome || "");
       setCargaHoraria(cursoParaDuplicar.carga_horaria?.toString() || "");
-      setVagaInicio(cursoParaDuplicar.vaga_inicio?.toString() || "");
-      setVagaFim(cursoParaDuplicar.vaga_fim?.toString() || "");
+      setQtdAlunosIniciaram(cursoParaDuplicar.qtd_alunos_iniciaram?.toString() || "");
+      setQtdAlunosConcluiram(cursoParaDuplicar.qtd_alunos_concluiram?.toString() || "");
+      setVagas(cursoParaDuplicar.vagas?.toString() || "");
       setDiasSemana(cursoParaDuplicar.dia_semana || []);
     } else {
       // Limpar formulário para novo curso
@@ -251,8 +255,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setSalaId("");
       setSalaNome("");
       setCargaHoraria("");
-      setVagaInicio("");
-      setVagaFim("");
+      setQtdAlunosIniciaram("");
+      setQtdAlunosConcluiram("");
+      setVagas("");
       setDiasSemana([]);
 
       setSelectedMaterias([]);
@@ -401,8 +406,9 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       unidade_id: unidadeId,
       sala_id: salaId || null,
       carga_horaria: cargaHoraria ? parseInt(cargaHoraria) : null,
-      vaga_inicio: vagaInicio ? parseInt(vagaInicio) : null,
-      vaga_fim: vagaFim ? parseInt(vagaFim) : null,
+      qtd_alunos_iniciaram: qtdAlunosIniciaram ? parseInt(qtdAlunosIniciaram) : null,
+      qtd_alunos_concluiram: qtdAlunosConcluiram ? parseInt(qtdAlunosConcluiram) : null,
+      vagas: vagas ? parseInt(vagas) : null,
       dia_semana: diasSemana
     };
 
@@ -921,48 +927,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="vaga_inicio" className="text-green-600 font-medium">
-            Vagas Preenchidas Início {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
-          </Label>
-          <div className="space-y-2">
-            <Slider
-              value={[parseInt(vagaInicio) || 0]}
-              onValueChange={(value) => setVagaInicio(value[0].toString())}
-              max={getSalaCapacidade() || 50}
-              min={0}
-              step={1}
-              className="w-full [&_.slider-track]:bg-green-200 [&_.slider-range]:bg-green-500 [&_.slider-thumb]:bg-green-600"
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>0</span>
-              <span className="font-medium text-green-600">{vagaInicio || 0}</span>
-              <span>{getSalaCapacidade() || 50}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="vaga_fim" className="text-red-500 font-medium">
-            Vagas Preenchidas Fim {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
-          </Label>
-          <div className="space-y-2">
-            <Slider
-              value={[parseInt(vagaFim) || 0]}
-              onValueChange={(value) => setVagaFim(value[0].toString())}
-              max={getSalaCapacidade() || 50}
-              min={0}
-              step={1}
-              className="w-full [&_.slider-track]:bg-red-200 [&_.slider-range]:bg-red-400 [&_.slider-thumb]:bg-red-500"
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>0</span>
-              <span className="font-medium text-red-500">{vagaFim || 0}</span>
-              <span>{getSalaCapacidade() || 50}</span>
-            </div>
-          </div>
-        </div>
-
+        {/* Carga Horária */}
         <div className="space-y-2">
           <Label htmlFor="carga_horaria">
             Carga Horária (horas)
@@ -976,6 +941,72 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
             placeholder="Ex: 40"
           />
         </div>
+
+        {/* Vagas */}
+        <div className="space-y-2">
+          <Label htmlFor="vagas" className="text-blue-600 font-medium">
+            Total de Vagas {getSalaCapacidade() && `(Máx: ${getSalaCapacidade()})`}
+          </Label>
+          <div className="space-y-2">
+            <Slider
+              value={[parseInt(vagas) || 0]}
+              onValueChange={(value) => setVagas(value[0].toString())}
+              max={getSalaCapacidade() || 50}
+              min={0}
+              step={1}
+              className="w-full [&_.slider-track]:bg-blue-200 [&_.slider-range]:bg-blue-500 [&_.slider-thumb]:bg-blue-600"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>0</span>
+              <span className="font-medium text-blue-600">{vagas || 0}</span>
+              <span>{getSalaCapacidade() || 50}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Alunos que Iniciaram */}
+        <div className="space-y-2">
+          <Label htmlFor="qtd_alunos_iniciaram" className="text-green-600 font-medium">
+            Alunos que Iniciaram {vagas && `(Máx: ${vagas})`}
+          </Label>
+          <div className="space-y-2">
+            <Slider
+              value={[parseInt(qtdAlunosIniciaram) || 0]}
+              onValueChange={(value) => setQtdAlunosIniciaram(value[0].toString())}
+              max={parseInt(vagas) || 50}
+              min={0}
+              step={1}
+              className="w-full [&_.slider-track]:bg-green-200 [&_.slider-range]:bg-green-500 [&_.slider-thumb]:bg-green-600"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>0</span>
+              <span className="font-medium text-green-600">{qtdAlunosIniciaram || 0}</span>
+              <span>{vagas || 50}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Alunos que Concluíram */}
+        <div className="space-y-2">
+          <Label htmlFor="qtd_alunos_concluiram" className="text-red-500 font-medium">
+            Alunos que Concluíram {qtdAlunosIniciaram && `(Máx: ${qtdAlunosIniciaram})`}
+          </Label>
+          <div className="space-y-2">
+            <Slider
+              value={[parseInt(qtdAlunosConcluiram) || 0]}
+              onValueChange={(value) => setQtdAlunosConcluiram(value[0].toString())}
+              max={parseInt(qtdAlunosIniciaram) || 50}
+              min={0}
+              step={1}
+              className="w-full [&_.slider-track]:bg-red-200 [&_.slider-range]:bg-red-400 [&_.slider-thumb]:bg-red-500"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>0</span>
+              <span className="font-medium text-red-500">{qtdAlunosConcluiram || 0}</span>
+              <span>{qtdAlunosIniciaram || 50}</span>
+            </div>
+          </div>
+        </div>        
       </div>
 
       {/* Matérias */}

@@ -419,17 +419,17 @@ const Dashboard = () => {
   });
 
   const cursosComVagas = cursosFinalizados.filter(curso => 
-    curso.vaga_inicio !== null && curso.vaga_fim !== null
+    curso.qtd_alunos_iniciaram !== null && curso.qtd_alunos_concluiram !== null
   );
 
-  // Gráfico de evolução de vagas (início vs fim)
-  const evolucaoVagas = cursosComVagas.map(curso => ({
+  // Gráfico de evolução de alunos (início vs fim)
+  const evolucaoAlunos = cursosComVagas.map(curso => ({
     titulo: curso.titulo.length > 30 ? curso.titulo.substring(0, 30) + '...' : curso.titulo,
-    vagaInicio: curso.vaga_inicio || 0,
-    vagaFim: curso.vaga_fim || 0,
+    alunosInicio: curso.qtd_alunos_iniciaram || 0,
+    alunosFim: curso.qtd_alunos_concluiram || 0,
     unidade: curso.unidades?.nome || 'Sem unidade',
-    evasao: ((curso.vaga_inicio || 0) - (curso.vaga_fim || 0)),
-    taxaEvasao: curso.vaga_inicio ? (((curso.vaga_inicio || 0) - (curso.vaga_fim || 0)) / curso.vaga_inicio * 100) : 0
+    evasao: ((curso.qtd_alunos_iniciaram || 0) - (curso.qtd_alunos_concluiram || 0)),
+    taxaEvasao: curso.qtd_alunos_iniciaram ? (((curso.qtd_alunos_iniciaram || 0) - (curso.qtd_alunos_concluiram || 0)) / curso.qtd_alunos_iniciaram * 100) : 0
   })).sort((a, b) => b.taxaEvasao - a.taxaEvasao).slice(0, 15); // Top 15 com maior taxa de evasão
 
   // Gráfico de distribuição de carga horária
@@ -486,18 +486,18 @@ const Dashboard = () => {
       acc[unidadeNome] = {
         unidade: unidadeNome,
         totalCursos: 0,
-        totalVagasInicio: 0,
-        totalVagasFim: 0,
-        cursosComVagas: 0
+        totalAlunosInicio: 0,
+        totalAlunosFim: 0,
+        cursosComAlunos: 0
       };
     }
     
     acc[unidadeNome].totalCursos += 1;
     
-    if (curso.vaga_inicio !== null && curso.vaga_fim !== null) {
-      acc[unidadeNome].totalVagasInicio += curso.vaga_inicio || 0;
-      acc[unidadeNome].totalVagasFim += curso.vaga_fim || 0;
-      acc[unidadeNome].cursosComVagas += 1;
+    if (curso.qtd_alunos_iniciaram !== null && curso.qtd_alunos_concluiram !== null) {
+      acc[unidadeNome].totalAlunosInicio += curso.qtd_alunos_iniciaram || 0;
+      acc[unidadeNome].totalAlunosFim += curso.qtd_alunos_concluiram || 0;
+      acc[unidadeNome].cursosComAlunos += 1;
     }
     
     return acc;
@@ -506,11 +506,11 @@ const Dashboard = () => {
   const evasaoPorUnidadeArray = Object.values(evasaoPorUnidade)
     .map((item: any) => ({
       ...item,
-      taxaEvasao: item.totalVagasInicio > 0 ? 
-        ((item.totalVagasInicio - item.totalVagasFim) / item.totalVagasInicio * 100) : 0,
-      evasaoAbsoluta: item.totalVagasInicio - item.totalVagasFim
+      taxaEvasao: item.totalAlunosInicio > 0 ? 
+        ((item.totalAlunosInicio - item.totalAlunosFim) / item.totalAlunosInicio * 100) : 0,
+      evasaoAbsoluta: item.totalAlunosInicio - item.totalAlunosFim
     }))
-    .filter((item: any) => item.cursosComVagas > 0)
+    .filter((item: any) => item.cursosComAlunos > 0)
     .sort((a: any, b: any) => b.taxaEvasao - a.taxaEvasao);
 
   // Gráfico de eficiência de ocupação de salas (apenas cursos finalizados)
@@ -523,18 +523,18 @@ const Dashboard = () => {
         sala: salaNome,
         capacidade: capacidade,
         totalCursos: 0,
-        totalVagasInicio: 0,
-        totalVagasFim: 0,
-        cursosComVagas: 0
+        totalAlunosInicio: 0,
+        totalAlunosFim: 0,
+        cursosComAlunos: 0
       };
     }
     
     acc[salaNome].totalCursos += 1;
     
-    if (curso.vaga_inicio !== null && curso.vaga_fim !== null) {
-      acc[salaNome].totalVagasInicio += curso.vaga_inicio || 0;
-      acc[salaNome].totalVagasFim += curso.vaga_fim || 0;
-      acc[salaNome].cursosComVagas += 1;
+    if (curso.qtd_alunos_iniciaram !== null && curso.qtd_alunos_concluiram !== null) {
+      acc[salaNome].totalAlunosInicio += curso.qtd_alunos_iniciaram || 0;
+      acc[salaNome].totalAlunosFim += curso.qtd_alunos_concluiram || 0;
+      acc[salaNome].cursosComAlunos += 1;
     }
     
     return acc;
@@ -543,19 +543,19 @@ const Dashboard = () => {
   const eficienciaSalasArray = Object.values(eficienciaSalas)
     .map((item: any) => ({
       ...item,
-      ocupacaoInicio: item.capacidade > 0 ? (item.totalVagasInicio / item.capacidade * 100) : 0,
-      ocupacaoFim: item.capacidade > 0 ? (item.totalVagasFim / item.capacidade * 100) : 0,
-      eficiencia: item.totalVagasInicio > 0 ? (item.totalVagasFim / item.totalVagasInicio * 100) : 0
+      ocupacaoInicio: item.capacidade > 0 ? (item.totalAlunosInicio / item.capacidade * 100) : 0,
+      ocupacaoFim: item.capacidade > 0 ? (item.totalAlunosFim / item.capacidade * 100) : 0,
+      eficiencia: item.totalAlunosInicio > 0 ? (item.totalAlunosFim / item.totalAlunosInicio * 100) : 0
     }))
-    .filter((item: any) => item.cursosComVagas > 0 && item.capacidade > 0)
+    .filter((item: any) => item.cursosComAlunos > 0 && item.capacidade > 0)
     .sort((a: any, b: any) => b.eficiencia - a.eficiencia)
     .slice(0, 10); // Top 10 salas
 
   // Gráfico de correlação entre carga horária e evasão
   const correlacaoCargaEvasao = cursosComVagas.map(curso => ({
     cargaHoraria: curso.carga_horaria || 0,
-    taxaEvasao: curso.vaga_inicio ? 
-      ((curso.vaga_inicio - (curso.vaga_fim || 0)) / curso.vaga_inicio * 100) : 0,
+    taxaEvasao: curso.qtd_alunos_iniciaram ? 
+      ((curso.qtd_alunos_iniciaram - (curso.qtd_alunos_concluiram || 0)) / curso.qtd_alunos_iniciaram * 100) : 0,
     titulo: curso.titulo.length > 20 ? curso.titulo.substring(0, 20) + '...' : curso.titulo,
     unidade: curso.unidades?.nome || 'Sem unidade'
   })).filter(item => item.cargaHoraria > 0);
@@ -1344,7 +1344,7 @@ const Dashboard = () => {
                   <CardContent>
                     {loadingCursosCompletos ? (
                       <div className="flex justify-center items-center h-64"><Skeleton className="h-48 w-full rounded" /></div>
-                    ) : evolucaoVagas.length === 0 ? (
+                    ) : evolucaoAlunos.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
                         <Users className="h-12 w-12 mb-4 opacity-50" />
                         <p className="text-lg font-medium">Nenhum dado de vagas</p>
@@ -1353,7 +1353,7 @@ const Dashboard = () => {
                     ) : (
                       <ChartContainer config={{}} className="w-full h-[400px]">
                         <RechartsPrimitive.BarChart 
-                          data={evolucaoVagas} 
+                          data={evolucaoAlunos} 
                           margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
                         >
                           <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
@@ -1548,7 +1548,7 @@ const Dashboard = () => {
                                   <div className="font-semibold mb-1">{data.unidade}</div>
                                   <div>Taxa de Evasão: {data.taxaEvasao.toFixed(1)}%</div>
                                   <div>Evasão Absoluta: {data.evasaoAbsoluta}</div>
-                                  <div>Cursos com Vagas: {data.cursosComVagas}</div>
+                                  <div>Cursos com Alunos: {data.cursosComAlunos}</div>
                                   <div>Total de Cursos: {data.totalCursos}</div>
                                 </div>
                               );
@@ -1618,7 +1618,7 @@ const Dashboard = () => {
                                   <div>Capacidade: {data.capacidade}</div>
                                   <div>Ocupação Início: {data.ocupacaoInicio.toFixed(1)}%</div>
                                   <div>Ocupação Fim: {data.ocupacaoFim.toFixed(1)}%</div>
-                                  <div>Cursos: {data.cursosComVagas}</div>
+                                  <div>Cursos: {data.cursosComAlunos}</div>
                                 </div>
                               );
                             }}

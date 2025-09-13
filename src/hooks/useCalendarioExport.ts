@@ -221,8 +221,8 @@ const exportSemanal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow
   });
   
   const columnStyles: any = {
-    0: { cellWidth: 15, halign: 'center' as const },
-    1: { cellWidth: 35, halign: 'center' as const }
+    0: { cellWidth: 15, halign: 'center' as const }, // Período
+    1: { cellWidth: 30, halign: 'center' as const } // Unidade\nSala
   };
   
   weekDays.forEach((_, index) => {
@@ -414,7 +414,7 @@ export const useCalendarioExport = () => {
     }
     
     doc.text(`Data de emissão: ${dataAtual}`, 120, infoY);
-    infoY += 8;
+    infoY += 5;
     
     if (viewMode === 'semana') {
       exportSemanal(doc, infoY, currentWeek, salasToShow, cursosFiltrados);

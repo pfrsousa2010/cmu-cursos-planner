@@ -18,15 +18,15 @@ export const useCursosExport = () => {
 
   const formatDiasSemana = (diasSemana: string[]) => {
     if (!diasSemana || diasSemana.length === 0) return 'Não definido';
-    
+
     // Se todos os dias da semana estão presentes, mostrar "segunda à sexta"
     const todosDias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
     const temTodosDias = todosDias.every(dia => diasSemana.includes(dia));
-    
+
     if (temTodosDias) {
       return 'Segunda à sexta';
     }
-    
+
     // Caso contrário, mostrar os dias separados por vírgula
     const diasFormatados = diasSemana.map(dia => {
       const diasMap = {
@@ -38,7 +38,7 @@ export const useCursosExport = () => {
       };
       return diasMap[dia as keyof typeof diasMap] || dia;
     });
-    
+
     return diasFormatados.join(', ');
   };
 
@@ -46,11 +46,11 @@ export const useCursosExport = () => {
   const isCursoFinalizado = (dataFim: string) => {
     const hoje = new Date();
     const fimCurso = new Date(dataFim + 'T00:00:00');
-    
+
     // Normalizar as datas para comparar apenas o dia (sem horário)
     const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
-    
+
     // Curso está finalizado apenas se a data fim for anterior ao dia atual
     return fimCursoNormalizado < hojeNormalizado;
   };
@@ -100,15 +100,16 @@ export const useCursosExport = () => {
     const excelData = cursosOrdenados.map(curso => {
       const cursoFinalizado = isCursoFinalizado(curso.fim);
       const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
-      
+
       return {
         'Título': tituloComStatus,
         'Professor': curso.professor,
         'Período': formatPeriodo(curso.periodo),
         'Dias da Semana': formatDiasSemana(curso.dia_semana),
         'Carga Horária': curso.carga_horaria || 0,
-        'Vagas Preenchidas Início': curso.vaga_inicio || 0,
-        'Vagas Preenchidas Fim': curso.vaga_fim || 0,
+        'Total de Vagas': curso.vagas || 0,
+        'Alunos Iniciaram': curso.qtd_alunos_iniciaram || 0,
+        'Alunos Concluíram': curso.qtd_alunos_concluiram || 0,
         'Data Início': format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         'Data Fim': format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         'Unidade': curso.unidades?.nome || 'Sem Unidade',
@@ -129,8 +130,9 @@ export const useCursosExport = () => {
       { wch: 12 }, // Período
       { wch: 20 }, // Dias da Semana
       { wch: 15 }, // Carga Horária
-      { wch: 20 }, // Vagas Preenchidas Início
-      { wch: 20 }, // Vagas Preenchidas Fim
+      { wch: 15 }, // Total de Vagas
+      { wch: 18 }, // Alunos Iniciaram
+      { wch: 18 }, // Alunos Concluíram
       { wch: 12 }, // Data Início
       { wch: 12 }, // Data Fim
       { wch: 20 }, // Unidade
@@ -146,8 +148,8 @@ export const useCursosExport = () => {
     // Gerar arquivo Excel
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
-    const dataStr = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-    
+    const dataStr = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+
     const fileName = `relatorio_cursos_${dataStr}.xlsx`;
     XLSX.writeFile(wb, fileName);
 
@@ -173,15 +175,15 @@ export const useCursosExport = () => {
 
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const dataAtual = new Date().toLocaleDateString('pt-BR');
-    
+
     // Título principal
     doc.setFontSize(16);
     doc.text('Relatório de Cursos', 14, 20);
-    
+
     // Informações do relatório
     doc.setFontSize(10);
     let infoY = 30;
-    
+
     // Filtros aplicados
     const filtros = [];
     if (searchTerm) {
@@ -204,29 +206,30 @@ export const useCursosExport = () => {
     } else {
       filtros.push(`Mostrar finalizados: Não`);
     }
-    
+
     if (filtros.length > 0) {
       doc.text(`Filtros aplicados: ${filtros.join(' | ')}`, 14, infoY);
       infoY += 6;
     }
-    
+
     // Data de emissão
     doc.text(`Data de emissão: ${dataAtual}`, 14, infoY);
     infoY += 6;
-    
+
     // Total de cursos
     doc.text(`Total de cursos: ${cursosOrdenados.length}`, 14, infoY);
-    infoY += 8;
-    
+    infoY += 5;
+
     // Preparar dados da tabela
     const headers = [
       'Título',
-      'Professor', 
+      'Professor',
       'Período',
       'Dias da Semana',
       'Carga Horária',
-      'Vagas Início',
-      'Vagas Fim',
+      'Vagas',
+      'Iniciaram',
+      'Concluíram',
       'Data Início',
       'Data Fim',
       'Unidade',
@@ -234,19 +237,20 @@ export const useCursosExport = () => {
       'Insumos',
       'Matérias'
     ];
-    
+
     const tableData = cursosOrdenados.map(curso => {
       const cursoFinalizado = isCursoFinalizado(curso.fim);
       const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
-      
+
       return [
         tituloComStatus,
         curso.professor,
         formatPeriodo(curso.periodo),
         formatDiasSemana(curso.dia_semana),
         curso.carga_horaria?.toString() || '0',
-        curso.vaga_inicio?.toString() || '0',
-        curso.vaga_fim?.toString() || '0',
+        curso.vagas?.toString() || '0',
+        curso.qtd_alunos_iniciaram?.toString() || '0',
+        curso.qtd_alunos_concluiram?.toString() || '0',
         format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         curso.unidades?.nome || 'Sem Unidade',
@@ -255,43 +259,44 @@ export const useCursosExport = () => {
         curso.total_materias?.toString() || '0'
       ];
     });
-    
+
     // Configuração da tabela para orientação paisagem
     const columnStyles: any = {
-      0: { cellWidth: 40, halign: 'center' as const }, // Título
-      1: { cellWidth: 30, halign: 'center' as const }, // Professor
+      0: { cellWidth: 38, halign: 'center' as const }, // Título
+      1: { cellWidth: 25, halign: 'center' as const }, // Professor
       2: { cellWidth: 14, halign: 'center' as const }, // Período
-      3: { cellWidth: 30, halign: 'center' as const }, // Dias da Semana
-      4: { cellWidth: 16, halign: 'center' as const }, // Carga Horária
-      5: { cellWidth: 16, halign: 'center' as const }, // Vagas Início
-      6: { cellWidth: 16, halign: 'center' as const }, // Vagas Fim
-      7: { cellWidth: 18, halign: 'center' as const }, // Data Início
-      8: { cellWidth: 18, halign: 'center' as const }, // Data Fim
-      9: { cellWidth: 22, halign: 'center' as const }, // Unidade
-      10: { cellWidth: 20, halign: 'center' as const }, // Sala
-      11: { cellWidth: 15, halign: 'center' as const }, // Insumos
-      12: { cellWidth: 15, halign: 'center' as const } // Matérias
+      3: { cellWidth: 25, halign: 'center' as const }, // Dias da Semana
+      4: { cellWidth: 14, halign: 'center' as const }, // Carga Horária
+      5: { cellWidth: 14, halign: 'center' as const }, // Vagas
+      6: { cellWidth: 16, halign: 'center' as const }, // Alunos Iniciaram
+      7: { cellWidth: 20, halign: 'center' as const }, // Alunos Concluíram
+      8: { cellWidth: 18, halign: 'center' as const }, // Data Início
+      9: { cellWidth: 18, halign: 'center' as const }, // Data Fim
+      10: { cellWidth: 22, halign: 'center' as const }, // Unidade
+      11: { cellWidth: 20, halign: 'center' as const }, // Sala
+      12: { cellWidth: 15, halign: 'center' as const }, // Insumos
+      13: { cellWidth: 15, halign: 'center' as const } // Matérias
     };
-    
+
     autoTable(doc, {
       head: [headers],
       body: tableData,
       startY: infoY + 3,
       margin: { left: 14, right: 14 },
       theme: 'grid',
-      headStyles: { 
-        fillColor: [74, 144, 226], 
-        textColor: 255, 
+      headStyles: {
+        fillColor: [74, 144, 226],
+        textColor: 255,
         halign: 'center',
         fontSize: 9,
         fontStyle: 'bold'
       },
-      bodyStyles: { 
+      bodyStyles: {
         textColor: 0,
         fontSize: 8,
         cellPadding: 2
       },
-      styles: { 
+      styles: {
         fontSize: 8,
         cellPadding: 1
       },
@@ -299,8 +304,10 @@ export const useCursosExport = () => {
       didParseCell: function (data) {
         if (data.section === 'body') {
           data.cell.styles.minCellHeight = 8;
+          data.cell.styles.halign = 'center';
+          data.cell.styles.valign = 'middle';
         }
-        
+
         // Aplicar cores para período
         if (data.section === 'body' && data.column.index === 2) {
           const periodo = data.cell.text[0];
@@ -317,23 +324,23 @@ export const useCursosExport = () => {
         }
       }
     });
-    
+
     addPageNumbers(doc);
-    
+
     // Nome do arquivo
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
-    const dataStr = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-    
+    const dataStr = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+
     const fileName = `relatorio_cursos_${dataStr}.pdf`;
     doc.save(fileName);
-    
+
     toast.success("Relatório PDF gerado com sucesso!");
   };
 
   const addPageNumbers = (doc: jsPDF) => {
     const finalTotalPages = doc.getNumberOfPages();
-    
+
     for (let pageNum = 1; pageNum <= finalTotalPages; pageNum++) {
       doc.setPage(pageNum);
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -344,8 +351,8 @@ export const useCursosExport = () => {
     }
   };
 
-  return { 
-    exportToExcel, 
-    exportToPDF 
+  return {
+    exportToExcel,
+    exportToPDF
   };
 };

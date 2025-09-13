@@ -13,8 +13,9 @@ export interface Curso {
   total_insumos?: number;
   total_materias?: number;
   carga_horaria?: number | null;
-  vaga_inicio?: number | null;
-  vaga_fim?: number | null;
+  qtd_alunos_iniciaram?: number | null;
+  qtd_alunos_concluiram?: number | null;
+  vagas?: number | null;
   dia_semana: ('segunda' | 'terca' | 'quarta' | 'quinta' | 'sexta')[];
 }
 
