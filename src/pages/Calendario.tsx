@@ -367,7 +367,7 @@ const Calendario = () => {
               <CursoForm 
                 onSuccess={handleNovoCursoSuccess}
                 cursosExistentes={cursosFiltrados}
-                curso={novoCursoData ? (() => {
+                cursoParaDuplicar={novoCursoData ? (() => {
                   const salaSelecionada = salasToShow.find(s => s.id === novoCursoData.salaId);
                   return {
                     id: '',
