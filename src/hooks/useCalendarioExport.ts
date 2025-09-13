@@ -4,7 +4,6 @@ import autoTable from "jspdf-autotable";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Curso, Sala, ViewMode } from "@/types/calendario";
-import { getCursoColorRGB } from "@/utils/calendarioUtils";
 
 const cursoApareceNoDia = (curso: Curso, dia: Date): boolean => {
   const cursoStart = parseISO(curso.inicio);
@@ -189,7 +188,7 @@ const exportSemanal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow
     end: endOfWeek(currentWeek, { weekStartsOn: 1 })
   }).filter(day => day.getDay() !== 0 && day.getDay() !== 6);
 
-  const headers = ['Turno', 'Unidade\nSala'];
+  const headers = ['Período', 'Unidade\nSala'];
   weekDays.forEach(day => {
     const dayName = format(day, 'EEEE', { locale: ptBR });
     const shortDayName = dayName.replace('-feira', '');
@@ -257,9 +256,22 @@ const exportSemanal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow
         data.cell.styles.minCellHeight = 10;
       }
       
+      // Coluna Turno (índice 0) - aplicar cores por período
       if (data.section === 'body' && data.column.index === 0 && data.row.index >= 0) {
         const currentValue = tableData[data.row.index][0];
         const prevValue = data.row.index > 0 ? tableData[data.row.index - 1][0] : null;
+        
+        // Aplicar cor baseada no período (usando as cores do CursoDetails.tsx)
+        if (currentValue === 'Manhã') {
+          data.cell.styles.fillColor = [254, 249, 195] as [number, number, number]; // bg-yellow-100
+          data.cell.styles.textColor = [133, 77, 14] as [number, number, number]; // text-yellow-800
+        } else if (currentValue === 'Tarde') {
+          data.cell.styles.fillColor = [255, 237, 213] as [number, number, number]; // bg-orange-100
+          data.cell.styles.textColor = [154, 52, 18] as [number, number, number]; // text-orange-800
+        } else if (currentValue === 'Noite') {
+          data.cell.styles.fillColor = [219, 234, 254] as [number, number, number]; // bg-blue-100
+          data.cell.styles.textColor = [30, 64, 175] as [number, number, number]; // text-blue-800
+        }
         
         if (prevValue === currentValue) {
           data.cell.rowSpan = 1;
@@ -279,6 +291,7 @@ const exportSemanal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow
         }
       }
       
+      // Coluna Salas (índice 1) - mesclagem
       if (data.section === 'body' && data.column.index === 1 && data.row.index >= 0) {
         const currentValue = tableData[data.row.index][1];
         
