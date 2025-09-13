@@ -72,6 +72,50 @@ export const useRelatoriosExport = () => {
     });
   };
 
+  const agruparCursosPorMes = (cursos: Curso[], periodoRelatorio: PeriodoRelatorio) => {
+    if (periodoRelatorio !== 'anual' && periodoRelatorio !== 'semestral') {
+      return null;
+    }
+
+    const cursosPorMes: { [key: string]: Curso[] } = {};
+    
+    // Inicializar todos os meses do período
+    const meses = [];
+    if (periodoRelatorio === 'anual') {
+      for (let i = 0; i < 12; i++) {
+        meses.push(i);
+      }
+    } else { // semestral
+      const primeiroMes = cursos.length > 0 ? new Date(cursos[0].inicio + 'T00:00:00').getMonth() : 0;
+      const semestre = primeiroMes < 6 ? [0, 1, 2, 3, 4, 5] : [6, 7, 8, 9, 10, 11];
+      meses.push(...semestre);
+    }
+
+    // Inicializar todos os meses com array vazio
+    meses.forEach(mes => {
+      const nomeMes = format(new Date(2024, mes, 1), 'MMMM', { locale: ptBR });
+      cursosPorMes[nomeMes] = [];
+    });
+
+    // Agrupar cursos por mês
+    cursos.forEach(curso => {
+      const dataInicio = new Date(curso.inicio + 'T00:00:00');
+      const mes = dataInicio.getMonth();
+      const nomeMes = format(dataInicio, 'MMMM', { locale: ptBR });
+      
+      if (cursosPorMes[nomeMes]) {
+        cursosPorMes[nomeMes].push(curso);
+      }
+    });
+
+    // Ordenar cursos dentro de cada mês
+    Object.keys(cursosPorMes).forEach(mes => {
+      cursosPorMes[mes] = sortCursos(cursosPorMes[mes]);
+    });
+
+    return cursosPorMes;
+  };
+
   const exportToExcel = (
     cursos: Curso[],
     periodoRelatorio: PeriodoRelatorio,
@@ -170,6 +214,7 @@ export const useRelatoriosExport = () => {
     }
 
     const cursosOrdenados = sortCursos(cursos);
+    const cursosPorMes = agruparCursosPorMes(cursos, periodoRelatorio);
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const dataAtual = new Date().toLocaleDateString('pt-BR');
 
@@ -227,28 +272,6 @@ export const useRelatoriosExport = () => {
       'Matérias'
     ];
 
-    const tableData = cursosOrdenados.map(curso => {
-      const cursoFinalizado = isCursoFinalizado(curso.fim);
-      const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
-
-      return [
-        tituloComStatus,
-        curso.professor,
-        formatPeriodo(curso.periodo),
-        formatDiasSemana(curso.dia_semana),
-        curso.carga_horaria?.toString() || '0',
-        curso.vagas?.toString() || '0',
-        curso.qtd_alunos_iniciaram?.toString() || '0',
-        curso.qtd_alunos_concluiram?.toString() || '0',
-        format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
-        format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
-        curso.unidades?.nome || 'Sem Unidade',
-        curso.salas?.nome || 'Sem Sala',
-        curso.total_insumos?.toString() || '0',
-        curso.total_materias?.toString() || '0'
-      ];
-    });
-
     // Configuração da tabela
     const columnStyles: any = {
       0: { cellWidth: 38, halign: 'center' as const },
@@ -267,52 +290,172 @@ export const useRelatoriosExport = () => {
       13: { cellWidth: 15, halign: 'center' as const }
     };
 
-    autoTable(doc, {
-      head: [headers],
-      body: tableData,
-      startY: infoY + 3,
-      margin: { left: 14, right: 14 },
-      theme: 'grid',
-      headStyles: {
-        fillColor: [74, 144, 226],
-        textColor: 255,
-        halign: 'center',
-        fontSize: 9,
-        fontStyle: 'bold'
-      },
-      bodyStyles: {
-        textColor: 0,
-        fontSize: 8,
-        cellPadding: 2
-      },
-      styles: {
-        fontSize: 8,
-        cellPadding: 1
-      },
-      columnStyles,
-      didParseCell: function (data) {
-        if (data.section === 'body') {
-          data.cell.styles.minCellHeight = 8;
-          data.cell.styles.halign = 'center';
-          data.cell.styles.valign = 'middle';
-        }
+    if (cursosPorMes) {
+      // Agrupar por mês
+      const meses = Object.keys(cursosPorMes).sort((a, b) => {
+        const mesA = new Date(2024, Object.keys(cursosPorMes).indexOf(a), 1).getMonth();
+        const mesB = new Date(2024, Object.keys(cursosPorMes).indexOf(b), 1).getMonth();
+        return mesA - mesB;
+      });
 
-        // Aplicar cores para período
-        if (data.section === 'body' && data.column.index === 2) {
-          const periodo = data.cell.text[0];
-          if (periodo === 'Manhã') {
-            data.cell.styles.fillColor = [254, 243, 199] as [number, number, number];
-            data.cell.styles.textColor = [146, 64, 14] as [number, number, number];
-          } else if (periodo === 'Tarde') {
-            data.cell.styles.fillColor = [254, 215, 170] as [number, number, number];
-            data.cell.styles.textColor = [234, 88, 12] as [number, number, number];
-          } else if (periodo === 'Noite') {
-            data.cell.styles.fillColor = [219, 234, 254] as [number, number, number];
-            data.cell.styles.textColor = [30, 64, 175] as [number, number, number];
+      meses.forEach((mes, index) => {
+        const cursosDoMes = cursosPorMes[mes];
+        
+        // Adicionar cabeçalho do mês
+        if (index > 0) {
+          doc.addPage();
+        }
+        
+        doc.setFontSize(14);
+        const mesY = index === 0 ? infoY + 10 : 20;
+        doc.text(`${mes} (${cursosDoMes.length} cursos)`, 14, mesY);
+        
+        if (cursosDoMes.length === 0) {
+          doc.setFontSize(12);
+          const mensagemY = index === 0 ? mesY + 15 : mesY + 15;
+          doc.text('Nenhum curso encontrado neste mês', 14, mensagemY);
+        } else {
+          const tableData = cursosDoMes.map(curso => {
+            const cursoFinalizado = isCursoFinalizado(curso.fim);
+            const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+
+            return [
+              tituloComStatus,
+              curso.professor,
+              formatPeriodo(curso.periodo),
+              formatDiasSemana(curso.dia_semana),
+              curso.carga_horaria?.toString() || '0',
+              curso.vagas?.toString() || '0',
+              curso.qtd_alunos_iniciaram?.toString() || '0',
+              curso.qtd_alunos_concluiram?.toString() || '0',
+              format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+              format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+              curso.unidades?.nome || 'Sem Unidade',
+              curso.salas?.nome || 'Sem Sala',
+              curso.total_insumos?.toString() || '0',
+              curso.total_materias?.toString() || '0'
+            ];
+          });
+
+          autoTable(doc, {
+            head: [headers],
+            body: tableData,
+            startY: index === 0 ? mesY + 10 : 30,
+            margin: { left: 14, right: 14 },
+            theme: 'grid',
+            headStyles: {
+              fillColor: [74, 144, 226],
+              textColor: 255,
+              halign: 'center',
+              fontSize: 9,
+              fontStyle: 'bold'
+            },
+            bodyStyles: {
+              textColor: 0,
+              fontSize: 8,
+              cellPadding: 2
+            },
+            styles: {
+              fontSize: 8,
+              cellPadding: 1
+            },
+            columnStyles,
+            didParseCell: function (data) {
+              if (data.section === 'body') {
+                data.cell.styles.minCellHeight = 8;
+                data.cell.styles.halign = 'center';
+                data.cell.styles.valign = 'middle';
+              }
+
+              // Aplicar cores para período
+              if (data.section === 'body' && data.column.index === 2) {
+                const periodo = data.cell.text[0];
+                if (periodo === 'Manhã') {
+                  data.cell.styles.fillColor = [254, 243, 199] as [number, number, number];
+                  data.cell.styles.textColor = [146, 64, 14] as [number, number, number];
+                } else if (periodo === 'Tarde') {
+                  data.cell.styles.fillColor = [254, 215, 170] as [number, number, number];
+                  data.cell.styles.textColor = [234, 88, 12] as [number, number, number];
+                } else if (periodo === 'Noite') {
+                  data.cell.styles.fillColor = [219, 234, 254] as [number, number, number];
+                  data.cell.styles.textColor = [30, 64, 175] as [number, number, number];
+                }
+              }
+            }
+          });
+        }
+      });
+    } else {
+      // Exibição normal (mensal/semanal)
+      const tableData = cursosOrdenados.map(curso => {
+        const cursoFinalizado = isCursoFinalizado(curso.fim);
+        const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+
+        return [
+          tituloComStatus,
+          curso.professor,
+          formatPeriodo(curso.periodo),
+          formatDiasSemana(curso.dia_semana),
+          curso.carga_horaria?.toString() || '0',
+          curso.vagas?.toString() || '0',
+          curso.qtd_alunos_iniciaram?.toString() || '0',
+          curso.qtd_alunos_concluiram?.toString() || '0',
+          format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+          format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
+          curso.unidades?.nome || 'Sem Unidade',
+          curso.salas?.nome || 'Sem Sala',
+          curso.total_insumos?.toString() || '0',
+          curso.total_materias?.toString() || '0'
+        ];
+      });
+
+      autoTable(doc, {
+        head: [headers],
+        body: tableData,
+        startY: infoY + 3,
+        margin: { left: 14, right: 14 },
+        theme: 'grid',
+        headStyles: {
+          fillColor: [74, 144, 226],
+          textColor: 255,
+          halign: 'center',
+          fontSize: 9,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          textColor: 0,
+          fontSize: 8,
+          cellPadding: 2
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 1
+        },
+        columnStyles,
+        didParseCell: function (data) {
+          if (data.section === 'body') {
+            data.cell.styles.minCellHeight = 8;
+            data.cell.styles.halign = 'center';
+            data.cell.styles.valign = 'middle';
+          }
+
+          // Aplicar cores para período
+          if (data.section === 'body' && data.column.index === 2) {
+            const periodo = data.cell.text[0];
+            if (periodo === 'Manhã') {
+              data.cell.styles.fillColor = [254, 243, 199] as [number, number, number];
+              data.cell.styles.textColor = [146, 64, 14] as [number, number, number];
+            } else if (periodo === 'Tarde') {
+              data.cell.styles.fillColor = [254, 215, 170] as [number, number, number];
+              data.cell.styles.textColor = [234, 88, 12] as [number, number, number];
+            } else if (periodo === 'Noite') {
+              data.cell.styles.fillColor = [219, 234, 254] as [number, number, number];
+              data.cell.styles.textColor = [30, 64, 175] as [number, number, number];
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     // Adicionar página de resumo estatístico no final
     if (estatisticas) {
