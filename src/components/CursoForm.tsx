@@ -143,7 +143,7 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
 
   // Carregar dados do curso para edição ou duplicação
   useEffect(() => {
-    if (curso) {
+    if (curso && curso.id) {
       setTitulo(curso.titulo || "");
       setProfessor(curso.professor || "");
       setInicio(curso.inicio || "");
@@ -157,7 +157,6 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setVagaInicio(curso.vaga_inicio?.toString() || "");
       setVagaFim(curso.vaga_fim?.toString() || "");
       setDiasSemana(curso.dia_semana || []);
-
 
       // Carregar matérias e insumos do curso
       const loadCursoData = async () => {
@@ -178,12 +177,12 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
             })));
           }
         } catch (error) {
-          console.error('Erro ao carregar dados do curso:', error);
+          toast.error("Erro ao carregar dados do curso");
         }
       };
 
       loadCursoData();
-    } else if (cursoParaDuplicar) {
+    } else if (cursoParaDuplicar && cursoParaDuplicar.id) {
       // Carregar dados do curso para duplicação
       setTitulo(`${cursoParaDuplicar.titulo}`);
       setProfessor(cursoParaDuplicar.professor || "");
@@ -219,11 +218,27 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
             })));
           }
         } catch (error) {
-          console.error('Erro ao carregar dados do curso para duplicação:', error);
+          toast.error("Erro ao carregar dados do curso para duplicação");
         }
       };
 
       loadCursoData();
+    } else if (cursoParaDuplicar && !cursoParaDuplicar.id) {
+      // Caso especial: cursoParaDuplicar com ID vazio (do calendário)
+      // Apenas definir os dados básicos sem carregar do banco
+      setTitulo(cursoParaDuplicar.titulo || "");
+      setProfessor(cursoParaDuplicar.professor || "");
+      setInicio(cursoParaDuplicar.inicio || "");
+      setFim(cursoParaDuplicar.fim || "");
+      setPeriodo(cursoParaDuplicar.periodo || "");
+      setUnidadeId(cursoParaDuplicar.unidades?.id || "");
+      setUnidadeNome(cursoParaDuplicar.unidades?.nome || "");
+      setSalaId(cursoParaDuplicar.salas?.id || "");
+      setSalaNome(cursoParaDuplicar.salas?.nome || "");
+      setCargaHoraria(cursoParaDuplicar.carga_horaria?.toString() || "");
+      setVagaInicio(cursoParaDuplicar.vaga_inicio?.toString() || "");
+      setVagaFim(cursoParaDuplicar.vaga_fim?.toString() || "");
+      setDiasSemana(cursoParaDuplicar.dia_semana || []);
     } else {
       // Limpar formulário para novo curso
       setTitulo("");
@@ -369,9 +384,8 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       onSuccess();
     },
     onError: (error) => {
-      console.error('Erro ao salvar curso:', error);
       const action = curso ? "atualizar" : cursoParaDuplicar ? "duplicar" : "criar";
-      toast.error(`Erro ao ${action} curso: ` + error.message);
+      toast.error(`Erro ao ${action} curso: ${error.message}`);
     }
   });
 
@@ -481,7 +495,6 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
 
       if (error) {
         toast.error("Erro ao criar matéria");
-        console.error(error);
         return;
       }
 
@@ -496,7 +509,6 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setTempSelectedMaterias(prev => [...prev, data.id]);
     } catch (error) {
       toast.error("Erro ao criar matéria");
-      console.error(error);
     }
   };
 
@@ -515,7 +527,6 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
 
       if (error) {
         toast.error("Erro ao criar insumo");
-        console.error(error);
         return;
       }
 
@@ -530,7 +541,6 @@ const CursoForm = ({ curso, cursoParaDuplicar, onSuccess, cursosExistentes = [] 
       setTempSelectedInsumos(prev => [{ id: data.id, quantidade: 1 }, ...prev]);
     } catch (error) {
       toast.error("Erro ao criar insumo");
-      console.error(error);
     }
   };
 

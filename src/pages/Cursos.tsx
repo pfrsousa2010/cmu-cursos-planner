@@ -408,6 +408,7 @@ const Cursos = () => {
                       curso={editingCurso}
                       cursoParaDuplicar={duplicatingCurso}
                       onSuccess={handleDialogClose}
+                      cursosExistentes={cursos || []}
                     />
                   </div>
                   <div className="flex gap-4 justify-end flex-shrink-0 pt-4 border-t">
