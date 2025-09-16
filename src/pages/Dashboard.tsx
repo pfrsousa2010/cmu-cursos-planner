@@ -676,8 +676,8 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   {cursosProximos.map((curso) => (
                     <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                      <div>
-                        <p className="font-medium">{curso.titulo}</p>
+                      <div className="flex-1 min-w-0 mr-3">
+                        <p className="font-medium truncate">{curso.titulo}</p>
                         <p className="text-sm text-muted-foreground">
                           {curso.professor} • {formatPeriodo(curso.periodo)}
                         </p>
@@ -726,8 +726,8 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   {cursosTerminando.map((curso) => (
                     <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                      <div>
-                        <p className="font-medium">{curso.titulo}</p>
+                      <div className="flex-1 min-w-0 mr-3">
+                        <p className="font-medium truncate">{curso.titulo}</p>
                         <p className="text-sm text-muted-foreground">
                           {curso.professor} • {formatPeriodo(curso.periodo)}
                         </p>
@@ -836,13 +836,13 @@ const Dashboard = () => {
                                         const fimJaPassou = new Date(curso.fim + 'T23:59:59') < new Date();
                                         return (
                                           <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                                            <div>
-                                              <p className="font-medium text-sm">{curso.titulo}</p>
+                                            <div className="flex-1 min-w-0 mr-3">
+                                              <p className="font-medium text-sm truncate">{curso.titulo}</p>
                                               <p className="text-xs text-muted-foreground">
                                                 {curso.professor} • {formatPeriodo(curso.periodo)}
                                               </p>
                                             </div>
-                                            <div className="flex flex-col items-end min-w-[90px]">
+                                            <div className="flex flex-col items-end min-w-[90px] flex-shrink-0">
                                               <Badge variant={fimJaPassou ? "destructive" : "outline"} className="text-xs">
                                                 {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                                               </Badge>
@@ -953,20 +953,20 @@ const Dashboard = () => {
                                         return aFim ? 1 : -1;
                                       })
                                       .map((curso) => {
-                                        const fimJaPassou = new Date(curso.fim + 'T23:59:59') < new Date();
+                                        const isFinalizado = new Date(curso.fim + 'T23:59:59') < new Date();
                                         return (
                                           <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                                            <div>
-                                              <p className="font-medium text-sm">{curso.titulo}</p>
+                                            <div className="flex-1 min-w-0 mr-3">
+                                              <p className="font-medium text-sm truncate">{curso.titulo}</p>
                                               <p className="text-xs text-muted-foreground">
                                                 {curso.professor} • {formatPeriodo(curso.periodo)}
                                               </p>
                                             </div>
-                                            <div className="flex flex-col items-end min-w-[90px]">
-                                              <Badge variant={fimJaPassou ? "destructive" : "outline"} className="text-xs">
+                                            <div className="flex flex-col items-end min-w-[90px] flex-shrink-0">
+                                              <Badge variant={isFinalizado ? "destructive" : "outline"} className="text-xs">
                                                 {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                                               </Badge>
-                                              {fimJaPassou && (
+                                              {isFinalizado && (
                                                 <div className="text-xs text-red-600 font-semibold mt-1">Finalizado</div>
                                               )}
                                             </div>
