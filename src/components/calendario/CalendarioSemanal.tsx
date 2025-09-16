@@ -148,11 +148,11 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                   
                   return (
                     <TableHead key={day.toISOString()} className="text-center min-w-[220px] font-semibold">
-                      <div className="flex flex-col">
+                      <div className={`flex flex-col ${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-lg p-2' : ''}`}>
                         <span className="capitalize text-sm">
                           {format(day, 'EEEE', { locale: ptBR })}
                         </span>
-                        <span className={`text-lg font-bold ${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-full w-20 h-8 flex items-center justify-center mx-auto' : ''}`}>
+                        <span className="text-lg font-bold">
                           {format(day, 'dd/MM')}
                         </span>
                       </div>
