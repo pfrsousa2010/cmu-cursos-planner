@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -36,7 +35,7 @@ const Cursos = () => {
   const [selectedUnidade, setSelectedUnidade] = useState("todas");
   const [selectedSala, setSelectedSala] = useState("todas");
   const [selectedYear, setSelectedYear] = useState("todos");
-  const [showFinalizados, setShowFinalizados] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("todos");
 
   
   const { canManageCursos } = useUserRole();
@@ -58,6 +57,34 @@ const Cursos = () => {
     
     // Curso está finalizado apenas se a data fim for anterior ao dia atual
     return fimCursoNormalizado < hojeNormalizado;
+  };
+
+  // Função para verificar se o curso está em andamento
+  const isCursoEmAndamento = (dataInicio: string, dataFim: string) => {
+    const hoje = new Date();
+    const inicioCurso = new Date(dataInicio + 'T00:00:00');
+    const fimCurso = new Date(dataFim + 'T00:00:00');
+    
+    // Normalizar as datas para comparar apenas o dia (sem horário)
+    const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const inicioCursoNormalizado = new Date(inicioCurso.getFullYear(), inicioCurso.getMonth(), inicioCurso.getDate());
+    const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
+    
+    // Curso está em andamento se hoje está entre o início e o fim (inclusive)
+    return hojeNormalizado >= inicioCursoNormalizado && hojeNormalizado <= fimCursoNormalizado;
+  };
+
+  // Função para verificar se o curso é previsto (ainda não começou)
+  const isCursoPrevisto = (dataInicio: string) => {
+    const hoje = new Date();
+    const inicioCurso = new Date(dataInicio + 'T00:00:00');
+    
+    // Normalizar as datas para comparar apenas o dia (sem horário)
+    const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const inicioCursoNormalizado = new Date(inicioCurso.getFullYear(), inicioCurso.getMonth(), inicioCurso.getDate());
+    
+    // Curso é previsto se a data de início for posterior ao dia atual
+    return inicioCursoNormalizado > hojeNormalizado;
   };
 
   // Buscar cursos
@@ -116,8 +143,12 @@ const Cursos = () => {
         if (cursoYear !== selectedYear) return false;
       }
       
-      // Filtro por cursos finalizados
-      if (!showFinalizados && isCursoFinalizado(curso.fim)) return false;
+      // Filtro por status do curso
+      if (selectedStatus !== "todos") {
+        if (selectedStatus === "finalizados" && !isCursoFinalizado(curso.fim)) return false;
+        if (selectedStatus === "em-andamento" && !isCursoEmAndamento(curso.inicio, curso.fim)) return false;
+        if (selectedStatus === "previstos" && !isCursoPrevisto(curso.inicio)) return false;
+      }
       
       return true;
     });
@@ -152,7 +183,7 @@ const Cursos = () => {
     });
 
     return { filteredCursos: filtered, groupedCursos: grouped };
-  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear, showFinalizados]);
+  }, [cursos, searchTerm, selectedPeriodo, selectedUnidade, selectedSala, selectedYear, selectedStatus]);
 
   // Obter dados únicos para filtros
   const getUnidades = () => {
@@ -283,7 +314,7 @@ const Cursos = () => {
     setSelectedUnidade("todas");
     setSelectedSala("todas");
     setSelectedYear("todos");
-    setShowFinalizados(false);
+    setSelectedStatus("todos");
   };
 
   // Handlers para exportação
@@ -295,7 +326,7 @@ const Cursos = () => {
       selectedUnidade,
       selectedSala,
       selectedYear,
-      showFinalizados
+      selectedStatus
     );
     setRelatorioDialogOpen(false);
   };
@@ -308,7 +339,7 @@ const Cursos = () => {
       selectedUnidade,
       selectedSala,
       selectedYear,
-      showFinalizados
+      selectedStatus
     );
     setRelatorioDialogOpen(false);
   };
@@ -549,19 +580,20 @@ const Cursos = () => {
                 </Select>
               </div>
 
-              {/* Toggle para mostrar cursos finalizados */}
+              {/* Filtro por Status */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Cursos Finalizados</label>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="showFinalizados"
-                    checked={showFinalizados}
-                    onCheckedChange={setShowFinalizados}
-                  />
-                  <label htmlFor="showFinalizados" className="text-sm text-muted-foreground">
-                    Mostrar cursos finalizados
-                  </label>
-                </div>
+                <label className="text-sm font-medium">Status</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="previstos">Previstos</SelectItem>
+                    <SelectItem value="em-andamento">Em andamento</SelectItem>
+                    <SelectItem value="finalizados">Finalizados</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
             </div>
@@ -572,8 +604,12 @@ const Cursos = () => {
                 {cursos && cursos.length > 0 && (
                   <div className="flex items-center gap-4 text-xs">
                     <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                      <span>Previstos: {cursos.filter(curso => isCursoPrevisto(curso.inicio)).length}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full"></div>
-                      <span>Não finalizados: {cursos.filter(curso => !isCursoFinalizado(curso.fim)).length}</span>
+                      <span>Em andamento: {cursos.filter(curso => isCursoEmAndamento(curso.inicio, curso.fim)).length}</span>
                     </span>
                     <span className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full"></div>

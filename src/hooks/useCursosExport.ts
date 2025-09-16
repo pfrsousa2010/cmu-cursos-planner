@@ -86,7 +86,7 @@ export const useCursosExport = () => {
     selectedUnidade: string = "todas",
     selectedSala: string = "todas",
     selectedYear: string = "todos",
-    showFinalizados: boolean = false
+    selectedStatus: string = "todos"
   ) => {
     if (!filteredCursos || filteredCursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
@@ -163,7 +163,7 @@ export const useCursosExport = () => {
     selectedUnidade: string = "todas",
     selectedSala: string = "todas",
     selectedYear: string = "todos",
-    showFinalizados: boolean = false
+    selectedStatus: string = "todos"
   ) => {
     if (!filteredCursos || filteredCursos.length === 0) {
       toast.error("Nenhum curso encontrado para exportar");
@@ -201,10 +201,13 @@ export const useCursosExport = () => {
     if (selectedYear !== "todos") {
       filtros.push(`Ano: ${selectedYear}`);
     }
-    if (showFinalizados) {
-      filtros.push(`Mostrar finalizados: Sim`);
-    } else {
-      filtros.push(`Mostrar finalizados: Não`);
+    if (selectedStatus !== "todos") {
+      const statusLabels = {
+        'previstos': 'Previstos',
+        'em-andamento': 'Em andamento',
+        'finalizados': 'Finalizados'
+      };
+      filtros.push(`Status: ${statusLabels[selectedStatus as keyof typeof statusLabels] || selectedStatus}`);
     }
 
     if (filtros.length > 0) {
