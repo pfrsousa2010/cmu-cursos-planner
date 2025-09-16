@@ -11,6 +11,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { useUser } from "@/contexts/UserContext";
 
 interface CursoInsumosListProps {
   cursoId: string;
@@ -21,6 +22,7 @@ interface CursoInsumosListProps {
 const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { data: insumos, isLoading, error } = useCursoInsumos(cursoId);
+  const { profile } = useUser();
 
   // Buscar dados do curso para sala e unidade
   const [cursoInfo, setCursoInfo] = useState<{ sala?: string; unidade?: string }>({});
@@ -98,7 +100,8 @@ const CursoInsumosList = ({ cursoId, cursoTitulo, professor }: CursoInsumosListP
         const pageHeight = doc.internal.pageSize.getHeight();
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text('Sistema de Cursos - CMU', 10, pageHeight - 10);
+        const username = profile?.nome || 'Usuário';
+        doc.text(`Gestor de Cursos - CMU - Emitido por: ${username}`, 10, pageHeight - 10);
         const pageCount = doc.getNumberOfPages();
         doc.text(`Página ${data.pageNumber} de ${pageCount}`, 200 - 10, pageHeight - 10, { align: 'right' });
       }

@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Curso, Sala, ViewMode } from "@/types/calendario";
+import { useUser } from "@/contexts/UserContext";
 
 const cursoApareceNoDia = (curso: Curso, dia: Date): boolean => {
   const cursoStart = parseISO(curso.inicio);
@@ -36,18 +37,6 @@ const formatPeriodo = (periodo: string) => {
   return periodos[periodo as keyof typeof periodos] || periodo;
 };
 
-const addPageNumbers = (doc: jsPDF) => {
-  const finalTotalPages = doc.getNumberOfPages();
-  
-  for (let pageNum = 1; pageNum <= finalTotalPages; pageNum++) {
-    doc.setPage(pageNum);
-    const pageHeight = doc.internal.pageSize.getHeight();
-    doc.setFontSize(8);
-    doc.setTextColor(100);
-    doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
-    doc.text(`Página ${pageNum} de ${finalTotalPages}`, 280, pageHeight - 10, { align: 'right' });
-  }
-};
 
 const createCalendarGrid = (currentWeek: Date) => {
   const startMonth = startOfMonth(currentWeek);
@@ -182,184 +171,200 @@ const createTableConfig = (headers: string[], tableData: any[], columnStyles: an
   }
 });
 
-const exportSemanal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow: Sala[], cursosFiltrados: Curso[]) => {
-  const weekDays = eachDayOfInterval({
-    start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
-    end: endOfWeek(currentWeek, { weekStartsOn: 1 })
-  }).filter(day => day.getDay() !== 0 && day.getDay() !== 6);
 
-  const headers = ['Período', 'Unidade\nSala'];
-  weekDays.forEach(day => {
-    const dayName = format(day, 'EEEE', { locale: ptBR });
-    const shortDayName = dayName.replace('-feira', '');
-    headers.push(`${shortDayName} ${format(day, 'dd/MM')}`);
-  });
+export const useCalendarioExport = () => {
+  const { profile } = useUser();
   
-  let tableData: any[] = [];
-  salasToShow.forEach(sala => {
-    const turnos = ['manha', 'tarde', 'noite'];
-    turnos.forEach(turno => {
-      const row = [formatPeriodo(turno), `${sala.unidades?.nome}\n${sala.nome}`];
-      
-      weekDays.forEach(day => {
-        const cursosDay = cursosFiltrados.filter(curso => 
-          curso.sala_id === sala.id && 
-          curso.periodo === turno &&
-          cursoApareceNoDia(curso, day)
-        );
-        
-        if (cursosDay.length > 0) {
-          const curso = cursosDay[0];
-          row.push(`${curso.titulo}\n${curso.professor}\n(Início: ${format(parseISO(curso.inicio), 'dd/MM')} - Fim: ${format(parseISO(curso.fim), 'dd/MM')})`);
-        } else {
-          row.push('-');
-        }
-      });
-      
-      tableData.push(row);
-    });
-  });
-  
-  const columnStyles: any = {
-    0: { cellWidth: 15, halign: 'center' as const }, // Período
-    1: { cellWidth: 30, halign: 'center' as const } // Unidade\nSala
+  const addPageNumbers = (doc: jsPDF) => {
+    const finalTotalPages = doc.getNumberOfPages();
+    
+    for (let pageNum = 1; pageNum <= finalTotalPages; pageNum++) {
+      doc.setPage(pageNum);
+      const pageHeight = doc.internal.pageSize.getHeight();
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      const username = profile?.nome || 'Usuário';
+      doc.text(`Gestor de Cursos - CMU - Emitido por: ${username}`, 14, pageHeight - 10);
+      doc.text(`Página ${pageNum} de ${finalTotalPages}`, 280, pageHeight - 10, { align: 'right' });
+    }
   };
-  
-  weekDays.forEach((_, index) => {
-    columnStyles[index + 2] = { cellWidth: 45, halign: 'center' as const };
-  });
-  
-  autoTable(doc, {
-    head: [headers],
-    body: tableData,
-    startY: infoY + 3,
-    margin: { left: 14, right: 20 },
-    theme: 'grid',
-    headStyles: { 
-      fillColor: [74, 144, 226], 
-      textColor: 255, 
-      halign: 'center',
-      fontSize: 9
-    },
-    bodyStyles: { 
-      textColor: 0,
-      fontSize: 8,
-      cellPadding: 2
-    },
-    styles: { 
-      fontSize: 8,
-      cellPadding: 1
-    },
-    columnStyles,
-    didParseCell: function (data: any) {
-      if (data.section === 'body') {
-        data.cell.styles.minCellHeight = 10;
-      }
-      
-      // Coluna Turno (índice 0) - aplicar cores por período
-      if (data.section === 'body' && data.column.index === 0 && data.row.index >= 0) {
-        const currentValue = tableData[data.row.index][0];
-        const prevValue = data.row.index > 0 ? tableData[data.row.index - 1][0] : null;
+
+  const exportSemanal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow: Sala[], cursosFiltrados: Curso[]) => {
+    const weekDays = eachDayOfInterval({
+      start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
+      end: endOfWeek(currentWeek, { weekStartsOn: 1 })
+    }).filter(day => day.getDay() !== 0 && day.getDay() !== 6);
+
+    const headers = ['Período', 'Unidade\nSala'];
+    weekDays.forEach(day => {
+      const dayName = format(day, 'EEEE', { locale: ptBR });
+      const shortDayName = dayName.replace('-feira', '');
+      headers.push(`${shortDayName} ${format(day, 'dd/MM')}`);
+    });
+    
+    let tableData: any[] = [];
+    salasToShow.forEach(sala => {
+      const turnos = ['manha', 'tarde', 'noite'];
+      turnos.forEach(turno => {
+        const row = [formatPeriodo(turno), `${sala.unidades?.nome}\n${sala.nome}`];
         
-        // Aplicar cor baseada no período (usando as cores do CursoDetails.tsx)
-        if (currentValue === 'Manhã') {
-          data.cell.styles.fillColor = [254, 249, 195] as [number, number, number]; // bg-yellow-100
-          data.cell.styles.textColor = [133, 77, 14] as [number, number, number]; // text-yellow-800
-        } else if (currentValue === 'Tarde') {
-          data.cell.styles.fillColor = [255, 237, 213] as [number, number, number]; // bg-orange-100
-          data.cell.styles.textColor = [154, 52, 18] as [number, number, number]; // text-orange-800
-        } else if (currentValue === 'Noite') {
-          data.cell.styles.fillColor = [219, 234, 254] as [number, number, number]; // bg-blue-100
-          data.cell.styles.textColor = [30, 64, 175] as [number, number, number]; // text-blue-800
+        weekDays.forEach(day => {
+          const cursosDay = cursosFiltrados.filter(curso => 
+            curso.sala_id === sala.id && 
+            curso.periodo === turno &&
+            cursoApareceNoDia(curso, day)
+          );
+          
+          if (cursosDay.length > 0) {
+            const curso = cursosDay[0];
+            row.push(`${curso.titulo}\n${curso.professor}\n(Início: ${format(parseISO(curso.inicio), 'dd/MM')} - Fim: ${format(parseISO(curso.fim), 'dd/MM')})`);
+          } else {
+            row.push('-');
+          }
+        });
+        
+        tableData.push(row);
+      });
+    });
+    
+    const columnStyles: any = {
+      0: { cellWidth: 15, halign: 'center' as const }, // Período
+      1: { cellWidth: 30, halign: 'center' as const } // Unidade\nSala
+    };
+    
+    weekDays.forEach((_, index) => {
+      columnStyles[index + 2] = { cellWidth: 45, halign: 'center' as const };
+    });
+    
+    autoTable(doc, {
+      head: [headers],
+      body: tableData,
+      startY: infoY + 3,
+      margin: { left: 14, right: 20 },
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [74, 144, 226], 
+        textColor: 255, 
+        halign: 'center',
+        fontSize: 9
+      },
+      bodyStyles: { 
+        textColor: 0,
+        fontSize: 8,
+        cellPadding: 2
+      },
+      styles: { 
+        fontSize: 8,
+        cellPadding: 1
+      },
+      columnStyles,
+      didParseCell: function (data: any) {
+        if (data.section === 'body') {
+          data.cell.styles.minCellHeight = 10;
         }
         
-        if (prevValue === currentValue) {
-          data.cell.rowSpan = 1;
-          data.cell.styles.cellPadding = 0;
-          data.cell.styles.fillColor = [255, 255, 255];
-        } else {
-          let rowSpan = 1;
-          for (let i = data.row.index + 1; i < tableData.length; i++) {
-            if (tableData[i][0] === currentValue) {
-              rowSpan++;
-            } else {
-              break;
+        // Coluna Turno (índice 0) - aplicar cores por período
+        if (data.section === 'body' && data.column.index === 0 && data.row.index >= 0) {
+          const currentValue = tableData[data.row.index][0];
+          const prevValue = data.row.index > 0 ? tableData[data.row.index - 1][0] : null;
+          
+          // Aplicar cor baseada no período (usando as cores do CursoDetails.tsx)
+          if (currentValue === 'Manhã') {
+            data.cell.styles.fillColor = [254, 249, 195] as [number, number, number]; // bg-yellow-100
+            data.cell.styles.textColor = [133, 77, 14] as [number, number, number]; // text-yellow-800
+          } else if (currentValue === 'Tarde') {
+            data.cell.styles.fillColor = [255, 237, 213] as [number, number, number]; // bg-orange-100
+            data.cell.styles.textColor = [154, 52, 18] as [number, number, number]; // text-orange-800
+          } else if (currentValue === 'Noite') {
+            data.cell.styles.fillColor = [219, 234, 254] as [number, number, number]; // bg-blue-100
+            data.cell.styles.textColor = [30, 64, 175] as [number, number, number]; // text-blue-800
+          }
+          
+          if (prevValue === currentValue) {
+            data.cell.rowSpan = 1;
+            data.cell.styles.cellPadding = 0;
+            data.cell.styles.fillColor = [255, 255, 255];
+          } else {
+            let rowSpan = 1;
+            for (let i = data.row.index + 1; i < tableData.length; i++) {
+              if (tableData[i][0] === currentValue) {
+                rowSpan++;
+              } else {
+                break;
+              }
             }
-          }
-          data.cell.rowSpan = rowSpan;
-          data.cell.styles.valign = 'middle';
-        }
-      }
-      
-      // Coluna Salas (índice 1) - mesclagem
-      if (data.section === 'body' && data.column.index === 1 && data.row.index >= 0) {
-        const currentValue = tableData[data.row.index][1];
-        
-        let isFirstOccurrence = true;
-        for (let i = data.row.index - 1; i >= 0; i--) {
-          if (tableData[i][1] === currentValue) {
-            isFirstOccurrence = false;
-            break;
+            data.cell.rowSpan = rowSpan;
+            data.cell.styles.valign = 'middle';
           }
         }
         
-        if (isFirstOccurrence) {
-          let rowSpan = 1;
-          for (let i = data.row.index + 1; i < tableData.length; i++) {
+        // Coluna Salas (índice 1) - mesclagem
+        if (data.section === 'body' && data.column.index === 1 && data.row.index >= 0) {
+          const currentValue = tableData[data.row.index][1];
+          
+          let isFirstOccurrence = true;
+          for (let i = data.row.index - 1; i >= 0; i--) {
             if (tableData[i][1] === currentValue) {
-              rowSpan++;
-            } else {
+              isFirstOccurrence = false;
               break;
             }
           }
           
-          data.cell.rowSpan = rowSpan;
-          data.cell.styles.valign = 'middle';
-        } else {
-          data.cell.rowSpan = 1;
-          data.cell.styles.cellPadding = 0;
-          data.cell.styles.fillColor = [255, 255, 255];
+          if (isFirstOccurrence) {
+            let rowSpan = 1;
+            for (let i = data.row.index + 1; i < tableData.length; i++) {
+              if (tableData[i][1] === currentValue) {
+                rowSpan++;
+              } else {
+                break;
+              }
+            }
+            
+            data.cell.rowSpan = rowSpan;
+            data.cell.styles.valign = 'middle';
+          } else {
+            data.cell.rowSpan = 1;
+            data.cell.styles.cellPadding = 0;
+            data.cell.styles.fillColor = [255, 255, 255];
+          }
         }
       }
-    }
-  });
-  
-  addPageNumbers(doc);
-};
-
-const exportMensal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow: Sala[], cursosFiltrados: Curso[]) => {
-  const calendarioGrid = createCalendarGrid(currentWeek);
-  const diasDaSemana = ['DOMINGO','SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
-  
-  salasToShow.forEach((sala, salaIndex) => {
-    if (salaIndex > 0) {
-      doc.addPage();
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(`${sala.unidades?.nome} - ${sala.nome}`, 14, 20);
-      var currentY = 30;
-    } else {
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(`${sala.unidades?.nome} - ${sala.nome}`, 14, infoY + 5);
-      var currentY = infoY + 10;
-    }
-    
-    const headers = diasDaSemana.map(dia => dia);
-    const tableData = createTableData(calendarioGrid, cursosFiltrados, sala.id);
-    const columnStyles = createColumnStyles(diasDaSemana);
-    const tableConfig = createTableConfig(headers, tableData, columnStyles);
-    
-    autoTable(doc, {
-      ...tableConfig,
-      startY: currentY
     });
-  });
+    
+    addPageNumbers(doc);
+  };
 
-  addPageNumbers(doc);
-};
+  const exportMensal = (doc: jsPDF, infoY: number, currentWeek: Date, salasToShow: Sala[], cursosFiltrados: Curso[]) => {
+    const calendarioGrid = createCalendarGrid(currentWeek);
+    const diasDaSemana = ['DOMINGO','SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+    
+    salasToShow.forEach((sala, salaIndex) => {
+      if (salaIndex > 0) {
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${sala.unidades?.nome} - ${sala.nome}`, 14, 20);
+        var currentY = 30;
+      } else {
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${sala.unidades?.nome} - ${sala.nome}`, 14, infoY + 5);
+        var currentY = infoY + 10;
+      }
+      
+      const headers = diasDaSemana.map(dia => dia);
+      const tableData = createTableData(calendarioGrid, cursosFiltrados, sala.id);
+      const columnStyles = createColumnStyles(diasDaSemana);
+      const tableConfig = createTableConfig(headers, tableData, columnStyles);
+      
+      autoTable(doc, {
+        ...tableConfig,
+        startY: currentY
+      });
+    });
 
-export const useCalendarioExport = () => {
+    addPageNumbers(doc);
+  };
   const handleExportPDF = (
     viewMode: ViewMode,
     currentWeek: Date,

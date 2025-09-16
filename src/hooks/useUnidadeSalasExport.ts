@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from "xlsx";
+import { useUser } from "@/contexts/UserContext";
 
 interface Unidade {
   id: string;
@@ -23,6 +24,7 @@ interface Sala {
 }
 
 export const useUnidadeSalasExport = () => {
+  const { profile } = useUser();
   const sortUnidades = (unidades: Unidade[]) => {
     return [...unidades].sort((a, b) => {
       // Ordenar por nome da unidade
@@ -301,7 +303,8 @@ export const useUnidadeSalasExport = () => {
       const pageHeight = doc.internal.pageSize.getHeight();
       doc.setFontSize(8);
       doc.setTextColor(100);
-      doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
+      const username = profile?.nome || 'Usuário';
+      doc.text(`Gestor de Cursos - CMU - Emitido por: ${username}`, 14, pageHeight - 10);
       doc.text(`Página ${pageNum} de ${finalTotalPages}`, 180, pageHeight - 10, { align: 'right' });
     }
   };

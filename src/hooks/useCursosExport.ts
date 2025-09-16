@@ -5,8 +5,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { Curso } from "@/types/calendario";
+import { useUser } from "@/contexts/UserContext";
 
 export const useCursosExport = () => {
+  const { profile } = useUser();
   const formatPeriodo = (periodo: string) => {
     const periodos = {
       'manha': 'Manhã',
@@ -349,7 +351,8 @@ export const useCursosExport = () => {
       const pageHeight = doc.internal.pageSize.getHeight();
       doc.setFontSize(8);
       doc.setTextColor(100);
-      doc.text('Sistema de Cursos - CMU', 14, pageHeight - 10);
+      const username = profile?.nome || 'Usuário';
+      doc.text(`Gestor de Cursos - CMU - Emitido por: ${username}`, 14, pageHeight - 10);
       doc.text(`Página ${pageNum} de ${finalTotalPages}`, 270, pageHeight - 10, { align: 'right' });
     }
   };
