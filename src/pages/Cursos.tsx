@@ -673,12 +673,21 @@ const Cursos = () => {
                                 }`}
                               >
                                 <div className="flex-1 space-y-1">
-                                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-2">
-                                    <h5 className="font-medium">{curso.titulo}</h5>
+                                  <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-2">
+                                      <h5 className="font-medium">{curso.titulo}</h5>
+                                      <div className="flex items-center gap-1 flex-wrap">
+                                        <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
+                                          {formatPeriodo(curso.periodo)}
+                                        </Badge>
+                                        {cursoFinalizado && (
+                                          <Badge variant="destructive">
+                                            Finalizado
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
                                     <div className="flex items-center gap-1 flex-wrap">
-                                      <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
-                                        {formatPeriodo(curso.periodo)}
-                                      </Badge>
                                       {(() => {
                                         if (!curso.dia_semana || curso.dia_semana.length === 0) {
                                           return (
@@ -713,11 +722,6 @@ const Cursos = () => {
                                           </Badge>
                                         ));
                                       })()}
-                                      {cursoFinalizado && (
-                                        <Badge variant="destructive">
-                                          Finalizado
-                                        </Badge>
-                                      )}
                                     </div>
                                   </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-muted-foreground">
