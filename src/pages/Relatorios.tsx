@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRelatoriosCursos, PeriodoRelatorio } from "@/hooks/useRelatoriosCursos";
 import { useRelatoriosExport } from "@/hooks/useRelatoriosExport";
 import { useOrientation } from "@/hooks/useOrientation";
@@ -15,7 +16,8 @@ import {
   FileImage, 
   Calendar,
   BarChart3,
-  BookOpen
+  BookOpen,
+  Info
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -316,7 +318,19 @@ const Relatorios = () => {
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Taxa de Conclusão:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Taxa de Conclusão:</span>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">Calculada apenas para cursos finalizados</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                       <span className="text-sm font-bold text-primary">
                         {estatisticas.taxaConclusao.toFixed(2)}%
                       </span>

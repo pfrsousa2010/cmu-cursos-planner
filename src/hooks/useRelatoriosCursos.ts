@@ -154,11 +154,22 @@ export const useRelatoriosCursos = () => {
   const estatisticas = useMemo(() => {
     if (!cursosFiltrados.length) return null;
 
+    // Filtrar apenas cursos finalizados para cálculo da taxa de conclusão
+    const hoje = new Date();
+    const cursosFinalizados = cursosFiltrados.filter(curso => {
+      const fimCurso = new Date(curso.fim + 'T23:59:59-03:00');
+      return fimCurso < hoje;
+    });
+
     const totalCursos = cursosFiltrados.length;
     const totalVagas = cursosFiltrados.reduce((sum, curso) => sum + (curso.vagas || 0), 0);
     const totalAlunosIniciaram = cursosFiltrados.reduce((sum, curso) => sum + (curso.qtd_alunos_iniciaram || 0), 0);
     const totalAlunosConcluiram = cursosFiltrados.reduce((sum, curso) => sum + (curso.qtd_alunos_concluiram || 0), 0);
     const totalCargaHoraria = cursosFiltrados.reduce((sum, curso) => sum + (curso.carga_horaria || 0), 0);
+    
+    // Calcular taxa de conclusão apenas com cursos finalizados
+    const totalAlunosIniciaramFinalizados = cursosFinalizados.reduce((sum, curso) => sum + (curso.qtd_alunos_iniciaram || 0), 0);
+    const totalAlunosConcluiramFinalizados = cursosFinalizados.reduce((sum, curso) => sum + (curso.qtd_alunos_concluiram || 0), 0);
     
     // Cursos por período do dia
     const cursosPorPeriodo = cursosFiltrados.reduce((acc, curso) => {
@@ -181,7 +192,7 @@ export const useRelatoriosCursos = () => {
       totalCargaHoraria,
       cursosPorPeriodo,
       cursosPorUnidade,
-      taxaConclusao: totalAlunosIniciaram > 0 ? (totalAlunosConcluiram / totalAlunosIniciaram) * 100 : 0
+      taxaConclusao: totalAlunosIniciaramFinalizados > 0 ? (totalAlunosConcluiramFinalizados / totalAlunosIniciaramFinalizados) * 100 : 0
     };
   }, [cursosFiltrados]);
 
