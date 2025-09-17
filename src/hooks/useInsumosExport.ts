@@ -12,6 +12,14 @@ interface Insumo {
   created_at: string;
 }
 
+interface CursoInsumo {
+  id: string;
+  quantidade: number;
+  insumos?: {
+    nome: string;
+  };
+}
+
 export const useInsumosExport = () => {
   const { profile } = useUser();
   const sortInsumos = (insumos: Insumo[]) => {
@@ -149,6 +157,93 @@ export const useInsumosExport = () => {
     toast.success("Relatório PDF gerado com sucesso!");
   };
 
+  const exportCursoInsumosToPDF = (
+    cursoInsumos: CursoInsumo[], 
+    cursoTitulo: string, 
+    professor: string, 
+    cursoInfo: { sala?: string; unidade?: string },
+    dataInicio?: string,
+    dataFim?: string
+  ) => {
+    if (!cursoInsumos || cursoInsumos.length === 0) {
+      toast.error("Nenhum insumo para exportar");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const dataAtual = new Date().toLocaleDateString();
+    
+    // Título
+    doc.setFontSize(14);
+    doc.text(`Lista de Insumos`, 10, 15);
+    
+    // Informações do curso
+    doc.setFontSize(11);
+    let infoY = 25;
+    doc.text(`Curso: ${cursoTitulo}`, 10, infoY);
+    doc.text(`Professor: ${professor}`, 110, infoY);
+    infoY += 7;
+    doc.text(`Unidade: ${cursoInfo.unidade || '-'}`, 10, infoY);
+    doc.text(`Sala: ${cursoInfo.sala || '-'}`, 110, infoY);
+    infoY += 7;
+    if (dataInicio || dataFim) {
+      doc.text(`Período: ${dataInicio || 'N/A'} a ${dataFim || 'N/A'}`, 10, infoY);
+      infoY += 7;
+    }
+    doc.text(`Data de emissão: ${dataAtual}`, 10, infoY);
+    
+    // Total de itens no canto direito
+    doc.setFontSize(9);
+    doc.text(`Total de itens: ${cursoInsumos.length}`, 200 - 10, infoY, { align: 'right' });
+    doc.setFontSize(11);
+
+    // Montar dados da tabela
+    const tableData = cursoInsumos.map((insumo, idx) => [
+      String(idx + 1),
+      insumo.insumos?.nome || '-',
+      String(insumo.quantidade)
+    ]);
+
+    // Definir largura das colunas
+    const columnStyles = {
+      0: { cellWidth: 15, halign: 'center' as const }, // Item
+      1: { cellWidth: 136 }, // Descrição
+      2: { cellWidth: 25, halign: 'center' as const }, // Quantidade
+    };
+
+    autoTable(doc, {
+      head: [["Item", "Descrição", "Quantidade"]],
+      body: tableData,
+      startY: infoY + 10,
+      theme: 'grid',
+      headStyles: { fillColor: [230, 230, 230], textColor: 0, halign: 'center' },
+      bodyStyles: { textColor: 0 },
+      styles: { fontSize: 11, cellPadding: 2 },
+      columnStyles,
+      didDrawPage: function (data) {
+        // Rodapé
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        const username = profile?.nome || 'Usuário';
+        doc.text(`Gestor de Cursos - CMU - Emitido por: ${username}`, 10, pageHeight - 10);
+        const pageCount = doc.getNumberOfPages();
+        doc.text(`Página ${data.pageNumber} de ${pageCount}`, 200 - 10, pageHeight - 10, { align: 'right' });
+      }
+    });
+
+    // Nome do arquivo
+    const sanitize = (str: string) => (str || '').normalize('NFD').replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+    const nomeCurso = sanitize(cursoTitulo);
+    const sala = sanitize(cursoInfo.sala || '');
+    const unidade = sanitize(cursoInfo.unidade || '');
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dataStr = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+    
+    doc.save(`insumos_${nomeCurso}_${sala}_${unidade}_${dataStr}.pdf`);
+  };
+
   const addPageNumbers = (doc: jsPDF) => {
     const finalTotalPages = doc.getNumberOfPages();
     
@@ -165,6 +260,7 @@ export const useInsumosExport = () => {
 
   return { 
     exportToExcel, 
-    exportToPDF 
+    exportToPDF,
+    exportCursoInsumosToPDF
   };
 };
