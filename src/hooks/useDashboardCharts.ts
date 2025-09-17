@@ -13,8 +13,13 @@ export interface PeriodData {
 
 export interface SalaData {
   nome: string;
+  unidade: string;
   quantidade: number;
   capacidade: number;
+  totalVagas: number;
+  totalAlunosIniciaram: number;
+  totalAlunosConcluiram: number;
+  taxaOcupacao: number;
 }
 
 export interface ProfessorData {
@@ -135,17 +140,47 @@ export const useDashboardCharts = (cursosAno: Curso[], cursosCompletos: Curso[],
   ], [cursosCompletos]);
 
   const salasData = useMemo((): SalaData[] => {
-    const salasMap = cursosCompletos.reduce((acc: any, curso) => {
+    // Filtrar apenas cursos finalizados
+    const cursosFinalizados = cursosCompletos.filter(curso => {
+      const hoje = new Date();
+      const fimCurso = new Date(curso.fim + 'T23:59:59-03:00');
+      return fimCurso < hoje;
+    });
+
+    const salasMap = cursosFinalizados.reduce((acc: any, curso) => {
       const salaNome = curso.salas?.nome || 'Sem sala';
+      const unidadeNome = curso.unidades?.nome || 'Sem unidade';
+      
       if (!acc[salaNome]) {
-        acc[salaNome] = { nome: salaNome, quantidade: 0, capacidade: curso.salas?.capacidade || 0 };
+        acc[salaNome] = { 
+          nome: salaNome,
+          unidade: unidadeNome,
+          quantidade: 0, 
+          capacidade: curso.salas?.capacidade || 0,
+          totalVagas: 0,
+          totalAlunosIniciaram: 0,
+          totalAlunosConcluiram: 0
+        };
       }
       acc[salaNome].quantidade += 1;
+      acc[salaNome].totalVagas += curso.vagas || 0;
+      acc[salaNome].totalAlunosIniciaram += curso.qtd_alunos_iniciaram || 0;
+      acc[salaNome].totalAlunosConcluiram += curso.qtd_alunos_concluiram || 0;
       return acc;
     }, {});
 
     return Object.values(salasMap)
-      .sort((a: any, b: any) => b.quantidade - a.quantidade)
+      .map((sala: any) => {
+        // Calcular taxa de ocupação média baseada nos alunos que concluíram por curso
+        const ocupacaoMedia = sala.quantidade > 0 ? (sala.totalAlunosConcluiram / sala.quantidade) : 0;
+        const taxaOcupacao = sala.capacidade > 0 ? (ocupacaoMedia / sala.capacidade) * 100 : 0;
+        
+        return {
+          ...sala,
+          taxaOcupacao: Math.min(taxaOcupacao, 100) // Limitar a 100% para evitar valores acima de 100%
+        };
+      })
+      .sort((a: any, b: any) => b.taxaOcupacao - a.taxaOcupacao)
       .slice(0, 10);
   }, [cursosCompletos]);
 
@@ -161,7 +196,7 @@ export const useDashboardCharts = (cursosAno: Curso[], cursosCompletos: Curso[],
 
     return Object.values(professoresMap)
       .sort((a: any, b: any) => b.quantidade - a.quantidade)
-      .slice(0, 10);
+      .slice(0, 10) as ProfessorData[];
   }, [cursosCompletos]);
 
   const materiasData = useMemo((): MateriaData[] => {
@@ -180,7 +215,7 @@ export const useDashboardCharts = (cursosAno: Curso[], cursosCompletos: Curso[],
 
     return Object.values(materiasMap)
       .sort((a: any, b: any) => b.quantidade - a.quantidade)
-      .slice(0, 8);
+      .slice(0, 8) as MateriaData[];
   }, [cursosCompletos]);
 
   const evolucaoMensal = useMemo((): EvolucaoMensal[] => {
@@ -241,7 +276,7 @@ export const useDashboardCharts = (cursosAno: Curso[], cursosCompletos: Curso[],
       unidade: curso.unidades?.nome || 'Sem unidade',
       evasao: ((curso.qtd_alunos_iniciaram || 0) - (curso.qtd_alunos_concluiram || 0)),
       taxaEvasao: curso.qtd_alunos_iniciaram ? (((curso.qtd_alunos_iniciaram || 0) - (curso.qtd_alunos_concluiram || 0)) / curso.qtd_alunos_iniciaram * 100) : 0
-    })).sort((a, b) => b.taxaEvasao - a.taxaEvasao).slice(0, 15), 
+    })).sort((a, b) => b.taxaEvasao - a.taxaEvasao).slice(0, 5), 
     [cursosComVagas]
   );
 
@@ -266,7 +301,7 @@ export const useDashboardCharts = (cursosAno: Curso[], cursosCompletos: Curso[],
       .sort((a: any, b: any) => {
         const ordem = ['Até 20h', '21-40h', '41-60h', '61-80h', 'Mais de 80h'];
         return ordem.indexOf(a.faixa) - ordem.indexOf(b.faixa);
-      });
+      }) as CargaHorariaData[];
   }, [cursosCompletos]);
 
   const diasSemanaData = useMemo((): DiaSemanaData[] => {
@@ -291,7 +326,7 @@ export const useDashboardCharts = (cursosAno: Curso[], cursosCompletos: Curso[],
     }, {});
 
     return Object.values(diasMap)
-      .sort((a: any, b: any) => b.quantidade - a.quantidade);
+      .sort((a: any, b: any) => b.quantidade - a.quantidade) as DiaSemanaData[];
   }, [cursosCompletos]);
 
   const evasaoPorUnidade = useMemo((): EvasaoUnidadeData[] => {

@@ -13,6 +13,7 @@ export interface Curso {
   carga_horaria?: number;
   qtd_alunos_iniciaram?: number;
   qtd_alunos_concluiram?: number;
+  vagas?: number;
   dia_semana?: string[];
   unidades?: { nome: string };
   salas?: { nome: string; capacidade?: number };
