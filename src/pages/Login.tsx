@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { useTheme } from "next-themes";
 import logoCmu from "/logo-cmu-menor.png";
+import logoCmuDark from "/logo-dark-theme.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +19,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useUser();
+  const { theme } = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +45,12 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src={logoCmu} alt="Logo CMU" className="mx-auto mb-2 h-20 w-auto" />
-          <CardTitle className="text-2xl font-bold text-blue-600">
+          <img 
+            src={theme === "dark" ? logoCmuDark : logoCmu} 
+            alt="Logo CMU" 
+            className="mx-auto mb-2 h-20 w-auto" 
+          />
+          <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
           Gestor de Cursos CMU
           </CardTitle>
           
