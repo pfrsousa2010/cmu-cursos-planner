@@ -466,7 +466,7 @@ const Cursos = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Busca por texto */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Buscar</label>
