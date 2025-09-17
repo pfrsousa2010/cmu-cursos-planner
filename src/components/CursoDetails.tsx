@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Curso } from "@/types/calendario";
+import { getStatusCurso } from "@/lib/utils";
 
 interface CursoDetailsProps {
   curso: Curso;
@@ -121,8 +122,8 @@ const CursoDetails = ({ curso, onEdit, onViewInsumos, showActions = true }: Curs
         </div>
 
         <div>
-          <span className="font-medium">Matérias:</span>
-          <p>{curso.total_materias || 0}</p>
+          <span className="font-medium">Status:</span>
+          <p>{getStatusCurso(curso.inicio, curso.fim)}</p>
         </div>
         
         <div>

@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { Curso } from "@/types/calendario";
 import { PeriodoRelatorio } from "./useRelatoriosCursos";
 import { useUser } from "@/contexts/UserContext";
+import { getStatusCurso } from "@/lib/utils";
 
 export const useRelatoriosExport = () => {
   const { profile } = useUser();
@@ -52,6 +53,7 @@ export const useRelatoriosExport = () => {
 
     return fimCursoNormalizado < hojeNormalizado;
   };
+
 
   const sortCursos = (cursos: Curso[]) => {
     return [...cursos].sort((a, b) => {
@@ -133,11 +135,10 @@ export const useRelatoriosExport = () => {
 
     // Criar dados para Excel
     const excelData = cursosOrdenados.map(curso => {
-      const cursoFinalizado = isCursoFinalizado(curso.fim);
-      const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+      const statusCurso = getStatusCurso(curso.inicio, curso.fim);
 
       return {
-        'Título': tituloComStatus,
+        'Título': curso.titulo,
         'Professor': curso.professor,
         'Período': formatPeriodo(curso.periodo),
         'Dias da Semana': formatDiasSemana(curso.dia_semana),
@@ -149,8 +150,7 @@ export const useRelatoriosExport = () => {
         'Data Fim': format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         'Unidade': curso.unidades?.nome || 'Sem Unidade',
         'Sala': curso.salas?.nome || 'Sem Sala',
-        'Total de Insumos': curso.total_insumos || 0,
-        'Total de Matérias': curso.total_materias || 0
+        'Status': statusCurso
       };
     });
 
@@ -162,7 +162,7 @@ export const useRelatoriosExport = () => {
     const colWidths = [
       { wch: 35 }, { wch: 25 }, { wch: 12 }, { wch: 20 }, { wch: 15 },
       { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 12 },
-      { wch: 20 }, { wch: 15 }, { wch: 18 }, { wch: 18 }
+      { wch: 20 }, { wch: 15 }, { wch: 18 }
     ];
     ws['!cols'] = colWidths;
     XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Cursos');
@@ -172,6 +172,7 @@ export const useRelatoriosExport = () => {
       const statsData = [
         ['Período do Relatório', periodoLabel],
         ['Total de Cursos', estatisticas.totalCursos],
+        ['Cursos Finalizados', estatisticas.totalCursosFinalizados],
         ['Total de Vagas', estatisticas.totalVagas],
         ['Total de Alunos Iniciaram', estatisticas.totalAlunosIniciaram],
         ['Total de Alunos Concluíram', estatisticas.totalAlunosConcluiram],
@@ -270,26 +271,24 @@ export const useRelatoriosExport = () => {
       'Data Fim',
       'Unidade',
       'Sala',
-      'Insumos',
-      'Matérias'
+      'Status do Curso'
     ];
 
     // Configuração da tabela
     const columnStyles: any = {
-      0: { cellWidth: 38, halign: 'center' as const },
-      1: { cellWidth: 25, halign: 'center' as const },
-      2: { cellWidth: 14, halign: 'center' as const },
-      3: { cellWidth: 25, halign: 'center' as const },
-      4: { cellWidth: 14, halign: 'center' as const },
-      5: { cellWidth: 14, halign: 'center' as const },
-      6: { cellWidth: 16, halign: 'center' as const },
-      7: { cellWidth: 20, halign: 'center' as const },
-      8: { cellWidth: 18, halign: 'center' as const },
-      9: { cellWidth: 18, halign: 'center' as const },
-      10: { cellWidth: 22, halign: 'center' as const },
-      11: { cellWidth: 20, halign: 'center' as const },
-      12: { cellWidth: 15, halign: 'center' as const },
-      13: { cellWidth: 15, halign: 'center' as const }
+      0: { cellWidth: 38, halign: 'center' as const }, // Título
+      1: { cellWidth: 25, halign: 'center' as const }, // Professor
+      2: { cellWidth: 14, halign: 'center' as const }, // Período
+      3: { cellWidth: 25, halign: 'center' as const }, // Dias da Semana
+      4: { cellWidth: 14, halign: 'center' as const }, // Carga Horária
+      5: { cellWidth: 14, halign: 'center' as const }, // Vagas
+      6: { cellWidth: 16, halign: 'center' as const }, // Alunos Iniciaram
+      7: { cellWidth: 20, halign: 'center' as const }, // Alunos Concluíram
+      8: { cellWidth: 18, halign: 'center' as const }, // Data Início
+      9: { cellWidth: 18, halign: 'center' as const }, // Data Fim
+      10: { cellWidth: 22, halign: 'center' as const }, // Unidade
+      11: { cellWidth: 20, halign: 'center' as const }, // Sala
+      12: { cellWidth: 20, halign: 'center' as const } // Status do Curso
     };
 
     if (cursosPorMes) {
@@ -318,11 +317,10 @@ export const useRelatoriosExport = () => {
           doc.text('Nenhum curso encontrado neste mês', 14, mensagemY);
         } else {
           const tableData = cursosDoMes.map(curso => {
-            const cursoFinalizado = isCursoFinalizado(curso.fim);
-            const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+            const statusCurso = getStatusCurso(curso.inicio, curso.fim);
 
             return [
-              tituloComStatus,
+              curso.titulo,
               curso.professor,
               formatPeriodo(curso.periodo),
               formatDiasSemana(curso.dia_semana),
@@ -334,8 +332,7 @@ export const useRelatoriosExport = () => {
               format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
               curso.unidades?.nome || 'Sem Unidade',
               curso.salas?.nome || 'Sem Sala',
-              curso.total_insumos?.toString() || '0',
-              curso.total_materias?.toString() || '0'
+              statusCurso
             ];
           });
 
@@ -390,11 +387,10 @@ export const useRelatoriosExport = () => {
     } else {
       // Exibição normal (mensal/semanal)
       const tableData = cursosOrdenados.map(curso => {
-        const cursoFinalizado = isCursoFinalizado(curso.fim);
-        const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+        const statusCurso = getStatusCurso(curso.inicio, curso.fim);
 
         return [
-          tituloComStatus,
+          curso.titulo,
           curso.professor,
           formatPeriodo(curso.periodo),
           formatDiasSemana(curso.dia_semana),
@@ -406,8 +402,7 @@ export const useRelatoriosExport = () => {
           format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
           curso.unidades?.nome || 'Sem Unidade',
           curso.salas?.nome || 'Sem Sala',
-          curso.total_insumos?.toString() || '0',
-          curso.total_materias?.toString() || '0'
+          statusCurso
         ];
       });
 
@@ -501,6 +496,8 @@ export const useRelatoriosExport = () => {
 
     doc.setFontSize(11);
     doc.text(`Total de cursos: ${estatisticas.totalCursos}`, 14, infoY);
+    infoY += 8;
+    doc.text(`Cursos finalizados: ${estatisticas.totalCursosFinalizados}`, 14, infoY);
     infoY += 8;
     doc.text(`Total de vagas: ${estatisticas.totalVagas}`, 14, infoY);
     infoY += 8;

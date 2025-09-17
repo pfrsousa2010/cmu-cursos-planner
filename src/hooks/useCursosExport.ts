@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { Curso } from "@/types/calendario";
 import { useUser } from "@/contexts/UserContext";
+import { getStatusCurso } from "@/lib/utils";
 
 export const useCursosExport = () => {
   const { profile } = useUser();
@@ -57,6 +58,7 @@ export const useCursosExport = () => {
     return fimCursoNormalizado < hojeNormalizado;
   };
 
+
   const sortCursos = (cursos: Curso[]) => {
     return [...cursos].sort((a, b) => {
       // Primeiro por unidade
@@ -100,11 +102,10 @@ export const useCursosExport = () => {
 
     // Criar dados para Excel
     const excelData = cursosOrdenados.map(curso => {
-      const cursoFinalizado = isCursoFinalizado(curso.fim);
-      const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+      const statusCurso = getStatusCurso(curso.inicio, curso.fim);
 
       return {
-        'Título': tituloComStatus,
+        'Título': curso.titulo,
         'Professor': curso.professor,
         'Período': formatPeriodo(curso.periodo),
         'Dias da Semana': formatDiasSemana(curso.dia_semana),
@@ -116,8 +117,7 @@ export const useCursosExport = () => {
         'Data Fim': format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         'Unidade': curso.unidades?.nome || 'Sem Unidade',
         'Sala': curso.salas?.nome || 'Sem Sala',
-        'Total de Insumos': curso.total_insumos || 0,
-        'Total de Matérias': curso.total_materias || 0
+        'Status': statusCurso
       };
     });
 
@@ -139,8 +139,7 @@ export const useCursosExport = () => {
       { wch: 12 }, // Data Fim
       { wch: 20 }, // Unidade
       { wch: 15 }, // Sala
-      { wch: 18 }, // Total de Insumos
-      { wch: 18 }  // Total de Matérias
+      { wch: 18 }  // Status do Curso
     ];
     ws['!cols'] = colWidths;
 
@@ -239,16 +238,14 @@ export const useCursosExport = () => {
       'Data Fim',
       'Unidade',
       'Sala',
-      'Insumos',
-      'Matérias'
+      'Status do Curso'
     ];
 
     const tableData = cursosOrdenados.map(curso => {
-      const cursoFinalizado = isCursoFinalizado(curso.fim);
-      const tituloComStatus = cursoFinalizado ? `${curso.titulo} (Finalizado)` : curso.titulo;
+      const statusCurso = getStatusCurso(curso.inicio, curso.fim);
 
       return [
-        tituloComStatus,
+        curso.titulo,
         curso.professor,
         formatPeriodo(curso.periodo),
         formatDiasSemana(curso.dia_semana),
@@ -260,8 +257,7 @@ export const useCursosExport = () => {
         format(new Date(curso.fim + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR }),
         curso.unidades?.nome || 'Sem Unidade',
         curso.salas?.nome || 'Sem Sala',
-        curso.total_insumos?.toString() || '0',
-        curso.total_materias?.toString() || '0'
+        statusCurso
       ];
     });
 
@@ -279,8 +275,7 @@ export const useCursosExport = () => {
       9: { cellWidth: 18, halign: 'center' as const }, // Data Fim
       10: { cellWidth: 22, halign: 'center' as const }, // Unidade
       11: { cellWidth: 20, halign: 'center' as const }, // Sala
-      12: { cellWidth: 15, halign: 'center' as const }, // Insumos
-      13: { cellWidth: 15, halign: 'center' as const } // Matérias
+      12: { cellWidth: 20, halign: 'center' as const } // Status do Curso
     };
 
     autoTable(doc, {

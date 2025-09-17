@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useRelatoriosCursos, PeriodoRelatorio } from "@/hooks/useRelatoriosCursos";
 import { useRelatoriosExport } from "@/hooks/useRelatoriosExport";
 import { useOrientation } from "@/hooks/useOrientation";
+import { getStatusCurso, getStatusBadgeColor } from "@/lib/utils";
 import { 
   Download, 
   FileSpreadsheet, 
@@ -297,14 +298,18 @@ const Relatorios = () => {
             <CardContent>
               {estatisticas ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-primary">{estatisticas.totalCursos}</div>
                       <div className="text-sm text-muted-foreground">Total de Cursos</div>
-                    </div>
+                    </div>                    
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-primary">{estatisticas.totalVagas}</div>
                       <div className="text-sm text-muted-foreground">Total de Vagas</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-red-600">{estatisticas.totalCursosFinalizados}</div>
+                      <div className="text-sm text-muted-foreground">Cursos Finalizados</div>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-green-600">{estatisticas.totalAlunosIniciaram}</div>
@@ -338,16 +343,14 @@ const Relatorios = () => {
                         </TooltipProvider>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Taxa de Conclusão:</span>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">{estatisticas.taxaConclusao.toFixed(1)}%</div>
+                      <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                        <span>Taxa de Conclusão</span>
                         <TooltipProvider>
                           <Tooltip delayDuration={100}>
                             <TooltipTrigger asChild>
-                              <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                              <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent>
                               <p className="text-sm">Calculada apenas para cursos finalizados</p>
@@ -355,10 +358,10 @@ const Relatorios = () => {
                           </Tooltip>
                         </TooltipProvider>
                       </div>
-                      <span className="text-sm font-bold text-primary">
-                        {estatisticas.taxaConclusao.toFixed(1)}%
-                      </span>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Carga Horária Total:</span>
                       <span className="text-sm font-bold text-primary">
@@ -371,11 +374,14 @@ const Relatorios = () => {
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Cursos por Período do Dia:</h4>
                     <div className="flex gap-2 flex-wrap">
-                      {Object.entries(estatisticas.cursosPorPeriodo).map(([periodo, qtd]) => (
-                        <Badge key={periodo} variant="outline" className={getPeriodoColor(periodo)}>
-                          {formatPeriodo(periodo)}: {qtd}
-                        </Badge>
-                      ))}
+                      {['manha', 'tarde', 'noite'].map(periodo => {
+                        const qtd = estatisticas.cursosPorPeriodo[periodo] || 0;
+                        return (
+                          <Badge key={periodo} variant="outline" className={getPeriodoColor(periodo)}>
+                            {formatPeriodo(periodo)}: {qtd}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -486,10 +492,12 @@ const Relatorios = () => {
                           <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
                             {formatPeriodo(curso.periodo)}
                           </Badge>
-                          
-                          {cursoFinalizado && (
-                            <Badge variant="destructive">Finalizado</Badge>
-                          )}
+                          <Badge 
+                            variant="outline" 
+                            className={getStatusBadgeColor(getStatusCurso(curso.inicio, curso.fim))}
+                          >
+                            {getStatusCurso(curso.inicio, curso.fim)}
+                          </Badge>
                         </div>
                       </div>
                       
@@ -514,9 +522,6 @@ const Relatorios = () => {
                         </div>
                         <div>
                           <span className="font-medium">Alunos:</span> {curso.qtd_alunos_iniciaram || 0} → {curso.qtd_alunos_concluiram || 0}
-                        </div>
-                        <div>
-                          <span className="font-medium">Insumos/Matérias:</span> {curso.total_insumos || 0}/{curso.total_materias || 0}
                         </div>
                       </div>
                     </div>

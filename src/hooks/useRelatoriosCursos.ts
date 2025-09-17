@@ -189,6 +189,7 @@ export const useRelatoriosCursos = () => {
     return {
       totalCursos,
       totalVagas,
+      totalCursosFinalizados: cursosFinalizados.length,
       totalAlunosIniciaram,
       totalAlunosConcluiram,
       totalCargaHoraria,

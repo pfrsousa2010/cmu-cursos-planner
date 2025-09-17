@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCursosExport } from "@/hooks/useCursosExport";
 import { useOrientation } from "@/hooks/useOrientation";
+import { getStatusCurso, getStatusBadgeColor } from "@/lib/utils";
 import { Plus, Edit, Trash2, FileText, Download, Search, Filter, Copy, MoreHorizontal, FileSpreadsheet, FileImage } from "lucide-react";
 import logoCmu from "/logo-cmu.png";
 import { toast } from "sonner";
@@ -585,13 +586,45 @@ const Cursos = () => {
                 <label className="text-sm font-medium">Status</label>
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecionar status" />
+                    <SelectValue placeholder="Selecionar status">
+                      {selectedStatus === "todos" ? (
+                        "Todos os status"
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
+                          selectedStatus === "previstos" ? "Previsto" :
+                          selectedStatus === "em-andamento" ? "Em andamento" :
+                          selectedStatus === "finalizados" ? "Finalizado" : "Previsto"
+                        )}`}>
+                          {selectedStatus === "previstos" ? "Previstos" :
+                           selectedStatus === "em-andamento" ? "Em andamento" :
+                           selectedStatus === "finalizados" ? "Finalizados" : "Todos"}
+                        </span>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="previstos">Previstos</SelectItem>
-                    <SelectItem value="em-andamento">Em andamento</SelectItem>
-                    <SelectItem value="finalizados">Finalizados</SelectItem>
+                    <SelectItem value="todos">Todos os status</SelectItem>
+                    <SelectItem value="previstos">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor('Previsto')}`}>
+                          Previstos
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="em-andamento">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor('Em andamento')}`}>
+                          Em andamento
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="finalizados">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor('Finalizado')}`}>
+                          Finalizados
+                        </span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -680,11 +713,12 @@ const Cursos = () => {
                                         <Badge variant="outline" className={getPeriodoColor(curso.periodo)}>
                                           {formatPeriodo(curso.periodo)}
                                         </Badge>
-                                        {cursoFinalizado && (
-                                          <Badge variant="destructive">
-                                            Finalizado
-                                          </Badge>
-                                        )}
+                                        <Badge 
+                                          variant="outline" 
+                                          className={getStatusBadgeColor(getStatusCurso(curso.inicio, curso.fim))}
+                                        >
+                                          {getStatusCurso(curso.inicio, curso.fim)}
+                                        </Badge>
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1 flex-wrap">
@@ -742,12 +776,6 @@ const Cursos = () => {
                                   </div>
                                   <div>
                                     <span className="font-medium">Carga Horária:</span> {curso.carga_horaria ? `${curso.carga_horaria}h` : 'Não definida'}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Matérias:</span> {curso.total_materias || 0}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Insumos:</span> {curso.total_insumos || 0}
                                   </div>
                                 </div>
                               </div>
