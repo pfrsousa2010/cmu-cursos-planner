@@ -308,11 +308,35 @@ const Relatorios = () => {
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-green-600">{estatisticas.totalAlunosIniciaram}</div>
-                      <div className="text-sm text-muted-foreground">Alunos Iniciaram</div>
+                      <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                        <span>Alunos Iniciaram</span>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">Apenas de cursos finalizados</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">{estatisticas.totalAlunosConcluiram}</div>
-                      <div className="text-sm text-muted-foreground">Alunos Concluíram</div>
+                      <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                        <span>Alunos Concluíram</span>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">Apenas de cursos finalizados</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                   </div>
 
@@ -332,7 +356,7 @@ const Relatorios = () => {
                         </TooltipProvider>
                       </div>
                       <span className="text-sm font-bold text-primary">
-                        {estatisticas.taxaConclusao.toFixed(2)}%
+                        {estatisticas.taxaConclusao.toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

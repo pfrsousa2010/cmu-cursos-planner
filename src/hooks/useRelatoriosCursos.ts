@@ -163,13 +163,15 @@ export const useRelatoriosCursos = () => {
 
     const totalCursos = cursosFiltrados.length;
     const totalVagas = cursosFiltrados.reduce((sum, curso) => sum + (curso.vagas || 0), 0);
-    const totalAlunosIniciaram = cursosFiltrados.reduce((sum, curso) => sum + (curso.qtd_alunos_iniciaram || 0), 0);
-    const totalAlunosConcluiram = cursosFiltrados.reduce((sum, curso) => sum + (curso.qtd_alunos_concluiram || 0), 0);
     const totalCargaHoraria = cursosFiltrados.reduce((sum, curso) => sum + (curso.carga_horaria || 0), 0);
     
+    // Para os cards de alunos, mostrar apenas dados de cursos finalizados
+    const totalAlunosIniciaram = cursosFinalizados.reduce((sum, curso) => sum + (curso.qtd_alunos_iniciaram || 0), 0);
+    const totalAlunosConcluiram = cursosFinalizados.reduce((sum, curso) => sum + (curso.qtd_alunos_concluiram || 0), 0);
+    
     // Calcular taxa de conclusão apenas com cursos finalizados
-    const totalAlunosIniciaramFinalizados = cursosFinalizados.reduce((sum, curso) => sum + (curso.qtd_alunos_iniciaram || 0), 0);
-    const totalAlunosConcluiramFinalizados = cursosFinalizados.reduce((sum, curso) => sum + (curso.qtd_alunos_concluiram || 0), 0);
+    const totalAlunosIniciaramFinalizados = totalAlunosIniciaram;
+    const totalAlunosConcluiramFinalizados = totalAlunosConcluiram;
     
     // Cursos por período do dia
     const cursosPorPeriodo = cursosFiltrados.reduce((acc, curso) => {
