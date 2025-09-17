@@ -42,7 +42,7 @@ const UserRoleLabel: Record<string, string> = {
 };
 
 const UserRoleColor: Record<string, string> = {
-  [UserRoleEnum.ADMIN]: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30',
+  [UserRoleEnum.ADMIN]: 'text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-900/30',
   [UserRoleEnum.EDITOR]: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30',
   [UserRoleEnum.VISUALIZADOR]: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30',
 };
