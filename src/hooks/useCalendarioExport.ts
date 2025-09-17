@@ -102,7 +102,7 @@ const createCellContent = (dia: Date, diaIndex: number, cursosFiltrados: Curso[]
   
   conteudoCelula += cursosManha.length > 0 ? `\nManhã: ${cursosManha[0].titulo}\n` : `\nManhã: -\n`;
   conteudoCelula += cursosTarde.length > 0 ? `\nTarde: ${cursosTarde[0].titulo}\n` : `\nTarde: -\n`;
-  conteudoCelula += cursosNoite.length > 0 ? `\nNoite: ${cursosNoite[0].titulo}\n` : `\nNoite: -`;
+  conteudoCelula += cursosNoite.length > 0 ? `\nNoite: ${cursosNoite[0].titulo}` : `\nNoite: -`;
   
   return conteudoCelula;
 };
