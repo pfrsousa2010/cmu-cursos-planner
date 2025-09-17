@@ -141,6 +141,12 @@ const Calendario = () => {
   };
 
   const handleAddCurso = (salaId: string, dia: Date, periodo: string) => {
+    // Verificar se o usuário tem permissão para adicionar cursos
+    if (canViewOnly) {
+      toast.error("Você não tem permissão para adicionar cursos.");
+      return;
+    }
+    
     setNovoCursoData({ salaId, dia, periodo });
     setNovoCursoDialogOpen(true);
   };

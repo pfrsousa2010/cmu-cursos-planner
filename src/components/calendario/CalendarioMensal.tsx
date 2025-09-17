@@ -13,6 +13,7 @@ import {
   formatPeriodo 
 } from "@/utils/calendarioUtils";
 import { useOrientation } from "@/hooks/useOrientation";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // Função para verificar se um curso deve aparecer em um dia específico
 const cursoApareceNoDia = (curso: Curso, dia: Date): boolean => {
@@ -71,6 +72,7 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
   onAddCurso
 }) => {
   const { isMobile, isTablet } = useOrientation();
+  const { canViewOnly } = useUserRole();
   const ano = currentWeek.getFullYear();
   const mes = currentWeek.getMonth();
   const startMonth = startOfMonth(currentWeek);
@@ -144,15 +146,15 @@ const CalendarioMensal: React.FC<CalendarioMensalProps> = ({
                 <div className="h-full bg-gray-50 dark:bg-gray-800 rounded opacity-50"></div>
               </TableCell>
             );
-          } else if (isMobile || isTablet) {
-            // Em dispositivos móveis: célula vazia sem interação
+          } else if (isMobile || isTablet || canViewOnly) {
+            // Em dispositivos móveis ou usuários visualizador: célula vazia sem interação
             cells.push(
               <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
                 <div className="h-full bg-gray-50 dark:bg-gray-800 rounded opacity-50"></div>
               </TableCell>
             );
           } else {
-            // Dias úteis em desktop: mostrar card para adicionar curso
+            // Dias úteis em desktop para usuários com permissão: mostrar card para adicionar curso
             cells.push(
               <TableCell key={`empty-${sala.id}-${turno}-${i}`} className="align-middle p-1 h-[40px]">
                 <div 

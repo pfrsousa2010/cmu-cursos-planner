@@ -6,24 +6,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, eachDayOfInterval, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Curso, Sala } from "@/types/calendario";
-import { 
-  getCursosForSalaAndDay, 
-  getUnidadeColor, 
-  getUnidadeTextColor, 
+import {
+  getCursosForSalaAndDay,
+  getUnidadeColor,
+  getUnidadeTextColor,
   getUnidadeBorder,
-  formatPeriodo 
+  formatPeriodo
 } from "@/utils/calendarioUtils";
 import { useOrientation } from "@/hooks/useOrientation";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // Função para verificar se o curso está finalizado
 const isCursoFinalizado = (dataFim: string) => {
   const hoje = new Date();
   const fimCurso = new Date(dataFim + 'T00:00:00');
-  
+
   // Normalizar as datas para comparar apenas o dia (sem horário)
   const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
   const fimCursoNormalizado = new Date(fimCurso.getFullYear(), fimCurso.getMonth(), fimCurso.getDate());
-  
+
   // Curso está finalizado apenas se a data fim for anterior ao dia atual
   return fimCursoNormalizado < hojeNormalizado;
 };
@@ -48,6 +49,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   onAddCurso
 }) => {
   const { isMobile, isTablet } = useOrientation();
+  const { canViewOnly } = useUserRole();
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
     end: endOfWeek(currentWeek, { weekStartsOn: 1 })
@@ -67,10 +69,10 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                   <TableHead className="w-32 font-semibold">SALAS</TableHead>
                   {weekDays.map((day) => {
                     const hoje = new Date();
-                    const isHoje = day.getDate() === hoje.getDate() && 
-                                  day.getMonth() === hoje.getMonth() && 
-                                  day.getFullYear() === hoje.getFullYear();
-                    
+                    const isHoje = day.getDate() === hoje.getDate() &&
+                      day.getMonth() === hoje.getMonth() &&
+                      day.getFullYear() === hoje.getFullYear();
+
                     return (
                       <TableHead key={day.toISOString()} className="text-center min-w-[220px] font-semibold">
                         <div className="flex flex-col">
@@ -142,10 +144,10 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                 <TableHead className="w-16 font-semibold">Turno</TableHead>
                 {weekDays.map((day) => {
                   const hoje = new Date();
-                  const isHoje = day.getDate() === hoje.getDate() && 
-                                day.getMonth() === hoje.getMonth() && 
-                                day.getFullYear() === hoje.getFullYear();
-                  
+                  const isHoje = day.getDate() === hoje.getDate() &&
+                    day.getMonth() === hoje.getMonth() &&
+                    day.getFullYear() === hoje.getFullYear();
+
                   return (
                     <TableHead key={day.toISOString()} className="text-center min-w-[220px] font-semibold">
                       <div className={`flex flex-col ${isHoje ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white rounded-lg p-2' : ''}`}>
@@ -167,8 +169,8 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                 return turnos.map((turno, turnoIdx) => (
                   <TableRow key={sala.id + '-' + turno} className={getUnidadeColor(sala.unidades?.nome || '')}>
                     {turnoIdx === 0 ? (
-                      <TableCell 
-                        rowSpan={3} 
+                      <TableCell
+                        rowSpan={3}
                         className={`font-medium align-middle ${getUnidadeBorder(sala.unidades?.nome || '')}`}
                       >
                         <div className="flex flex-col items-center justify-center h-full space-y-1 py-2">
@@ -185,7 +187,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                     {weekDays.map((day) => {
                       const cursosTurno = getCursosForSalaAndDay(cursosFiltrados, sala.id, day)
                         .filter(curso => curso.periodo === turno);
-                      
+
                       return (
                         <TableCell key={day.toISOString()} className="align-top p-2">
                           <div className="space-y-2">
@@ -212,25 +214,18 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
                               (() => {
                                 const diaSemana = day.getDay();
                                 const isFimDeSemana = diaSemana === 0 || diaSemana === 6; // Domingo ou Sábado
-                                
-                                if (isFimDeSemana) {
-                                  // Fins de semana: célula vazia sem interação
+
+                                if (isMobile || isTablet || canViewOnly) {
+                                  // Em dispositivos móveis ou usuários visualizador: célula vazia sem interação
                                   return (
-                                    <div className="flex items-center justify-center p-2 bg-gray-50 dark:bg-gray-800 rounded opacity-50">
-                                      <span className="text-sm text-muted-foreground">-</span>
-                                    </div>
-                                  );
-                                } else if (isMobile || isTablet) {
-                                  // Em dispositivos móveis: célula vazia sem interação
-                                  return (
-                                    <div className="flex items-center justify-center p-2 bg-gray-50 dark:bg-gray-800 rounded opacity-50">
+                                    <div className="flex items-center justify-center p-2">
                                       <span className="text-sm text-muted-foreground">-</span>
                                     </div>
                                   );
                                 } else {
-                                  // Dias úteis em desktop: mostrar card para adicionar curso
+                                  // Dias úteis em desktop para usuários com permissão: mostrar card para adicionar curso
                                   return (
-                                    <div 
+                                    <div
                                       className="flex items-center justify-center p-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-500 hover:text-blue-600 h-full min-h-[60px]"
                                       onClick={() => onAddCurso(sala.id, day, turno)}
                                       title="Adicionar novo curso"
