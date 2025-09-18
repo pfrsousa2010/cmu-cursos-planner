@@ -133,15 +133,15 @@ const Dashboard = () => {
                       : 'bg-background border-border text-foreground'
                       }`}>
                       <div className="font-semibold mb-1">Mês: {label}</div>
-                      {bars.map((item, idx) => (
+                        {bars.map((item, idx) => (
                         <div key={item.dataKey} className="mb-1 flex items-center gap-2">
                           <span style={{ color: item.color, fontWeight: 500 }}>{item.dataKey}:</span>
                           <span>
-                            {item.value} Curso{Number(item.value) === 1 ? '' : 's'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                              {item.value} Curso{Number(item.value) === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                   );
                 }}
               />
@@ -335,10 +335,6 @@ const Dashboard = () => {
                           <div className="flex justify-between">
                             <span className="font-medium">Carga Total:</span>
                             <span className="font-bold">{data.cargaTotal}h</span>
-                          </div>
-                          <div className="flex justify-between border-t pt-2">
-                            <span className="font-medium">Média:</span>
-                            <span className="font-bold">{(data.cargaTotal / data.quantidade).toFixed(1)}h</span>
                           </div>
                         </div>
                       </div>
