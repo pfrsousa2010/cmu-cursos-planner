@@ -1,73 +1,151 @@
-# Welcome to your Lovable project
+# CMU Cursos Planner
 
-## Project info
+Sistema de planejamento e gerenciamento de cursos para o Centro de Mídias Universitárias (CMU).
 
-**URL**: https://lovable.dev/projects/090cb36a-01ab-473b-9fff-35f43f3562d4
+## 📋 Sobre o Projeto
 
-## How can I edit this code?
+O CMU Cursos Planner é uma aplicação web desenvolvida para facilitar o planejamento, gerenciamento e acompanhamento de cursos oferecidos pelo Centro de Mídias Universitárias. O sistema oferece uma interface intuitiva para administradores e usuários visualizarem cursos, gerar relatórios e gerenciar recursos.
 
-There are several ways of editing your application.
+## ✨ Funcionalidades
 
-**Use Lovable**
+### 🏠 Dashboard
+- Visão geral com métricas de cursos
+- Gráficos de ocupação e performance
+- Estatísticas em tempo real
+- Lista de cursos próximos
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/090cb36a-01ab-473b-9fff-35f43f3562d4) and start prompting.
+### 📅 Calendário
+- Visualização mensal e semanal
+- Filtros por período e tipo de curso
+- Navegação intuitiva entre datas
+- Exportação de calendários
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📚 Gerenciamento de Cursos
+- CRUD completo para cursos
+- Controle de vagas e status
+- Gestão de insumos e materiais
+- Sistema de aprovação
 
-**Use your preferred IDE**
+### 📊 Relatórios
+- Geração de relatórios detalhados
+- Exportação em PDF e Excel
+- Métricas de performance
+- Análise de ocupação
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 👥 Usuários
+- Sistema de autenticação
+- Controle de permissões
+- Perfis de usuário
+- Gestão de acessos
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Tecnologias
 
-Follow these steps:
+- **Frontend**: React 18.3.1 + TypeScript 5.5.3
+- **Build Tool**: Vite 5.4.1
+- **Styling**: Tailwind CSS 3.4.11 + shadcn/ui
+- **Backend**: Supabase 2.50.3
+- **Routing**: React Router DOM 6.26.2
+- **Charts**: Recharts 2.12.7
+- **Forms**: React Hook Form 7.53.0 + Zod 3.23.8
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Instalação e Configuração
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Pré-requisitos
+- Node.js (versão 18 ou superior)
+- npm ou yarn
+- Conta no Supabase
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Passos para instalação
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Clone o repositório**
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd cmu-cursos-planner
 ```
 
-**Edit a file directly in GitHub**
+2. **Instale as dependências**
+```bash
+npm install
+# ou
+yarn install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. **Configure as variáveis de ambiente**
+```bash
+# Crie um arquivo .env.local na raiz do projeto
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+```
 
-**Use GitHub Codespaces**
+4. **Execute as migrações do banco de dados**
+```bash
+# Execute os scripts SQL na pasta supabase/migrations
+# no painel do Supabase ou usando a CLI
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+5. **Inicie o servidor de desenvolvimento**
+```bash
+npm run dev
+# ou
+yarn dev
+```
 
-## What technologies are used for this project?
+6. **Acesse a aplicação**
+Abra [http://localhost:5173](http://localhost:5173) no seu navegador.
 
-This project is built with:
+## 📦 Scripts Disponíveis
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run build` - Gera build de produção
+- `npm run build:dev` - Gera build de desenvolvimento
+- `npm run preview` - Visualiza o build de produção
+- `npm run lint` - Executa o linter
 
-## How can I deploy this project?
+## 🏗️ Estrutura do Projeto
 
-Simply open [Lovable](https://lovable.dev/projects/090cb36a-01ab-473b-9fff-35f43f3562d4) and click on Share -> Publish.
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   ├── calendario/     # Componentes do calendário
+│   ├── dashboard/      # Componentes do dashboard
+│   └── ui/            # Componentes de interface
+├── contexts/           # Contextos React
+├── hooks/             # Hooks customizados
+├── integrations/      # Integrações externas
+│   └── supabase/      # Configuração do Supabase
+├── lib/               # Utilitários
+├── pages/             # Páginas da aplicação
+├── types/             # Definições de tipos TypeScript
+└── utils/             # Funções utilitárias
+```
 
-## Can I connect a custom domain to my Lovable project?
+## 🔄 Versionamento
 
-Yes, you can!
+Este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **MAJOR**: Mudanças incompatíveis na API
+- **MINOR**: Funcionalidades adicionadas de forma compatível
+- **PATCH**: Correções de bugs compatíveis
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Veja o [CHANGELOG.md](./CHANGELOG.md) para detalhes das versões.
+
+## 🤝 Contribuição
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 📞 Suporte
+
+Para suporte e dúvidas, entre em contato através dos canais oficiais do CMU.
+
+---
+
+**Versão atual**: 1.0.0  
+**Última atualização**: Janeiro 2025
