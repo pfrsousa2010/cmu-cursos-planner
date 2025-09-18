@@ -1,10 +1,10 @@
-# CMU Cursos Planner
+# Gestor de Cursos Clube das Mães Unidas (CMU)
 
-Sistema de planejamento e gerenciamento de cursos para o Centro de Mídias Universitárias (CMU).
+Sistema de planejamento e gerenciamento de cursos.
 
 ## 📋 Sobre o Projeto
 
-O CMU Cursos Planner é uma aplicação web desenvolvida para facilitar o planejamento, gerenciamento e acompanhamento de cursos oferecidos pelo Centro de Mídias Universitárias. O sistema oferece uma interface intuitiva para administradores e usuários visualizarem cursos, gerar relatórios e gerenciar recursos.
+O Gestor de cursos CMU é uma aplicação web desenvolvida para facilitar o planejamento, gerenciamento e acompanhamento de cursos oferecidos pela ONG Clube das Mães Unidas (CMU). O sistema oferece uma interface intuitiva para administradores e usuários visualizarem cursos, gerar relatórios e gerenciar recursos.
 
 ## ✨ Funcionalidades
 
@@ -70,29 +70,6 @@ npm install
 yarn install
 ```
 
-3. **Configure as variáveis de ambiente**
-```bash
-# Crie um arquivo .env.local na raiz do projeto
-VITE_SUPABASE_URL=sua_url_do_supabase
-VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
-```
-
-4. **Execute as migrações do banco de dados**
-```bash
-# Execute os scripts SQL na pasta supabase/migrations
-# no painel do Supabase ou usando a CLI
-```
-
-5. **Inicie o servidor de desenvolvimento**
-```bash
-npm run dev
-# ou
-yarn dev
-```
-
-6. **Acesse a aplicação**
-Abra [http://localhost:5173](http://localhost:5173) no seu navegador.
-
 ## 📦 Scripts Disponíveis
 
 - `npm run dev` - Inicia o servidor de desenvolvimento
@@ -143,9 +120,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 📞 Suporte
 
-Para suporte e dúvidas, entre em contato através dos canais oficiais do CMU.
+Para suporte e dúvidas, entre em contato através dos canais oficiais da Micro Focus Pro.
+
+**Email**: microfocuspro@gmail.com
 
 ---
 
 **Versão atual**: 1.0.0  
-**Última atualização**: Janeiro 2025
+**Última atualização**: Setembro 2025
