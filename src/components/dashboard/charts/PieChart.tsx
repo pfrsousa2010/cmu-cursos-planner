@@ -74,7 +74,7 @@ export const PieChart = ({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={{}} className="w-full" style={{ height: `${height}px` }}>
+        <ChartContainer config={{}} className="w-full max-w-full overflow-hidden" style={{ height: `${height}px` }}>
           <RechartsPrimitive.PieChart>
             <RechartsPrimitive.Pie
               data={data}

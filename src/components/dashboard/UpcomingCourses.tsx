@@ -83,17 +83,17 @@ export const UpcomingCourses = ({
       <CardContent>
         <div className="space-y-3">
           {cursos.map((curso) => (
-            <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-              <div className="flex-1 min-w-0 mr-3">
+            <div key={curso.id} className="flex items-center justify-between border-b pb-2 gap-2">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{curso.titulo}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground truncate">
                   {curso.professor} • {formatPeriodo(curso.periodo)}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {curso.unidades?.nome} - {curso.salas?.nome}
                 </p>
               </div>
-              <Badge variant={badgeVariant}>
+              <Badge variant={badgeVariant} className="flex-shrink-0">
                 {format(new Date(curso[dateField] + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
               </Badge>
             </div>

@@ -86,7 +86,7 @@ export const BarChart = ({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config} className="w-full" style={{ height: `${height}px` }}>
+        <ChartContainer config={config} className="w-full max-w-full overflow-hidden" style={{ height: `${height}px` }}>
           <RechartsPrimitive.BarChart data={data} margin={margin}>
             <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
             <RechartsPrimitive.XAxis 

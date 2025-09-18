@@ -194,14 +194,14 @@ export const CollapsibleCoursesList = ({
                               .map((curso) => {
                                 const isFinalizado = new Date(curso.fim + 'T23:59:59') < new Date();
                                 return (
-                                  <div key={curso.id} className="flex items-center justify-between border-b pb-2">
-                                    <div className="flex-1 min-w-0 mr-3">
+                                  <div key={curso.id} className="flex items-center justify-between border-b pb-2 gap-2">
+                                    <div className="flex-1 min-w-0">
                                       <p className="font-medium text-sm truncate">{curso.titulo}</p>
-                                      <p className="text-xs text-muted-foreground">
+                                      <p className="text-xs text-muted-foreground truncate">
                                         {curso.professor} • {formatPeriodo(curso.periodo)}
                                       </p>
                                     </div>
-                                    <div className="flex flex-col items-end min-w-[90px] flex-shrink-0">
+                                    <div className="flex flex-col items-end min-w-[80px] flex-shrink-0">
                                       <Badge variant={isFinalizado ? "destructive" : "outline"} className="text-xs">
                                         {format(new Date(curso.inicio + 'T00:00:00'), 'dd/MM', { locale: ptBR })} - {format(new Date(curso.fim + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                                       </Badge>

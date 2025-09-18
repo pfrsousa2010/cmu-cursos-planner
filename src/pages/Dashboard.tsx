@@ -43,7 +43,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 overflow-x-hidden">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         </div>
@@ -55,7 +55,7 @@ const Dashboard = () => {
           isLoadingProfessores={loadingCursosCompletos}
         />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
           {/* Cursos começando em breve */}
           <UpcomingCourses
             cursos={cursosProximos}
@@ -128,7 +128,7 @@ const Dashboard = () => {
                   const bars = payload.filter(p => Number(p.value) > 0)
                     .length > 0 ? payload.filter(p => Number(p.value) > 0) : payload;
                   return (
-                    <div className={`rounded border p-2 shadow text-xs min-w-[180px] ${theme === 'dark'
+                    <div className={`rounded border p-2 shadow text-xs min-w-[120px] max-w-[200px] ${theme === 'dark'
                       ? 'bg-card border-border text-card-foreground'
                       : 'bg-background border-border text-foreground'
                       }`}>
@@ -191,7 +191,7 @@ const Dashboard = () => {
                     if (!active || !payload || !payload.length) return null;
                     const data = payload[0].payload;
                     return (
-                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[280px] ${theme === 'dark'
+                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[200px] max-w-[280px] ${theme === 'dark'
                         ? 'bg-card border-border text-card-foreground'
                         : 'bg-background border-border text-foreground'
                         }`}>
@@ -320,7 +320,7 @@ const Dashboard = () => {
                     if (!active || !payload || !payload.length) return null;
                     const data = payload[0].payload;
                     return (
-                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[280px] ${theme === 'dark'
+                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[200px] max-w-[280px] ${theme === 'dark'
                         ? 'bg-card border-border text-card-foreground'
                         : 'bg-background border-border text-foreground'
                         }`}>
@@ -370,7 +370,7 @@ const Dashboard = () => {
                     if (!active || !payload || !payload.length) return null;
                     const data = payload[0].payload;
                     return (
-                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[280px] ${theme === 'dark'
+                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[200px] max-w-[280px] ${theme === 'dark'
                         ? 'bg-card border-border text-card-foreground'
                         : 'bg-background border-border text-foreground'
                         }`}>
@@ -418,7 +418,7 @@ const Dashboard = () => {
                     if (!active || !payload || !payload.length) return null;
                     const data = payload[0].payload;
                     return (
-                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[280px] ${theme === 'dark'
+                      <div className={`rounded-lg border-2 p-4 shadow-lg min-w-[200px] max-w-[280px] ${theme === 'dark'
                         ? 'bg-card border-border text-card-foreground'
                         : 'bg-background border-border text-foreground'
                         }`}>
