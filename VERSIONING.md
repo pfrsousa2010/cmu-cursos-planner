@@ -1,4 +1,4 @@
-# Guia de Versionamento - CMU Cursos Planner
+# Guia de Versionamento - Gestor de Cursos CMU
 
 Este documento descreve as diretrizes de versionamento para o projeto CMU Cursos Planner.
 
