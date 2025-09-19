@@ -91,8 +91,8 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile Sidebar - sempre como overlay */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
-        <div className="flex items-center justify-between h-16 px-4 border-b">
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-700">
           <h1 className="text-lg font-bold text-primary">Menu</h1>
           <Button
             variant="ghost"
@@ -112,7 +112,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 key={item.path}
                 variant={isActive ? "secondary" : "ghost"}
-                className="w-full justify-start mb-1"
+                className={`w-full justify-start mb-1 ${isActive ? 'bg-blue-100 hover:bg-blue-200 dark:bg-secondary dark:hover:bg-secondary/80' : ''}`}
                 onClick={() => {
                   navigate(item.path);
                   setSidebarOpen(false);
@@ -133,7 +133,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Skeleton className="h-5 w-20 rounded" />
             </div>
           ) : (
-            <div className="mb-4 p-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl border border-border/50">
+            <div className="mb-4 p-4 bg-gradient-to-br from-blue-100/80 to-indigo-100/80 dark:from-blue-900/40 dark:to-indigo-900/40 rounded-xl border border-blue-200/60 dark:border-blue-700/60">
               <div className="space-y-3">
                 {/* Nome do usuário */}
                 <div className="text-sm font-semibold text-foreground text-center">
@@ -169,7 +169,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main content */}
       <div className="w-full">
         {/* Top bar */}
-        <header className="bg-card shadow-sm border-b sticky top-0 z-40">
+        <header className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 shadow-sm border-b border-blue-200 dark:border-slate-600 sticky top-0 z-40">
           <div className="flex items-center justify-between h-16 px-4">
             <div className="flex items-center gap-4">
               <Button
