@@ -1,12 +1,12 @@
 
 import { ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  BookOpen, 
-  Building2, 
-  Users, 
-  FileText, 
+import {
+  Calendar,
+  BookOpen,
+  Building2,
+  Users,
+  FileText,
   Home,
   Menu,
   X,
@@ -53,7 +53,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { width } = useOrientation();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Detectar se é dispositivo móvel/tablet (largura menor que 768px)
   const isMobile = width < 768;
 
@@ -102,12 +102,12 @@ const Layout = ({ children }: LayoutProps) => {
             <X className="h-5 w-5" />
           </Button>
         </div>
-        
+
         <nav className="mt-4 px-2">
           {filteredMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Button
                 key={item.path}
@@ -133,16 +133,28 @@ const Layout = ({ children }: LayoutProps) => {
               <Skeleton className="h-5 w-20 rounded" />
             </div>
           ) : (
-            <div className="mb-4 p-3 bg-muted rounded-lg">
-              <div className="text-sm text-muted-foreground flex flex-col gap-1">
-                <span className="font-medium text-foreground">{profile.nome || profile.email}</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}`}>
-                  {UserRoleLabel[profile.role] || profile.role}
-                </span>
+            <div className="mb-4 p-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl border border-border/50">
+              <div className="space-y-3">
+                {/* Nome do usuário */}
+                <div className="text-sm font-semibold text-foreground text-center">
+                  {profile.nome || profile.email}
+                </div>
+                
+                {/* Badge do cargo */}
+                <div className="flex items-center justify-between">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${UserRoleColor[profile.role] || 'text-muted-foreground bg-muted'}`}>
+                    {UserRoleLabel[profile.role] || profile.role}
+                  </span>
+                  
+                  {/* Versão */}
+                  <span className="text-xs text-muted-foreground/70 font-medium">
+                    v.beta
+                  </span>
+                </div>
               </div>
             </div>
           )}
-          
+
           <Button
             variant="outline"
             className="w-full justify-start"
@@ -172,7 +184,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <h1 className="hidden md:block text-xl font-bold text-primary">Gestor de Cursos CMU</h1>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Informações do perfil - ocultas em mobile e tablet */}
               <div className="hidden lg:flex items-center space-x-4">
@@ -190,7 +202,7 @@ const Layout = ({ children }: LayoutProps) => {
                   </span>
                 )}
               </div>
-              
+
               {/* ThemeToggle - sempre visível */}
               <ThemeToggle />
             </div>
